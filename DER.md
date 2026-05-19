@@ -6,6 +6,7 @@ graph TD
     PJ[Persona Jurídica]
     U[Usuario]
     R[Rol]
+    
     UR[Usuario Rol]
     C[Categoría]
     E[Evento]
@@ -15,7 +16,7 @@ graph TD
     V[Visita]
     PRT[Password Reset Token]
 
-    %% Nuevas Entidades del Modelo de Datos (Sincronizadas con tu DBML)
+    
     EC[Evento Cronograma]
     EM[Evento Multimedia]
     EES[Evento Estado Sistema]
@@ -43,7 +44,7 @@ graph TD
     R11{detalla}
     R12{recibe}
     
-    %% Nuevos Rombos para Estructura de Eventos y Ubicaciones
+    %% Rombos para Estructura de Eventos y Ubicaciones
     R_Ev_Cro{agenda}
     R_Ev_Mul{contiene}
     R_Ev_EES{modera}
@@ -60,7 +61,7 @@ graph TD
     R_Us_Vis{hace}
     R_P_Hist{rastrea}
 
-    %% Rombos de Pagos y Suscripciones (Ajustados a Usuario)
+    %% Rombos de Pagos y Suscripciones 
     R_Us_Sus{adquiere}
     R_Ins_Pag{genera}
     R_Sus_Pag{genera}
@@ -72,9 +73,9 @@ graph TD
     P ---|"1"| R2 -->|"1"| PJ
     P ---|"1"| R3 -->|"1"| U
     U ---|"1"| R9 -->|"N"| UR
-    Rol ---|"1"| R_UR_R -->|"N"| UR
+    R ---|"1"| R_UR_R -->|"N"| UR
 
-    %% Gestión y Clasificación de Eventos (Ahora desde Usuario)
+    %% Gestión y Clasificación de Eventos
     U ---|"1"| R4 -->|"N"| E
     C ---|"1"| R10 -->|"N"| E
     EES ---|"1"| R_Ev_EES -->|"N"| E
@@ -91,7 +92,7 @@ graph TD
     Pro ---|"1"| R_Ciu_Pro -->|"N"| Ciu
     Pa ---|"1"| R_Pro_Pa -->|"N"| Pro
 
-    %% Flujo de Inscripciones e Interacciones Operativas (Desde Usuario)
+    %% Flujo de Inscripciones e Interacciones Operativas 
     U ---|"1"| R5 -->|"N"| I
     E ---|"1"| R12 -->|"N"| I
     
@@ -103,10 +104,10 @@ graph TD
     
     U ---|"1"| R8 -->|"N"| PRT
 
-    %% Flujo de Pagos y Suscripciones (Desde Usuario / Inscripción)
+    %% Flujo de Pagos y Suscripciones 
     I ---|"1"| R_Ins_Pag -->|"1..N"| Pag
     U ---|"1"| R_Us_Sus -->|"1"| S
     S ---|"1"| R_Sus_Pag -->|"1..N"| Pag
 
-    %% Auditoría de Actividad (Rastrea de Persona como definiste)
+    %% Auditoría de Actividad
     P ---|"1"| R_P_Hist -->|"N"| H
