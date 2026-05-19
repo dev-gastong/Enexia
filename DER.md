@@ -1,116 +1,112 @@
 ```mermaid
 graph TD
-    %% Estilos para mejorar la visualización en GitHub
-    classDef entidad fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px;
-    classDef relacion fill:#fff,stroke:#757575,stroke-width:1px,stroke-dasharray: 3 3;
+    %% Entidades Base Actualizadas
+    P[Persona]
+    PF[Persona Física]
+    PJ[Persona Jurídica]
+    U[Usuario]
+    R[Rol]
+    UR[Usuario Rol]
+    C[Categoría]
+    E[Evento]
+    ED[Evento Detalle]
+    I[Inscripción]
+    Pun[Puntuación]
+    V[Visita]
+    PRT[Password Reset Token]
 
-    %% Entidades Base
-    P[Persona]:::entidad
-    PF[Persona Física]:::entidad
-    PJ[Persona Jurídica]:::entidad
-    U[Usuario]:::entidad
-    R[Rol]:::entidad
-    Perm[Permiso]:::entidad
-    C[Categoría]:::entidad
-    E[Evento]:::entidad
-    ED[Evento Detalle]:::entidad
-    I[Inscripción]:::entidad
-    Pun[Puntuación]:::entidad
-    V[Visita]:::entidad
-    PRT[Password Reset Token]:::entidad
+    %% Nuevas Entidades del Modelo de Datos (Sincronizadas con tu DBML)
+    EC[Evento Cronograma]
+    EM[Evento Multimedia]
+    EES[Evento Estado Sistema]
+    EEO[Evento Estado Organizador]
+    Ubi[Ubicación]
+    Ciu[Ciudad]
+    Pro[Provincia]
+    Pa[País]
 
-    %% NUEVA ENTIDAD: Imágenes del Evento
-    UIE[Urls_Img_Evento]:::entidad
-    
     %% Entidades de Pagos e Historial
-    S[Suscripción]:::entidad
-    Pag[Pago]:::entidad
-    H[Historial de Interacciones]:::entidad
+    S[Suscripción]
+    Pag[Pago]
+    H[Historial de Interacciones]
 
-    %% Relaciones Base
-    R1{es}:::relacion
-    R2{es}:::relacion
-    R3{tiene}:::relacion
-    R4{organiza}:::relacion
-    R5{se inscribe}:::relacion
-    R8{solicita}:::relacion
-    R9{posee}:::relacion
-    R10{clasifica}:::relacion
-    R11{tiene}:::relacion
-    R12{registra}:::relacion
-    R13{contiene}:::relacion
-
-    %% NUEVA RELACIÓN: Imágenes del Evento (1:N)
-    R_Ev_Img{tiene}:::relacion
-
-    %% Conexión de las Imágenes del Evento
-    E ---|"1"| R_Ev_Img
-    R_Ev_Img ---|"N"| UIE
+    %% Rombos de Relación Base y Nuevos
+    R1{es}
+    R2{es}
+    R3{tiene}
+    R4{organiza}
+    R5{realiza}
+    R8{solicita}
+    R9{posee}
+    R_UR_R{asignado}
+    R10{clasifica}
+    R11{detalla}
+    R12{recibe}
     
-    %% Relaciones de Puntuación y Visita
-    R_Ev_Pun{tiene}:::relacion
-    R_Us_Pun{realiza}:::relacion
-    R_Ev_Vis{tiene}:::relacion
-    R_Us_Vis{realiza}:::relacion
+    %% Nuevos Rombos para Estructura de Eventos y Ubicaciones
+    R_Ev_Cro{agenda}
+    R_Ev_Mul{contiene}
+    R_Ev_EES{modera}
+    R_Ev_EEO{gestiona}
+    R_ED_Ubi{ubica}
+    R_Ubi_Ciu{contiene}
+    R_Ciu_Pro{contiene}
+    R_Pro_Pa{contiene}
 
-    %% NUEVAS RELACIONES (Pagos y Suscripciones)
-    R_Us_Sus{adquiere}:::relacion
-    R_Ins_Pag{genera}:::relacion
-    R_Sus_Pag{genera}:::relacion
-    R_Us_Hist{registra}:::relacion
+    %% Rombos de Puntuación, Visita y Auditoría
+    R_Ev_Pun{recibe}
+    R_Us_Pun{da}
+    R_Ev_Vis{registra}
+    R_Us_Vis{hace}
+    R_P_Hist{rastrea}
 
-    %% Conexiones Herencia y Usuario
-    P ---|"1"| R1
-    R1 ---|"1"| PF
-    P ---|"1"| R2
-    R2 ---|"1"| PJ
-    P ---|"1"| R3
-    R3 ---|"1"| U
+    %% Rombos de Pagos y Suscripciones (Ajustados a Usuario)
+    R_Us_Sus{adquiere}
+    R_Ins_Pag{genera}
+    R_Sus_Pag{genera}
 
-    %% Flujo de Eventos y Organizador
-    U ---|"1"| R4
-    R4 ---|"N"| E
+    %% === CONEXIONES ===
 
-    %% Flujo 1 de Pago: Inscripción
-    U ---|"1"| R5
-    R5 ---|"N"| I
-    E ---|"1"| R12
-    R12 ---|"N"| I
-    I ---|"1"| R_Ins_Pag
-    R_Ins_Pag ---|"1..N"| Pag
+    %% Jerarquía de Identidad y Seguridad
+    P ---|"1"| R1 -->|"1"| PF
+    P ---|"1"| R2 -->|"1"| PJ
+    P ---|"1"| R3 -->|"1"| U
+    U ---|"1"| R9 -->|"N"| UR
+    Rol ---|"1"| R_UR_R -->|"N"| UR
 
-    %% Flujo 2 de Pago: Suscripción
-    U ---|"1"| R_Us_Sus
-    R_Us_Sus ---|"1"| S
-    S ---|"1"| R_Sus_Pag
-    R_Sus_Pag ---|"1..N"| Pag
+    %% Gestión y Clasificación de Eventos (Ahora desde Usuario)
+    U ---|"1"| R4 -->|"N"| E
+    C ---|"1"| R10 -->|"N"| E
+    EES ---|"1"| R_Ev_EES -->|"N"| E
+    EEO ---|"1"| R_Ev_EEO -->|"N"| E
 
-    %% Historial de Interacciones
-    U ---|"1"| R_Us_Hist
-    R_Us_Hist ---|"N"| H
+    %% Componentes del Evento
+    E ---|"1"| R_Ev_Cro -->|"N"| EC
+    E ---|"1"| R_Ev_Mul -->|"N"| EM
+    E ---|"1"| R11 -->|"1"| ED
 
-    %% Puntuaciones, Visitas y Tokens
-    E ---|"1"| R_Ev_Pun
-    R_Ev_Pun ---|"N"| Pun
-    U ---|"1"| R_Us_Pun
-    R_Us_Pun ---|"N"| Pun
+    %% Normalización Geográfica de la Ubicación
+    Ubi ---|"1"| R_ED_Ubi -->|"1"| ED
+    Ciu ---|"1"| R_Ubi_Ciu -->|"N"| Ubi
+    Pro ---|"1"| R_Ciu_Pro -->|"N"| Ciu
+    Pa ---|"1"| R_Pro_Pa -->|"N"| Pro
 
-    E ---|"1"| R_Ev_Vis
-    R_Ev_Vis ---|"N"| V
-    U ---|"1"| R_Us_Vis
-    R_Us_Vis ---|"N"| V
+    %% Flujo de Inscripciones e Interacciones Operativas (Desde Usuario)
+    U ---|"1"| R5 -->|"N"| I
+    E ---|"1"| R12 -->|"N"| I
+    
+    U ---|"1"| R_Us_Pun -->|"N"| Pun
+    E ---|"1"| R_Ev_Pun -->|"N"| Pun
+    
+    U ---|"1"| R_Us_Vis -->|"N"| V
+    E ---|"1"| R_Ev_Vis -->|"N"| V
+    
+    U ---|"1"| R8 -->|"N"| PRT
 
-    U ---|"1"| R8
-    R8 ---|"N"| PRT
+    %% Flujo de Pagos y Suscripciones (Desde Usuario / Inscripción)
+    I ---|"1"| R_Ins_Pag -->|"1..N"| Pag
+    U ---|"1"| R_Us_Sus -->|"1"| S
+    S ---|"1"| R_Sus_Pag -->|"1..N"| Pag
 
-    %% Roles y Permisos
-    U ---|"1"| R9
-    R9 ---|"M"| R
-    R ---|"N"| R13
-    R13 ---|"M"| Perm
-
-    %% Categorías y Detalles
-    C ---|"1"| R10 
-    R10 ---|"N"| E
-    E ---|"1"| R11
-    R11 ---|"1"| ED
+    %% Auditoría de Actividad (Rastrea de Persona como definiste)
+    P ---|"1"| R_P_Hist -->|"N"| H
