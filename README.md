@@ -42,17 +42,6 @@ La plataforma está diseñada bajo un enfoque de **MVP (Producto Mínimo Viable)
 
 ---
 
-## Estructura de la Documentación
-Para facilitar la lectura y el mantenimiento en GitHub, la documentación técnica y sus diagramas Mermaid se dividen en los siguientes módulos:
-
-1. [Especificaciones y Arquitectura General](ARQUITECTURA.md) - Objetivos del sistema, Alcance y Requisitos No Funcionales (RNF).
-2. [Módulo de Usuarios y Seguridad](MODULO_USUARIOS.md) - Registro, Autenticación, Roles y Criterios de Aceptación de Accesos.
-3. [Módulo del Organizador y Membresías](MODULO_ORGANIZADOR.md) - Creación de eventos, tipos de persona (Física/Jurídica), Planes Free/Pro y Estadísticas.
-4. [Módulo del Participante y Catálogo](MODULO_PARTICIPANTE.md) - Inscripciones, Cancelaciones, Calificaciones e Interfaz Pública.
-5. [Módulo de Administración y Moderación](MODULO_ADMIN.md) - Filtros automáticos de contenido, Control de imágenes con Cloudinary y Panel de Control.
-
----
-
 ## Mapa General de Dependencias del Sistema
 ```mermaid
 graph TD
