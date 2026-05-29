@@ -6,21 +6,21 @@ El sistema reemplaza los métodos fragmentados de difusión actuales, brindando 
 
 ---
 
-## 🚀 Características Principales
+## Características Principales
 
-### 👥 Gestión de Roles y Usuarios
+### Gestión de Roles y Usuarios
 *   **Participantes:** Exploración de catálogo, inscripciones con control de cupos, cancelación de asistencia y sistema de puntuación/reseñas con cálculo de promedios en tiempo real.
 *   **Organizadores:** Panel de control (*Dashboard*) para gestionar eventos propios. El sistema diferencia entre **Personas Físicas** (requiere Nombre/Apellido) y **Personas Jurídicas** (requiere validación de CUIT y Razón Social).
 *   **Administradores:** Panel de supervisión global para dar de alta/baja eventos, suspender/rehabilitar cuentas de usuarios y gestionar el CRUD de categorías.
 
-### ⚙️ Automatización y Seguridad
+### Automatización y Seguridad
 *   **Moderación Automática de Contenido:** Filtro nativo en el backend que detecta y rechaza lenguaje ofensivo o discriminatorio en títulos, descripciones y comentarios antes de persistir en la base de datos.
 *   **Control de Membresías (Planes de Acceso):** Sistema de suscripción con planes **Free** (límites de carga y métricas simples) y **Pro** (sin límites y acceso a estadísticas avanzadas).
 *   **Seguridad en Autenticación:** Control de acceso basado en roles mediante **JWT (JSON Web Tokens)** y bloqueo automático de cuentas al tercer intento fallido de inicio de sesión.
 
 ---
 
-## 🛠️ Detalles Técnicos y Arquitectura
+## Detalles Técnicos y Arquitectura
 
 La plataforma está diseñada bajo un enfoque de **MVP (Producto Mínimo Viable)** y sigue buenas prácticas de desarrollo de software:
 
@@ -32,7 +32,7 @@ La plataforma está diseñada bajo un enfoque de **MVP (Producto Mínimo Viable)
 
 ---
 
-## 📋 Requisitos del Sistema (Prerrequisitos)
+## Requisitos del Sistema (Prerrequisitos)
 
 *(A completar: *Versiones*)*
 *   Java JDK 17 o superior
@@ -42,9 +42,23 @@ La plataforma está diseñada bajo un enfoque de **MVP (Producto Mínimo Viable)
 
 ---
 
-## 🔧 Instalación y Configuración
+## Estructura de la Documentación
+Para facilitar la lectura y el mantenimiento en GitHub, la documentación técnica y sus diagramas Mermaid se dividen en los siguientes módulos:
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone [https://github.com/dev-gastong/enexia.git](https://github.com/dev-gastong/enexia.git)
-   cd enexia
+1. [Especificaciones y Arquitectura General](ARQUITECTURA.md) - Objetivos del sistema, Alcance y Requisitos No Funcionales (RNF).
+2. [Módulo de Usuarios y Seguridad](MODULO_USUARIOS.md) - Registro, Autenticación, Roles y Criterios de Aceptación de Accesos.
+3. [Módulo del Organizador y Membresías](MODULO_ORGANIZADOR.md) - Creación de eventos, tipos de persona (Física/Jurídica), Planes Free/Pro y Estadísticas.
+4. [Módulo del Participante y Catálogo](MODULO_PARTICIPANTE.md) - Inscripciones, Cancelaciones, Calificaciones e Interfaz Pública.
+5. [Módulo de Administración y Moderación](MODULO_ADMIN.md) - Filtros automáticos de contenido, Control de imágenes con Cloudinary y Panel de Control.
+
+---
+
+## Mapa General de Dependencias del Sistema
+```mermaid
+graph TD
+    System[Enexia Core] --> M_Auth[Módulo de Usuarios y Seguridad]
+    System --> M_Org[Módulo del Organizador y Membresías]
+    System --> M_Part[Módulo del Participante y Catálogo]
+    System --> M_Admin[Módulo de Administración]
+
+    
