@@ -62,4 +62,4 @@ El sistema se delimita bajo los siguientes parámetros:
 
 ## 3. Atajos de Navegación 
 * [Diagrama MER](MER.md)
-* [Diagrama MER](DER.md)
+* [Diagrama DER](DER.md)
