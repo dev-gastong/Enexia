@@ -11,7 +11,7 @@ Este archivo sirve como:
 * **Referencia técnica** para el equipo de desarrollo a lo largo del ciclo de vida del proyecto.
 * **Base de evaluación académica**, detallando el relevamiento del problema, los requisitos del sistema, el modelado, el diseño técnico y el prototipo de interfaz.
 
-### 1.2 Alcance del Sistema (MVP)
+### 1.2 Alcance del Sistema 
 
 **Enexia** es una plataforma web orientada a la centralización, gestión y difusión de eventos en la provincia de Tierra del Fuego, con un foco inicial en la ciudad de Río Grande.
 
@@ -26,11 +26,10 @@ El sistema se delimita bajo los siguientes parámetros:
 * **Funcionalidades Clave del MVP:**
 * **Moderación automática:** Validación del contenido publicado mediante librerías de software especializadas, optimizando tiempos sin intervención humana directa.
 * **Planes de Suscripción:** Control de permisos y límites de uso según el nivel de cuenta del usuario, dividido en niveles **Free** y **Pro**.
-* **Check-in digital:** Confirmación de asistencia ágil a los eventos mediante el escaneo de códigos QR.
-
 
 * **Exclusiones de esta versión (Fuera de Alcance):**
 *  No incluye aplicación móvil nativa.
+*  No Incluye pagos integrados pero se realizará la simulacion de los mismos en sus correspondientes secciones (Suscripcion, inscripcion)
 
 ---
 
