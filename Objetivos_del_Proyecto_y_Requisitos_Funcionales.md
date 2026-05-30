@@ -87,6 +87,6 @@ El sistema busca reemplazar los métodos fragmentados de difusión y gestión ma
 
 ---
 
-## 🔗 Secciones Relacionadas
+##  Secciones Relacionadas
 
-* 
+* [Requisitos no Funcionales](Requisitos_No_Funcionales.md)
