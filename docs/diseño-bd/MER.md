@@ -63,7 +63,7 @@ erDiagram
         int id_multimedia PK
         int id_evento FK
         varchar tipo_archivo
-        url_archivo varchar
+        varchar url_archivo
         int orden
         timestamp fecha_subida
     }
@@ -85,7 +85,7 @@ erDiagram
         varchar calle
         varchar numero_exterior
         varchar numero_interior
-        int id_city FK
+        int id_ciudad FK
         decimal latitud
         decimal longitud
     }
@@ -106,27 +106,27 @@ erDiagram
     Inscripcion {
         int id_inscripcion PK
         int id_evento FK
-        int id_usuario FK
+        int id_persona FK
         date fecha_inscripcion
         varchar estado
     }
     Puntuacion {
         int id_puntuacion PK
         int id_evento FK
-        int id_usuario FK
+        int id_persona FK
         int valor
         date fecha
     }
     Visita {
         int id_visita PK
         int id_evento FK
-        int id_usuario FK
+        int id_persona FK
         datetime fecha_visita
     }
     PasswordResetToken {
         int id_token PK
         varchar token
-        int id_usuario FK
+        int id_persona FK
         datetime fecha_expiracion
     }
     Pago {
@@ -141,7 +141,7 @@ erDiagram
     }
     Suscripcion {
         int id_suscripcion PK
-        int id_usuario FK
+        int id_persona FK
         varchar tipo_plan
         date fecha_inicio
         date fecha_fin
@@ -149,7 +149,7 @@ erDiagram
     }
     Historial_Interacciones {
         int id_historial PK
-        int id_usuario FK
+        int id_persona FK
         varchar accion
         varchar modulo
         varchar endpoint
@@ -160,14 +160,14 @@ erDiagram
         timestamp fecha_interaccion
     }
 
-    %% Relaciones actualizadas del DBML
+    %% Relaciones del Modelo Normalizado
     Persona ||--|| Persona_Fisica : "es"
     Persona ||--|| Persona_Juridica : "es"
     Persona ||--|| Usuario : "tiene"
     Usuario ||--o{ Usuario_Rol : "posee"
     Rol ||--o{ Usuario_Rol : "asignado"
     
-    Usuario ||--o{ Evento : "organiza"
+    Persona ||--o{ Evento : "organiza"
     Categoria ||--o{ Evento : "clasifica"
     Evento_Estado_Sistema ||--o{ Evento : "modera"
     Evento_Estado_Organizador ||--o{ Evento : "gestiona"
@@ -177,19 +177,20 @@ erDiagram
     Evento ||--|| EventoDetalle : "detalla"
     
     Ubicacion ||--|| EventoDetalle : "ubica"
+    Ubicacion ||--|| Persona_Juridica : "asigna domicilio fiscal"
     Ciudad ||--o{ Ubicacion : "contiene"
     Provincia ||--o{ Ciudad : "contiene"
     Pais ||--o{ Provincia : "contiene"
     
     Evento ||--o{ Inscripcion : "recibe"
-    Usuario ||--o{ Inscripcion : "realiza"
+    Persona ||--o{ Inscripcion : "realiza"
     Evento ||--o{ Puntuacion : "recibe"
-    Usuario ||--o{ Puntuacion : "da"
+    Persona ||--o{ Puntuacion : "da"
     Evento ||--o{ Visita : "registra"
-    Usuario ||--o{ Visita : "hace"
+    Persona ||--o{ Visita : "hace"
     
-    Usuario ||--o{ PasswordResetToken : "solicita"
-    Usuario ||--o{ Suscripcion : "adquiere"
+    Persona ||--o{ PasswordResetToken : "solicita"
+    Persona ||--o{ Suscripcion : "adquiere"
     Inscripcion ||--o{ Pago : "genera"
     Suscripcion ||--o{ Pago : "genera"
     Persona ||--o{ Historial_Interacciones : "rastrea"
@@ -203,7 +204,6 @@ Table Persona {
   fecha_baja timestamp
   estado varchar [not null, note: 'activo / inactivo']
 }
-
 
 Table Rol {
   id_rol int [pk, increment]
@@ -223,7 +223,6 @@ Table Persona_Fisica {
   fecha_nacimiento date
 }
 
-
 Table Usuario {
   id_usuario int [pk, increment]
   id_persona int [ref: > Persona.id_persona]
@@ -237,8 +236,8 @@ Table Usuario {
 Table Persona_Juridica {
   id_persona int [pk, ref: - Persona.id_persona]
   razon_social varchar [not null]
-  cuit varchar  [not null]
-  id_ubicacion int [ref: > Ubicacion.id_ubicacion, note: 'Vincula al Domicilio Fiscal real']
+  cuit varchar [not null]
+  id_ubicacion int [ref: > Ubicacion.id_ubicacion, note: 'Vincula al Domicilio Fiscal real mapeado en cascada']
   emailCorporativo varchar [not null]
   telefonoContacto varchar [not null]
 }
@@ -258,14 +257,12 @@ Table Evento {
   url_portada varchar
 }
 
-Table Evento_Cronograma{
-
+Table Evento_Cronograma {
   id_cronograma int [pk, increment]
   id_evento int [ref: > Evento.id_evento]
   fecha date [not null]
   hora_inicio time [not null]
   hora_fin time [not null]
-
 }
 
 Table Evento_Multimedia {
@@ -277,18 +274,15 @@ Table Evento_Multimedia {
   fecha_subida timestamp [not null] 
 }
 
-
-Table Evento_Estado_Sistema{
+Table Evento_Estado_Sistema {
   id_estado_sistema int [pk, increment]
   estado_sistema varchar [not null, note: 'aprobado / rechazado']
 }
 
-Table Evento_Estado_Organizador{
+Table Evento_Estado_Organizador {
   id_estado_organizador int [pk, increment]
   estado_organizador varchar [not null, note: 'activo / inactivo']
 }
-
-  
 
 Table EventoDetalle {
   id_evento int [pk, ref: - Evento.id_evento]
@@ -307,20 +301,20 @@ Table Ubicacion {
 }
 
 Table Pais {
-  id_pais varchar [pk] // Ej: 'ARG', 'MEX'
+  id_pais varchar [pk]
   nombre varchar [not null]
 }
 
 Table Provincia {
   id_provincia int [pk, increment]
   nombre varchar [not null]
-  id_pais varchar [ref: > Pais.id_pais] // Muchas provincias pertenecen a un País
+  id_pais varchar [ref: > Pais.id_pais]
 }
 
 Table Ciudad {
   id_ciudad int [pk, increment]
   nombre varchar [not null]
-  id_provincia int [ref: > Provincia.id_provincia] // Muchas ciudades pertenecen a una Provincia
+  id_provincia int [ref: > Provincia.id_provincia]
 }
 
 Table Inscripcion {
@@ -372,7 +366,6 @@ Table Suscripcion {
   fecha_fin date [not null]
   estado varchar [not null, note: 'activa / expirada / cancelada']
 }
-
 
 Table Historial_Interacciones {
   id_historial int [pk, increment]
