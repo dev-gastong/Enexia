@@ -35,7 +35,7 @@ erDiagram
         int id_persona PK, FK
         varchar razon_social
         varchar cuit
-        id_ubicacion int [ref: > Ubicacion.id_ubicacion, note: 'Vincula al Domicilio Fiscal real']
+        int id_ubicacion FK
         varchar emailCorporativo
         varchar telefonoContacto
     }
@@ -238,7 +238,7 @@ Table Persona_Juridica {
   id_persona int [pk, ref: - Persona.id_persona]
   razon_social varchar [not null]
   cuit varchar  [not null]
-  domicilioFiscal varchar [not null]
+  id_ubicacion int [ref: > Ubicacion.id_ubicacion, note: 'Vincula al Domicilio Fiscal real']
   emailCorporativo varchar [not null]
   telefonoContacto varchar [not null]
 }
