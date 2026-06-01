@@ -35,7 +35,7 @@ erDiagram
         int id_persona PK, FK
         varchar razon_social
         varchar cuit
-        varchar domicilioFiscal
+        id_ubicacion int [ref: > Ubicacion.id_ubicacion, note: 'Vincula al Domicilio Fiscal real']
         varchar emailCorporativo
         varchar telefonoContacto
     }
