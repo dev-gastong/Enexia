@@ -276,7 +276,7 @@ Table Evento_Multimedia {
 
 Table Evento_Estado_Sistema {
   id_estado_sistema int [pk, increment]
-  estado_sistema varchar [not null, note: 'aprobado / rechazado']
+  estado_sistema varchar [not null, note: 'aprobado / rechazado / pendiente']
 }
 
 Table Evento_Estado_Organizador {
@@ -288,6 +288,7 @@ Table EventoDetalle {
   id_evento int [pk, ref: - Evento.id_evento]
   id_ubicacion int [ref: > Ubicacion.id_ubicacion]
   descripcion text
+  motivo_moderacion text [default: null, note: 'Registra la razón de rechazo dada por el administrador']
 }
 
 Table Ubicacion {
