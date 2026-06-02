@@ -193,7 +193,7 @@ erDiagram
     Persona ||--o{ Suscripcion : "adquiere"
     Inscripcion ||--o{ Pago : "genera"
     Suscripcion ||--o{ Pago : "genera"
-    Persona ||--o{ Historial_Interacciones : "rastrea"
+    Usuario ||--o{ Historial_Interacciones : "rastrea"
 ```
 
 ```dbml
