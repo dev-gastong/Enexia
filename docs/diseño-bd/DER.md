@@ -50,6 +50,7 @@ graph TD
     R_Ev_EES{modera}
     R_Ev_EEO{gestiona}
     R_ED_Ubi{ubica}
+    R_PJ_Ubi{registra}
     R_Ubi_Ciu{contiene}
     R_Ciu_Pro{contiene}
     R_Pro_Pa{contiene}
@@ -59,7 +60,7 @@ graph TD
     R_Us_Pun{da}
     R_Ev_Vis{registra}
     R_Us_Vis{hace}
-    R_P_Hist{rastrea}
+    R_U_Hist{rastrea}
 
     %% Rombos de Pagos y Suscripciones 
     R_Us_Sus{adquiere}
@@ -92,6 +93,8 @@ graph TD
     Pro ---|"1"| R_Ciu_Pro -->|"N"| Ciu
     Pa ---|"1"| R_Pro_Pa -->|"N"| Pro
 
+    PJ ---|"N"| R_PJ_Ubi ---> |"1"| Ubi
+
     %% Flujo de Inscripciones e Interacciones Operativas 
     U ---|"1"| R5 -->|"N"| I
     E ---|"1"| R12 -->|"N"| I
@@ -110,4 +113,4 @@ graph TD
     S ---|"1"| R_Sus_Pag -->|"1..N"| Pag
 
     %% Auditoría de Actividad
-    P ---|"1"| R_P_Hist -->|"N"| H
+    U ---|"1"| R_U_Hist -->|"N"| H
