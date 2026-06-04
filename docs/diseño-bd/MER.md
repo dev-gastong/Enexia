@@ -106,27 +106,27 @@ erDiagram
     Inscripcion {
         int id_inscripcion PK
         int id_evento FK
-        int id_persona FK
+        int id_usuario FK
         date fecha_inscripcion
         varchar estado
     }
     Puntuacion {
         int id_puntuacion PK
         int id_evento FK
-        int id_persona FK
+        int id_usuario FK
         int valor
         date fecha
     }
     Visita {
         int id_visita PK
         int id_evento FK
-        int id_persona FK
+        int id_usuario FK
         datetime fecha_visita
     }
     PasswordResetToken {
         int id_token PK
         varchar token
-        int id_persona FK
+        int id_usuario FK
         datetime fecha_expiracion
     }
     Pago {
@@ -141,7 +141,7 @@ erDiagram
     }
     Suscripcion {
         int id_suscripcion PK
-        int id_persona FK
+        int id_usuario FK
         varchar tipo_plan
         date fecha_inicio
         date fecha_fin
@@ -149,7 +149,7 @@ erDiagram
     }
     Historial_Interacciones {
         int id_historial PK
-        int id_persona FK
+        int id_usuario FK
         varchar accion
         varchar modulo
         varchar endpoint
@@ -167,7 +167,7 @@ erDiagram
     Usuario ||--o{ Usuario_Rol : "posee"
     Rol ||--o{ Usuario_Rol : "asignado"
     
-    Persona ||--o{ Evento : "organiza"
+    Usuario ||--o{ Evento : "organiza"
     Categoria ||--o{ Evento : "clasifica"
     Evento_Estado_Sistema ||--o{ Evento : "modera"
     Evento_Estado_Organizador ||--o{ Evento : "gestiona"
@@ -183,14 +183,14 @@ erDiagram
     Pais ||--o{ Provincia : "contiene"
     
     Evento ||--o{ Inscripcion : "recibe"
-    Persona ||--o{ Inscripcion : "realiza"
+    Usuario ||--o{ Inscripcion : "realiza"
     Evento ||--o{ Puntuacion : "recibe"
-    Persona ||--o{ Puntuacion : "da"
+    Usuario ||--o{ Puntuacion : "da"
     Evento ||--o{ Visita : "registra"
-    Persona ||--o{ Visita : "hace"
+    Usuario ||--o{ Visita : "hace"
     
-    Persona ||--o{ PasswordResetToken : "solicita"
-    Persona ||--o{ Suscripcion : "adquiere"
+    Usuario ||--o{ PasswordResetToken : "solicita"
+    Usuario ||--o{ Suscripcion : "adquiere"
     Inscripcion ||--o{ Pago : "genera"
     Suscripcion ||--o{ Pago : "genera"
     Usuario ||--o{ Historial_Interacciones : "rastrea"
