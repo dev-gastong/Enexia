@@ -332,7 +332,7 @@ Table Valoracion {
   id_evento int [ref: > Evento.id_evento]
   id_usuario int [ref: > Usuario.id_usuario]
   valor int [not null, note: '1 a 5']
-  comentario [null]
+  comentario varchar [null, note: 'Texto opcional analizado por filtro automático']
   fecha date [not null]
 }
 
