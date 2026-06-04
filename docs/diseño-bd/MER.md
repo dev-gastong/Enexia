@@ -70,6 +70,7 @@ erDiagram
     Evento_Estado_Sistema {
         int id_estado_sistema PK
         varchar estado_sistema
+        varchar motivo_codigo
     }
     Evento_Estado_Organizador {
         int id_estado_organizador PK
@@ -278,6 +279,7 @@ Table Evento_Multimedia {
 Table Evento_Estado_Sistema {
   id_estado_sistema int [pk, increment]
   estado_sistema varchar [not null, note: 'aprobado / rechazado / pendiente']
+  motivo_codigo varchar [null, note: 'LENGUAJE_INAPROPIADO / IMAGEN_SENSIBLE / CONTENIDO_ADULTO / APROBADO_MANUAL / NULL']
 }
 
 Table Evento_Estado_Organizador {
