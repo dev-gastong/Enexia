@@ -110,11 +110,12 @@ erDiagram
         date fecha_inscripcion
         varchar estado
     }
-    Puntuacion {
+    Valoracion {
         int id_puntuacion PK
         int id_evento FK
         int id_usuario FK
         int valor
+        varchar comentario
         date fecha
     }
     Visita {
@@ -184,8 +185,8 @@ erDiagram
     
     Evento ||--o{ Inscripcion : "recibe"
     Usuario ||--o{ Inscripcion : "realiza"
-    Evento ||--o{ Puntuacion : "recibe"
-    Usuario ||--o{ Puntuacion : "da"
+    Evento ||--o{ Valoracion : "recibe"
+    Usuario ||--o{ Valoracion : "da"
     Evento ||--o{ Visita : "registra"
     Usuario ||--o{ Visita : "hace"
     
@@ -249,7 +250,7 @@ Table Categoria {
 
 Table Evento {
   id_evento int [pk, increment]
-  id_organizador int [ref: > Persona.id_persona]
+  id_organizador int [ref: > Usuario.id_usuario]
   id_categoria int [ref: > Categoria.id_categoria]
   id_estado_sistema int [ref: > Evento_Estado_Sistema.id_estado_sistema]
   id_estado_organizador int [ref: > Evento_Estado_Organizador.id_estado_organizador]
@@ -321,30 +322,31 @@ Table Ciudad {
 Table Inscripcion {
   id_inscripcion int [pk, increment]
   id_evento int [ref: > Evento.id_evento]
-  id_persona int [ref: > Persona.id_persona]
+  id_usuario int [ref: > Usuario.id_usuario]
   fecha_inscripcion date [not null]
   estado varchar [not null, note: 'activa / cancelada']
 }
 
-Table Puntuacion {
+Table Valoracion {
   id_puntuacion int [pk, increment]
   id_evento int [ref: > Evento.id_evento]
-  id_persona int [ref: > Persona.id_persona]
+  id_usuario int [ref: > Usuario.id_usuario]
   valor int [not null, note: '1 a 5']
+  comentario [null]
   fecha date [not null]
 }
 
 Table Visita {
   id_visita int [pk, increment]
   id_evento int [ref: > Evento.id_evento]
-  id_persona int [ref: > Persona.id_persona, null]
+  id_usuario int [ref: > Usuario.id_usuario]
   fecha_visita datetime [not null]
 }
 
 Table PasswordResetToken {
   id_token int [pk, increment]
   token varchar [not null, unique]
-  id_persona int [ref: > Persona.id_persona]
+  id_usuario int [ref: > Usuario.id_usuario]
   fecha_expiracion datetime [not null]
 }
 
@@ -361,7 +363,7 @@ Table Pago {
 
 Table Suscripcion {
   id_suscripcion int [pk, increment]
-  id_persona int [ref: > Persona.id_persona, note: 'Filtro de código: Solo Organizador']
+  id_usuario int [ref: > Usuario.id_usuario, note: 'Filtro de código: Solo Organizador']
   tipo_plan varchar [not null, note: 'mensual / semestral / anual']
   fecha_inicio date [not null]
   fecha_fin date [not null]
@@ -370,7 +372,7 @@ Table Suscripcion {
 
 Table Historial_Interacciones {
   id_historial int [pk, increment]
-  id_persona int [ref: > Persona.id_persona]
+  id_usuario int [ref: > Usuario.id_usuario]
   accion varchar [not null, note: 'CREAR / MODIFICAR / ELIMINAR / LEER / LOGIN']
   modulo varchar [not null, note: 'EVENTOS / INSCRIPCIONES / AUTENTICACION']
   endpoint varchar [not null, note: '/api/v1/eventos/guardar']
