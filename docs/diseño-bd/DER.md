@@ -6,6 +6,7 @@ graph TD
     PJ[Persona Jurídica]
     U[Usuario]
     R[Rol]
+    MO[Miembros Organización]
     
     UR[Usuario Rol]
     C[Categoría]
@@ -33,7 +34,7 @@ graph TD
 
     %% Rombos de Relación Base y Nuevos
     R1{es}
-    R2{es}
+    
     R3{tiene}
     R4{organiza}
     R5{realiza}
@@ -43,6 +44,10 @@ graph TD
     R10{clasifica}
     R11{detalla}
     R12{recibe}
+
+    %% Rombos para la Intermedia Corporativa
+    R_U_MO{pertenece a}
+    R_PJ_MO{tiene miembro}
     
     %% Rombos para Estructura de Eventos y Ubicaciones
     R_Ev_Cro{agenda}
@@ -71,10 +76,13 @@ graph TD
 
     %% Jerarquía de Identidad y Seguridad
     P ---|"1"| R1 -->|"1"| PF
-    P ---|"1"| R2 -->|"1"| PJ
-    P ---|"1"| R3 -->|"1"| U
+    PF ---|"1"| R3 -->|"1"| U
     U ---|"1"| R9 -->|"N"| UR
     R ---|"1"| R_UR_R -->|"N"| UR
+
+    %% Nueva Estructura: Miembros de Organización Intermedia
+    U ---|"1"| R_U_MO -->|"N"| MO
+    PJ ---|"1"| R_PJ_MO -->|"N"| MO
 
     %% Gestión y Clasificación de Eventos
     U ---|"1"| R4 -->|"N"| E
