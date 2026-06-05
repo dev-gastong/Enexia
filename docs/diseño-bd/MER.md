@@ -179,7 +179,7 @@ erDiagram
     Evento ||--|| EventoDetalle : "detalla"
     
     Ubicacion ||--|| EventoDetalle : "ubica"
-    Ubicacion ||--|| Persona_Juridica : "asigna domicilio fiscal"
+    Ubicacion ||--|| Persona_Juridica : "ubica"
     Ciudad ||--o{ Ubicacion : "contiene"
     Provincia ||--o{ Ciudad : "contiene"
     Pais ||--o{ Provincia : "contiene"
