@@ -24,7 +24,7 @@ erDiagram
     }
     Usuario {
         int id_usuario PK
-        int id_persona FK
+        int id_persona_fisica FK
         varchar email
         varchar password
         varchar nickname
@@ -32,12 +32,17 @@ erDiagram
         datetime fecha_baja
     }
     Persona_Juridica {
-        int id_persona PK, FK
+        int id_persona_juridica PK
         varchar razon_social
         varchar cuit
         int id_ubicacion FK
         varchar emailCorporativo
         varchar telefonoContacto
+    }
+    Miembros_Organizacion {
+        int id_usuario PK, FK
+        int id_persona_juridica PK, FK
+        varchar rol_en_empresa
     }
     Categoria {
         int id_categoria PK
@@ -164,9 +169,10 @@ erDiagram
 
     %% Relaciones del Modelo Normalizado
     Persona ||--|| Persona_Fisica : "es"
-    Persona ||--|| Persona_Juridica : "es"
-    Persona ||--|| Usuario : "tiene"
+    Persona_Fisica ||--|| Usuario : "da origen a"
+    Usuario ||--o{ Miembros_Organizacion : "pertenece a"
     Usuario ||--o{ Usuario_Rol : "posee"
+    Persona_Juridica ||--o{ Miembros_Organizacion : "tiene como miembro"
     Rol ||--o{ Usuario_Rol : "asignado"
     
     Usuario ||--o{ Evento : "organiza"
@@ -227,7 +233,7 @@ Table Persona_Fisica {
 
 Table Usuario {
   id_usuario int [pk, increment]
-  id_persona int [ref: > Persona.id_persona]
+  id_persona_fisica int [ref: > Persona_Fisica.id_persona]
   email varchar [not null]
   password varchar [not null]
   nickname varchar [not null]
@@ -236,12 +242,22 @@ Table Usuario {
 }
 
 Table Persona_Juridica {
-  id_persona int [pk, ref: - Persona.id_persona]
+  id_persona_juridica int [pk, increment]
   razon_social varchar [not null]
   cuit varchar [not null]
   id_ubicacion int [ref: > Ubicacion.id_ubicacion, note: 'Vincula al Domicilio Fiscal real mapeado en cascada']
   emailCorporativo varchar [not null]
   telefonoContacto varchar [not null]
+}
+
+Table Miembros_Organizacion {
+  id_usuario int [ref: > Usuario.id_usuario]
+  id_persona_juridica int [ref: > Persona_Juridica.id_persona_juridica]
+  rol_en_empresa varchar [note: 'ADMIN / EDITOR / STAFF']
+  
+  Indexes {
+    (id_usuario, id_persona_juridica) [pk]
+  }
 }
 
 Table Categoria {
