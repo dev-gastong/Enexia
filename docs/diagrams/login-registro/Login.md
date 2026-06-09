@@ -1,7 +1,8 @@
 ```mermaid
 graph TD
-    %% Entidades y Entradas
-    User([Usuario en Login]) -->|Petición con Email, Password, IP| P1_2_1[1.2.1: Control de Rate Limiting General por IP]
+    %% Punto de Inicio Único
+    INICIO([INICIO: Solicitud de Autenticación]) --> User([Usuario en Login])
+    User -->|Petición con Email, Password, IP| P1_2_1[1.2.1: Control de Rate Limiting General por IP]
     
     %% Almacenes de Datos
     subgraph Almacenes de Seguridad
@@ -56,7 +57,7 @@ graph TD
     C_Pass -->|No| P1_2_6[1.2.6: Evaluar y Procesar Intento Fallido]
     P1_2_6 -->|Registrar Log de Auditoría| D6_Logs
     
-    %% Rombos Atómicos de Penalización Secuencial (Corregido)
+    %% Rombos Atómicos de Penalización Secuencial
     P1_2_6 --> C_TresFallos{¿Suma Exactamente<br>3 Intentos?}
     C_TresFallos -->|Sí| P1_2_6A[1.2.6A: Modificar intentos_fallidos, requiere_captcha=True y fecha_desbloqueo_cooldown +5m]
     C_TresFallos -->|No| C_SeisFallos{¿Suma Exactamente<br>6 Intentos?}
@@ -96,3 +97,14 @@ graph TD
     D3_Roles -->|Extraer Roles Asignados| P1_2_10
     P1_2_10 -->|Registrar Acceso Exitoso en Logs| D6_Logs
     P1_2_10 --> Success_JWT([Login Exitoso: Retornar JWT firmado])
+
+    %% Unificación de Salidas (Punto de Fin Único)
+    Err_429 --> FIN([FIN])
+    Err_Sesion --> FIN
+    Err_Gen1 --> FIN
+    Err_Gen2 --> FIN
+    Err_Cool --> FIN
+    Err_Cap --> FIN
+    Err_Block --> FIN
+    Err_2FA --> FIN
+    Success_JWT --> FIN
