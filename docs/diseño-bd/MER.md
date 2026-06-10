@@ -57,6 +57,18 @@ erDiagram
         varchar nombre
         varchar url_portada
     }
+    Tipo_Ticket {
+        int id_tipo_ticket PK
+        varchar nombre
+    }
+    Evento_Ticket {
+        int id_evento_ticket PK
+        int id_evento FK
+        int id_tipo_ticket FK
+        decimal precio
+        int cupo_maximo
+        int cupo_actual
+    }
     Evento_Cronograma {
         int id_cronograma PK
         int id_evento FK
@@ -111,10 +123,12 @@ erDiagram
     }
     Inscripcion {
         int id_inscripcion PK
-        int id_evento FK
+        int id_evento_ticket FK
         int id_usuario FK
         date fecha_inscripcion
+        decimal precio_abonado
         varchar estado
+        varchar codigo_qr_hash
     }
     Valoracion {
         int id_puntuacion PK
@@ -184,14 +198,20 @@ erDiagram
     Evento ||--o{ Evento_Multimedia : "contiene"
     Evento ||--|| EventoDetalle : "detalla"
     
+    %% Relación de la Entidad Débil de Tickets Nativos
+    Evento ||--o{ Evento_Ticket : "ofrece"
+    Tipo_Ticket ||--o{ Evento_Ticket : "se parametriza como"
+    
     Ubicacion ||--|| EventoDetalle : "ubica"
     Ubicacion ||--|| Persona_Juridica : "ubica"
     Ciudad ||--o{ Ubicacion : "contiene"
     Provincia ||--o{ Ciudad : "contiene"
     Pais ||--o{ Provincia : "contiene"
     
-    Evento ||--o{ Inscripcion : "recibe"
+    %% Ajuste en Inscripción para apuntar a la intermedia de tickets
+    Evento_Ticket ||--o{ Inscripcion : "asigna cupo en"
     Usuario ||--o{ Inscripcion : "realiza"
+    
     Evento ||--o{ Valoracion : "recibe"
     Usuario ||--o{ Valoracion : "da"
     Evento ||--o{ Visita : "registra"
@@ -202,217 +222,3 @@ erDiagram
     Inscripcion ||--o{ Pago : "genera"
     Suscripcion ||--o{ Pago : "genera"
     Usuario ||--o{ Historial_Interacciones : "rastrea"
-```
-
-```dbml
-Table Persona {
-  id_persona int [pk, increment]
-  tipo_persona varchar [not null, note: 'fisica / juridica']
-  fecha_registro timestamp [not null]
-  fecha_baja timestamp
-  estado varchar [not null, note: 'activo / inactivo']
-}
-
-Table Rol {
-  id_rol int [pk, increment]
-  nombre_rol varchar [not null, note: 'ORGANIZADOR / PARTICIPANTE']
-}
-
-Table Usuario_Rol {
-  id_usuario int [ref: > Usuario.id_usuario]
-  id_rol int [ref: > Rol.id_rol]
-}
-
-Table Persona_Fisica {
-  id_persona int [pk, ref: - Persona.id_persona]
-  dni varchar [not null]
-  nombre varchar [not null]
-  apellido varchar [not null]
-  fecha_nacimiento date
-}
-
-Table Usuario {
-  id_usuario int [pk, increment]
-  id_persona_fisica int [ref: > Persona_Fisica.id_persona]
-  email varchar [not null]
-  password varchar [not null]
-  nickname varchar [not null]
-  estado varchar
-  fecha_baja datetime
-}
-
-Table Persona_Juridica {
-  id_persona_juridica int [pk, increment]
-  razon_social varchar [not null]
-  cuit varchar [not null]
-  id_ubicacion int [ref: > Ubicacion.id_ubicacion, note: 'Vincula al Domicilio Fiscal real mapeado en cascada']
-  emailCorporativo varchar [not null]
-  telefonoContacto varchar [not null]
-}
-
-Table Miembros_Organizacion {
-  id_usuario int [ref: > Usuario.id_usuario]
-  id_persona_juridica int [ref: > Persona_Juridica.id_persona_juridica]
-  rol_en_empresa varchar [note: 'ADMIN / EDITOR / STAFF']
-  
-  Indexes {
-    (id_usuario, id_persona_juridica) [pk]
-  }
-}
-
-Table Categoria {
-  id_categoria int [pk, increment]
-  nombre_categoria varchar [not null]
-}
-
-Table Evento {
-  id_evento int [pk, increment]
-  id_organizador int [ref: > Usuario.id_usuario]
-  id_categoria int [ref: > Categoria.id_categoria]
-  id_estado_sistema int [ref: > Evento_Estado_Sistema.id_estado_sistema]
-  id_estado_organizador int [ref: > Evento_Estado_Organizador.id_estado_organizador]
-  nombre varchar [not null]
-  url_portada varchar
-}
-
-Table Evento_Cronograma {
-  id_cronograma int [pk, increment]
-  id_evento int [ref: > Evento.id_evento]
-  fecha date [not null]
-  hora_inicio time [not null]
-  hora_fin time [not null]
-}
-
-Table Evento_Multimedia {
-  id_multimedia int [pk, increment]
-  id_evento int [ref: > Evento.id_evento]
-  tipo_archivo varchar [not null, note: 'foto / video']
-  url_archivo varchar [not null, note: 'URL del storage (S3, Cloudinary, etc.)']
-  orden int [note: 'Para que el organizador elija en qué orden se muestran en el carrusel']
-  fecha_subida timestamp [not null] 
-}
-
-Table Evento_Estado_Sistema {
-  id_estado_sistema int [pk, increment]
-  estado_sistema varchar [not null, note: 'aprobado / rechazado / pendiente']
-  motivo_codigo varchar [null, note: 'LENGUAJE_INAPROPIADO / IMAGEN_SENSIBLE / CONTENIDO_ADULTO / APROBADO_MANUAL / NULL']
-}
-
-Table Evento_Estado_Organizador {
-  id_estado_organizador int [pk, increment]
-  estado_organizador varchar [not null, note: 'activo / inactivo']
-}
-
-Table EventoDetalle {
-  id_evento int [pk, ref: - Evento.id_evento]
-  id_ubicacion int [ref: > Ubicacion.id_ubicacion]
-  descripcion text
-  motivo_moderacion text [default: null, note: 'Registra la razón de rechazo dada por el administrador']
-}
-
-Table Ubicacion {
-  id_ubicacion int [pk, increment]
-  calle varchar(150) [not null]
-  numero_exterior varchar(20) [not null]
-  numero_interior varchar(20) [default: null]
-  id_ciudad int [ref: > Ciudad.id_ciudad]    
-  latitud decimal(9,6) [default: null]
-  longitud decimal(9,6) [default: null]
-}
-
-Table Pais {
-  id_pais varchar [pk]
-  nombre varchar [not null]
-}
-
-Table Provincia {
-  id_provincia int [pk, increment]
-  nombre varchar [not null]
-  id_pais varchar [ref: > Pais.id_pais]
-}
-
-Table Ciudad {
-  id_ciudad int [pk, increment]
-  nombre varchar [not null]
-  id_provincia int [ref: > Provincia.id_provincia]
-}
-
-Table Inscripcion {
-  id_inscripcion int [pk, increment]
-  id_evento int [ref: > Evento.id_evento]
-  id_usuario int [ref: > Usuario.id_usuario]
-  fecha_inscripcion date [not null]
-  estado varchar [not null, note: 'activa / cancelada']
-}
-
-Table Valoracion {
-  id_puntuacion int [pk, increment]
-  id_evento int [ref: > Evento.id_evento]
-  id_usuario int [ref: > Usuario.id_usuario]
-  valor int [not null, note: '1 a 5']
-  comentario varchar [null, note: 'Texto opcional analizado por filtro automático']
-  fecha date [not null]
-}
-
-Table Visita {
-  id_visita int [pk, increment]
-  id_evento int [ref: > Evento.id_evento]
-  id_usuario int [ref: > Usuario.id_usuario]
-  fecha_visita datetime [not null]
-}
-
-Table PasswordResetToken {
-  id_token int [pk, increment]
-  token varchar [not null, unique]
-  id_usuario int [ref: > Usuario.id_usuario]
-  fecha_expiracion datetime [not null]
-}
-
-Table Pago {
-  id_pago int [pk, increment]
-  id_inscripcion int [ref: > Inscripcion.id_inscripcion, null]
-  id_suscripcion int [ref: > Suscripcion.id_suscripcion, null]
-  monto decimal(10,2) [not null]
-  metodo_pago varchar [not null, note: 'tarjeta / transferencia / mercadopago']
-  estado_pago varchar [not null, note: 'pendiente / aprobado / rechazado']
-  token_operacion varchar [note: 'ID externo de la pasarela de pago']
-  fecha_pago timestamp [not null]
-}
-
-Table Suscripcion {
-  id_suscripcion int [pk, increment]
-  id_usuario int [ref: > Usuario.id_usuario, note: 'Filtro de código: Solo Organizador']
-  tipo_plan varchar [not null, note: 'mensual / semestral / anual']
-  fecha_inicio date [not null]
-  fecha_fin date [not null]
-  estado varchar [not null, note: 'activa / expirada / cancelada']
-}
-
-Table Historial_Interacciones {
-  id_historial int [pk, increment]
-  id_usuario int [ref: > Usuario.id_usuario]
-  accion varchar [not null, note: 'CREAR / MODIFICAR / ELIMINAR / LEER / LOGIN']
-  modulo varchar [not null, note: 'EVENTOS / INSCRIPCIONES / AUTENTICACION']
-  endpoint varchar [not null, note: '/api/v1/eventos/guardar']
-  metodo_http varchar [not null, note: 'POST / GET / PUT / DELETE']
-  detalles text [note: 'Guarda info extra, ej: Se eliminó el evento ID 45']
-  ip_origen varchar [note: 'Para rastrear desde dónde operó']
-  user_agent varchar [note: 'Dispositivo / Navegador utilizado']
-  fecha_interaccion timestamp [not null]
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
