@@ -13,10 +13,13 @@ graph TD
     E[Evento]
     ED[Evento Detalle]
     I[Inscripción]
-    Pun[Puntuación]
+    Pun[Valoración]
     V[Visita]
     PRT[Password Reset Token]
 
+    %% Módulo de Tickets Local
+    TT[Tipo_Ticket]
+    ET[Evento_Ticket]
     
     EC[Evento Cronograma]
     EM[Evento Multimedia]
@@ -43,13 +46,17 @@ graph TD
     R_UR_R{asignado}
     R10{clasifica}
     R11{detalla}
-    R12{recibe}
 
-    %% Rombos para la Intermedia Corporativa
+    %% Tickets Nativos
+    R_Ev_ET{ofrece}
+    R_TT_ET{se parametriza como}
+    R_ET_Ins{asigna cupo en}
+
+    %% Corporativos
     R_U_MO{pertenece a}
     R_PJ_MO{tiene miembro}
     
-    %% Rombos para Estructura de Eventos y Ubicaciones
+    %% Eventos y Ubicaciones
     R_Ev_Cro{agenda}
     R_Ev_Mul{contiene}
     R_Ev_EES{modera}
@@ -60,17 +67,18 @@ graph TD
     R_Ciu_Pro{contiene}
     R_Pro_Pa{contiene}
 
-    %% Rombos de Puntuación, Visita y Auditoría
-    R_Ev_Pun{recibe}
+    %% AJUSTADO: Rombos de Valoración (Puntuación) vinculados al Cronograma
+    R_EC_Pun{recibe}
     R_Us_Pun{da}
+    
     R_Ev_Vis{registra}
     R_Us_Vis{hace}
     R_U_Hist{rastrea}
 
-    %% Rombos de Pagos y Suscripciones 
-    R_Us_Sus{adquiere}
+    %% AJUSTADO: Rombos de Pagos a Cardinalidad 1:1
     R_Ins_Pag{genera}
     R_Sus_Pag{genera}
+    R_Us_Sus{adquiere}
 
     %% === CONEXIONES ===
 
@@ -80,7 +88,7 @@ graph TD
     U ---|"1"| R9 -->|"N"| UR
     R ---|"1"| R_UR_R -->|"N"| UR
 
-    %% Nueva Estructura: Miembros de Organización Intermedia
+    %% Miembros de Organización Intermedia
     U ---|"1"| R_U_MO -->|"N"| MO
     PJ ---|"1"| R_PJ_MO -->|"N"| MO
 
@@ -95,30 +103,33 @@ graph TD
     E ---|"1"| R_Ev_Mul -->|"N"| EM
     E ---|"1"| R11 -->|"1"| ED
 
-    %% Normalización Geográfica de la Ubicación
+    %% Tickets
+    E ---|"1"| R_Ev_ET -->|"N"| ET
+    TT ---|"1"| R_TT_ET -->|"N"| ET
+
+    %% Normalización Geográfica
     Ubi ---|"1"| R_ED_Ubi -->|"1"| ED
     Ciu ---|"1"| R_Ubi_Ciu -->|"N"| Ubi
     Pro ---|"1"| R_Ciu_Pro -->|"N"| Ciu
     Pa ---|"1"| R_Pro_Pa -->|"N"| Pro
-
     PJ ---|"N"| R_PJ_Ubi ---> |"1"| Ubi
 
-    %% Flujo de Inscripciones e Interacciones Operativas 
+    %% Inscripciones y Visitas
     U ---|"1"| R5 -->|"N"| I
-    E ---|"1"| R12 -->|"N"| I
-    
-    U ---|"1"| R_Us_Pun -->|"N"| Pun
-    E ---|"1"| R_Ev_Pun -->|"N"| Pun
+    ET ---|"1"| R_ET_Ins -->|"N"| I
     
     U ---|"1"| R_Us_Vis -->|"N"| V
     E ---|"1"| R_Ev_Vis -->|"N"| V
-    
     U ---|"1"| R8 -->|"N"| PRT
 
-    %% Flujo de Pagos y Suscripciones 
-    I ---|"1"| R_Ins_Pag -->|"1..N"| Pag
-    U ---|"1"| R_Us_Sus -->|"1"| S
-    S ---|"1"| R_Sus_Pag -->|"1..N"| Pag
+    %% CAMBIO 2: Conexión de Valoración al Cronograma y Unicidad de Usuario (1:1)
+    U ---|"1"| R_Us_Pun -->|"1"| Pun
+    EC ---|"1"| R_EC_Pun -->|"N"| Pun
 
-    %% Auditoría de Actividad
+    %% CAMBIO 1: Ajuste de Pagos a Cardinalidad 1:1
+    I ---|"1"| R_Ins_Pag -->|"1"| Pag
+    U ---|"1"| R_Us_Sus -->|"1"| S
+    S ---|"1"| R_Sus_Pag -->|"1"| Pag
+
+    %% Auditoría
     U ---|"1"| R_U_Hist -->|"N"| H
