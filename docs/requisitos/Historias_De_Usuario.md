@@ -67,17 +67,34 @@
 > **Para** mantener la información actualizada.
 
 #### Criterios de Aceptación:
-* **Validación de Fechas:**
-  * La fecha del evento debe ser posterior a la fecha actual.
-  * La fecha de fin no puede ser anterior a la de inicio.
-* **Gestión de Imágenes:**
-  * El sistema debe permitir subir una imagen promocional.
-  * El backend debe procesar la subida a **Cloudinary**, recibir la URL y guardarla en la base de datos.
-  * Se deben validar formatos (**JPG/PNG**) y un tamaño máximo de **2MB**.
-* **Integridad de Autoría:**
+* **Validación de Fechas, Horarios y Cronograma:**
+  * La fecha de inicio del evento debe ser obligatoriamente posterior a la fecha y hora actual del servidor.
+  * La fecha de finalización del show no puede ser anterior ni igual a la fecha de inicio.
+  * El sistema debe permitir estructurar un itinerario con múltiples instancias de días y horarios vinculados a la tabla Evento_Cronograma.
+* **Validación de Archivos Multimedia (Imágenes):**
+  * El sistema debe permitir la subida de una o varias imagenes promocionales (Maximo 3 por evento).
+  * El backend validará estrictamente que el archivo corresponda a formatos de imagen permitidos (JPG/PNG) y que su peso no exceda el límite máximo de 2MB.
+  * El sistema enviará estas imagenes a una API externa de moderacion.
+  * Si la API detecta contenido sensible (material sexual o explícito, expresiones ofensivas, exhibición de armamento, promoción de sustancias ilícitas, manifestaciones doctrinarias de carácter político o religioso radical, o contenido que promueva la polarización ideológica y el activismo social de confrontación), el evento se guardará automáticamente con estado "Rechazado", se registrará el intento en la auditoría de logs y no se mostrará en la cartelera pública.
+  * El backend debe procesar la subida a **Cloudinary**, recibir las URLs y guardarlas en la base de datos en caso de no haber problema.
+* **Integridad de Autoría y Sesión:**
   * Al crear el evento, el sistema debe asociar automáticamente el `id_organizador` (obtenido del JWT) para asegurar que nadie más pueda editarlo.
-* **Campos Obligatorios:**
-  * Nombre (mín. 10 caracteres), Descripción, Categoría, Dirección y Cupo Máximo (debe ser un número entero positivo).
+  * Al modificar un evento, el backend validará de forma estricta que el ID extraído del JWT coincida con el dueño original de la publicación. Si no coincide, bloqueará la edición lanzando un Error 403 (Prohibido).
+* **Validación de Campos de Texto Obligatorios:**
+  * El formulario exige completar obligatoriamente: Nombre, Descripción, Categoría y Dirección física (o enlace si es virtual).
+* **Parametrización Nativa de Tickets (Por Sectores):**
+  *   El sistema no utilizará un cupo global único. Requerirá la definición de al menos un sector de acceso.
+  *   Por cada sector se enviará el nombre, el precio (donde 0.00 representa una entrada gratuita) y el cupo_maximo.
+  *   El cupo_maximo de cada sector debe ser un número entero positivo y se persistirá en la tabla intermedia Evento_Ticket.
+* **Regla de Consistencia en la Modificación:**
+  * Al editar un evento, el backend validará que el nuevo cupo_maximo ingresado sea igual o mayor al cupo_actual (las entradas ya vendidas a los participantes).
+  *  Si se intenta fijar un cupo menor al de personas ya inscriptas, el sistema rechazará la transacción e informará el error para proteger las reservas.
+* **Control de Límites por Suscripción (Plan):**
+  * Al intentar crear un evento, el backend debe consultar la tabla Suscripcion para verificar el plan del organizador.
+  * Si el usuario posee el Plan Free y superó el límite máximo de eventos activos permitidos, el sistema debe rechazar la creación y solicitar un upgrade a Plan Pro.
+* **Filtro Avanzado de Moderación de Contenido (Segunda Capa Automática):**
+  * Antes de persistir los datos, el backend enviará los textos (Título y Descripción) a una API externa de moderación.
+  * Si la API detecta lenguaje ofensivo, inapropiado o que viole las políticas comunitarias, el evento se guardará automáticamente con estado "Rechazado", se registrará el intento en la auditoría de logs y no se mostrará en la cartelera pública.
 
 ---
 
