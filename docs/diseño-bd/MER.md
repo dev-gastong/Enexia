@@ -132,7 +132,7 @@ erDiagram
     }
     Valoracion {
         int id_puntuacion PK
-        int id_evento FK
+        int id_cronograma FK
         int id_usuario FK
         int valor
         varchar comentario
@@ -212,13 +212,18 @@ erDiagram
     Evento_Ticket ||--o{ Inscripcion : "asigna cupo en"
     Usuario ||--o{ Inscripcion : "realiza"
     
-    Evento ||--o{ Valoracion : "recibe"
-    Usuario ||--o{ Valoracion : "da"
+    %% CAMBIO 2: Valoración conectada a Cronograma (1:N) y a Usuario (1:1)
+    Evento_Cronograma ||--o{ Valoracion : "recibe"
+    Usuario ||--|| Valoracion : "da"
+    
     Evento ||--o{ Visita : "registra"
     Usuario ||--o{ Visita : "hace"
     
     Usuario ||--o{ PasswordResetToken : "solicita"
     Usuario ||--o{ Suscripcion : "adquiere"
-    Inscripcion ||--o{ Pago : "genera"
-    Suscripcion ||--o{ Pago : "genera"
+
+    %% CAMBIO 1: Ajuste de cardinalidades de Pago a 1:1 absoluto (||--||)
+    Inscripcion ||--|| Pago : "genera"
+    Suscripcion ||--|| Pago : "genera"
+    
     Usuario ||--o{ Historial_Interacciones : "rastrea"
