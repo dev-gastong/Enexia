@@ -20,7 +20,7 @@
 
 ---
 ## Otras rutas
-* **[Objetivos](../Objetivos.md)** 
+* **[Objetivos](../../Objetivos.md)** 
 
 * **Anterior:** [Gestion de Usuarios y Autenticacion](./modulo_1.md)
 
