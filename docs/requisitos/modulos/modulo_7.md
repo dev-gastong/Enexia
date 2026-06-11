@@ -10,4 +10,4 @@
 
 * **Anterior:** [Panel de Administración Global](./modulo_6.md)
 
-* **Siguiente:** [Tipificación de Perfiles de Organización](./modulo_8.md)
+* **Siguiente:** [Gestión de Membresías y Niveles de Acceso](./modulo_8.md)
