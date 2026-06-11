@@ -10,6 +10,8 @@
 ---
 ## Otras rutas
 
+* **[Objetivos](../Objetivos.md)** 
+
 * **Anterior:** [Participación](./modulo_3.md)
 
 * **Siguiente:** [Moderación y Seguridad de Contenido](./modulo_5.md)
