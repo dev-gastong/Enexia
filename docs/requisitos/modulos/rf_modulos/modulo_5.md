@@ -7,7 +7,7 @@
 ---
 ## Otras rutas
 
-* **[Objetivos](../Objetivos.md)** 
+* **[Objetivos](../../Objetivos.md)** 
 
 * **Anterior:** [Interfaz publica](./modulo_4.md)
 
