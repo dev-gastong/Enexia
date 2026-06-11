@@ -20,7 +20,10 @@
 
 ---
 ## Otras rutas
+* **[Objetivos](../Objetivos.md)** 
 
 * **Anterior:** [Gestion de Usuarios y Autenticacion](./modulo_1.md)
 
 * **Siguiente:** [Participación](./modulo_3.md)
+
+
