@@ -2,8 +2,8 @@
 
 ## Login Y Registro
 ---
-* ### [Login](./diseño-bd/DER.md)
-* ### [Registro](./diseño-bd/DER.md)
+* ### [Login](./login_registro/login.md)
+* ### [Registro](./login_registro/registro.md)
 ---
 ## Gestion de Eventos
 ---
