@@ -7,6 +7,8 @@
 ---
 ## Otras rutas
 
+* **[Objetivos](../Objetivos.md)** 
+
 * **Anterior:** [Interfaz publica](./modulo_4.md)
 
 * **Siguiente:** [Panel de Administración Global](./modulo_6.md)
