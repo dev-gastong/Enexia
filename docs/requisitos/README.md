@@ -39,5 +39,6 @@ El sistema busca reemplazar los métodos fragmentados de difusión y gestión ma
 ---
 ## Secciones Relacionadas
 ### [Introduccion](../README.md)
+### [Historias de Usuario](./historias_de_usuario/README.md)
 ### [Requisitos no Funcionales](./requisitos_no_funcionales/Requisitos_No_Funcionales.md)
 
