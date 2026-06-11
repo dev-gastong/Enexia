@@ -18,3 +18,9 @@
 
 * #### **RF-09:** El sistema debe permitir al organizador consultar estadísticas de sus eventos, incluyendo el conteo de visitas únicas y el promedio de puntuación recibido en cada uno de sus cronogramas.
 
+---
+## Otras rutas
+
+* **Anterior:** [Gestion de Usuarios y Autenticacion](./modulo_1.md)
+
+* **Siguiente:** [Participación](./modulo_3.md)
