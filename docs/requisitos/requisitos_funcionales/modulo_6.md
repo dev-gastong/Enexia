@@ -8,7 +8,7 @@
 ---
 ## Otras rutas
 
-* **[Objetivos](../../Objetivos.md)** 
+* **Anterior:** [Objetivos](../README.md)
 
 * **Anterior:** [Moderación y Seguridad de Contenido](./modulo_5.md)
 
