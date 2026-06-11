@@ -10,4 +10,4 @@
 
 * **Anterior:** [Tipificación de Perfiles de Organización](./modulo_7.md)
 
-* **Siguiente:** [Requisitos no Funcionales](../Requisitos_No_Funcionales.md)
+* **Siguiente:** [Requisitos no Funcionales](../rnf_modulos/Requisitos_No_Funcionales.md)
