@@ -42,6 +42,9 @@ La plataforma está diseñada bajo un enfoque de **MVP (Producto Mínimo Viable)
 
 ---
 
+* ### Enlace a [Documentación](./docs/README.md)
+
+---
 ## Mapa General de Dependencias del Sistema
 ```mermaid
 graph TD
