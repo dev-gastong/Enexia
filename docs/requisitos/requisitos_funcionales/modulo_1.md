@@ -8,6 +8,6 @@
 ---
 ## Otras rutas
 
-* **Anterior:** [Objetivos](../Objetivos.md)
+* **Anterior:** [Objetivos](../README.md)
 
 * **Siguiente:** [Gestion de Eventos (Organizadores)](./modulo_2.md)
