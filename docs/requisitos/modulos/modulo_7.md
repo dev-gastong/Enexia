@@ -8,6 +8,6 @@
 ---
 ## Otras rutas
 
-* **Anterior:** [Panel de Administración Global](./modulos/modulo_6.md)
+* **Anterior:** [Panel de Administración Global](./modulo_6.md)
 
-* **Siguiente:** [Tipificación de Perfiles de Organización](./modulos/modulo_8.md)
+* **Siguiente:** [Tipificación de Perfiles de Organización](./modulo_8.md)
