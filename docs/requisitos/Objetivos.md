@@ -12,7 +12,7 @@ El sistema busca reemplazar los métodos fragmentados de difusión y gestión ma
 
 ## 2. Objetivos Específicos con links a Requisitos Funcionales (RF)
 
-### [2.1: Modulo de Gestion de Usuarios y Autenticacion](./modulos/modulo_1.md) 
+### [2.1: Modulo de Gestion de Usuarios y Autenticacion](./modulos/rf_modulos/modulo_1.md) 
 > **Objetivo Específico:** Implementar un sistema seguro de registro, control de acceso y autenticación de usuarios.
 
 ### [2.2: Modulo de Gestion de Eventos (Organizadores)](./modulos/rf_modulos/modulo_2.md)  
