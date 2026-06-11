@@ -8,6 +8,8 @@
 ---
 ## Otras rutas
 
+* **[Objetivos](../Objetivos.md)** 
+
 * **Anterior:** [Moderación y Seguridad de Contenido](./modulo_5.md)
 
 * **Siguiente:** [Tipificación de Perfiles de Organización](./modulo_7.md)
