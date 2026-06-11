@@ -61,6 +61,6 @@ El sistema se delimita bajo los siguientes parámetros:
 ---
 
 ## 3. Atajos de Navegación 
-* [Objetivos del Proyecto y Requisitos Funcionales](./requisitos/Objetivos_del_Proyecto_y_Requisitos_Funcionales.md)
+* [Objetivos del Proyecto y Requisitos Funcionales](./requisitos/README.md)
 * [Diagrama MER](./diseño-bd/MER.md)
 * [Diagrama DER](./diseño-bd/DER.md)
