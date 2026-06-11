@@ -6,6 +6,6 @@
 ---
 ## Otras rutas
 
-* [<< Tipificación de Perfiles de Organización](./modulos/modulo_7.md)
+* **Anterior:** [Tipificación de Perfiles de Organización](./modulo_7.md)
 
-* [\>\> Requisitos no Funcionales](Requisitos_No_Funcionales.md)
+* **Siguiente:** [Requisitos no Funcionales](Requisitos_No_Funcionales.md)
