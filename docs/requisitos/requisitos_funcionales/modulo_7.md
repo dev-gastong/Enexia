@@ -7,7 +7,7 @@
 
 ---
 ## Otras rutas
-* **[Objetivos](../../Objetivos.md)** 
+* **Anterior:** [Objetivos](../README.md)
 
 * **Anterior:** [Panel de Administración Global](./modulo_6.md)
 
