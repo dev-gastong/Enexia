@@ -60,7 +60,7 @@ El sistema se delimita bajo los siguientes parámetros:
 
 ---
 
-## 3. Atajos de Navegación 
+## Secciones Relacionadas
 ### [Objetivos del Proyecto y Requisitos Funcionales](./requisitos/README.md)
 ### [Modelo Entidad Relacion](./diseño_bd/MER.md)
 ### [Diagrama Entidad Relacion](./diseño_bd/DER.md)
