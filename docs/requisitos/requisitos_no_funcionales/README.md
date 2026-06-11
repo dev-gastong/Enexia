@@ -43,7 +43,7 @@
 
 ##  Secciones Relacionadas
 
-### [Seguridad del Servidor](./seguridad_del_servidor.md)
+### [Seguridad del Servidor](./seguridad_de_servidor.md)
 
 ### [Historias de Usuarios](Historias_De_Usuario.md)
 
