@@ -10,7 +10,7 @@
 ---
 ## Otras rutas
 
-* **[Objetivos](../Objetivos.md)** 
+* **[Objetivos](../../Objetivos.md)** 
 
 * **Anterior:** [Participación](./modulo_3.md)
 
