@@ -6,6 +6,8 @@
 ---
 ## Otras rutas
 
+* **[Objetivos](../Objetivos.md)** 
+
 * **Anterior:** [Tipificación de Perfiles de Organización](./modulo_7.md)
 
 * **Siguiente:** [Requisitos no Funcionales](Requisitos_No_Funcionales.md)
