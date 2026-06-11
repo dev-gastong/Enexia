@@ -6,7 +6,7 @@
 ---
 ## Otras rutas
 
-* **[Objetivos](../../Objetivos.md)** 
+* **Anterior:** [Objetivos](../README.md)
 
 * **Anterior:** [Tipificación de Perfiles de Organización](./modulo_7.md)
 
