@@ -7,7 +7,7 @@
 ---
 ## Otras rutas
 
-* **[Objetivos](../Objetivos.md)** 
+* **[Objetivos](../../Objetivos.md)** 
 
 * **Anterior:** [Gestion de Eventos (Organizadores)](./modulo_2.md)
 
