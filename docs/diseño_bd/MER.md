@@ -61,9 +61,9 @@ erDiagram
         int id_tipo_ticket PK
         varchar nombre
     }
-    Evento_Ticket {
-        int id_evento_ticket PK
-        int id_evento FK
+    Cronograma_Ticket {
+        int id_cronograma_ticket PK
+        int id_cronograma FK
         int id_tipo_ticket FK
         decimal precio
         int cupo_maximo
@@ -123,7 +123,7 @@ erDiagram
     }
     Inscripcion {
         int id_inscripcion PK
-        int id_evento_ticket FK
+        int id_cronograma_ticket FK
         int id_usuario FK
         date fecha_inscripcion
         decimal precio_abonado
@@ -199,8 +199,8 @@ erDiagram
     Evento ||--|| EventoDetalle : "detalla"
     
     %% Relación de la Entidad Débil de Tickets Nativos
-    Evento ||--o{ Evento_Ticket : "ofrece"
-    Tipo_Ticket ||--o{ Evento_Ticket : "se parametriza como"
+    Evento_Cronograma ||--o{ Cronograma_Ticket : "ofrece"
+    Tipo_Ticket ||--o{ Cronograma_Ticket : "se parametriza como"
     
     Ubicacion ||--|| EventoDetalle : "ubica"
     Ubicacion ||--|| Persona_Juridica : "ubica"
@@ -209,7 +209,7 @@ erDiagram
     Pais ||--o{ Provincia : "contiene"
     
     %% Ajuste en Inscripción para apuntar a la intermedia de tickets
-    Evento_Ticket ||--o{ Inscripcion : "asigna cupo en"
+    Cronograma_Ticket ||--o{ Inscripcion : "asigna cupo en"
     Usuario ||--o{ Inscripcion : "realiza"
     
     %% CAMBIO 2: Valoración conectada a Cronograma (1:N) y a Usuario (1:1)
