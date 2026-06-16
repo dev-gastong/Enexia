@@ -11,7 +11,7 @@
 
 #### Criterios de Aceptación:
 * **Validación de Identidad de Acceso (Obligatorios):**
-  * **Email:** Debe cumplir con el estándar `usuario@dominio.ext`.
+  * **Email:** Debe ser unico cumplir con el estándar `usuario@dominio.ext`.
   * **Contraseña:** Debe cumplir con la política de seguridad (**8+ caracteres, Mayúscula, Minúscula, Número y Carácter especial**).
   * **Nickname:** Mínimo 5 caracteres, sin espacios en blanco y **único** en la base de datos.
 * **Validación de Datos Personales:**
@@ -40,7 +40,7 @@
   * El sistema debe verificar que el email exista en la base de datos y que el hash de la contraseña coincida con el ingresado.
   * En caso de error en cualquiera de los dos campos, el sistema debe mostrar el mensaje genérico: *"Email o contraseña incorrectos"*.
 * **Generación de Identidad (JWT):**
-  * Al ser una autenticación exitosa, el servidor debe generar un **Token JWT** que contenga en su interior el `id_persona`, el `nickname` y el `rol`.
+  * Al ser una autenticación exitosa, el servidor debe generar un **Token JWT** que contenga en su interior el `id_usuario`, el `nickname` y el `rol`.
   * El token debe estar firmado con la *Secret Key* definida en el servidor.
 * **Persistencia de Sesión:**
   * El sistema debe enviar el token al cliente, y el navegador debe almacenarlo de forma segura (`localStorage` o *Cookie*) para enviarlo en las cabeceras de futuras peticiones.
@@ -104,8 +104,10 @@
 > **Para** tener un control de mis actividades y acceder rápidamente a sus opciones.
 
 #### Criterios de Aceptación:
-* El listado solo debe mostrar eventos donde el `id_organizador` coincida con el usuario logueado.
+* El listado solo debe mostrar eventos con fecha de creacion y cantidad de inscriptos que hayan sido creados por el usuario organizador autenticado en el momento.
 * El listado debe indicar claramente el estado actual del evento: **"Activo"**, **"Finalizado"** o **"Dado de Baja"**.
+* El listado debe indicar si un evento fue rechazado por moderacion automatica con el tipo de rechazo y el motivo.
+* El sistema debe permitir filtrar el listado por el estado del evento.
 
 ---
 
