@@ -1,314 +1,297 @@
+
 # Backlog de Historias de Usuario (HU)
 
 ---
 
 ## Módulo 1: Autenticación y Gestión de Usuarios
 
-### HU 01: Registro de Usuarios
-> **Como** usuario nuevo  
-> **Quero** crear una cuenta eligiendo mi rol (Organizador o Participante)  
-> **Para** poder acceder a las funcionalidades específicas de la plataforma.
+### HU 01: Registro de Usuarios (Multi-paso)
+
+> **Como** usuario nuevo
+> **Quiero** registrarme a través de un formulario guiado por pasos y pestañas
+> **Para** crear una cuenta con los datos correctos según mi personería.
 
 #### Criterios de Aceptación:
-* **Validación de Identidad de Acceso (Obligatorios):**
-  * **Email:** Debe ser unico cumplir con el estándar `usuario@dominio.ext`.
-  * **Contraseña:** Debe cumplir con la política de seguridad (**8+ caracteres, Mayúscula, Minúscula, Número y Carácter especial**).
-  * **Nickname:** Mínimo 5 caracteres, sin espacios en blanco y **único** en la base de datos.
-* **Validación de Datos Personales:**
-  * **Nombre y Apellido:** No pueden contener números ni caracteres especiales (solo letras). Obligatorio.
-  * **Fecha de Nacimiento:** Debe ser menor o igual a la fecha actual del sistema. Obligatorio.
-* **Validación de Datos Corporativos (Persona Jurídica):**
-  * Esta opción solo se habilita si el rol seleccionado es **"Organizador"**.
-  * **CUIT/Identificador Fiscal:** Debe ser numérico y cumplir con el formato válido.
-  * **Campos Obligatorios:** Razón Social, Domicilio Fiscal y Representante Legal no pueden estar vacíos.
-* **Automatización del Sistema:**
-  * El sistema debe asignar automáticamente el **Estado: ACTIVO** al momento de la creación.
-  * El sistema debe persistir la **Fecha de Creación** exacta del registro sin intervención del usuario.
-* **Seguridad de Persistencia:**
-  * La contraseña nunca debe guardarse en texto plano; debe ser procesada por el algoritmo de hashing (**BCrypt**) antes de impactar en la base de datos.
-* **Confirmación:** El sistema valida los campos, guarda la información correctamente y muestra un mensaje de confirmación al registrarse.
+
+* **Paso 1 (Selección de Perfil):** El sistema debe ofrecer dos opciones excluyentes: *Participante* u *Organizador*. Si se escoge Organizador, la interfaz desplegará dos alternativas: *Persona Física* o *Persona Jurídica*.
+
+
+* **Paso 2 - Pestaña Persona Física / Participante:**
+* Requiere obligatoriamente *Nickname* (mínimo 5 caracteres, único), *Email* (`usuario@dominio.ext`, único) y *Contraseña* (8+ caracteres, mayúscula, minúscula, número y carácter especial).
+
+
+* Exige datos de identidad civil: *Nombre*, *Apellido* (solo letras), *DNI* (único) y *Fecha de Nacimiento* (coherente con la fecha actual del sistema). Los datos se persisten en la tabla `Persona_Fisica`.
+
+
+
+
+* **Paso 2 - Pestaña Persona Jurídica / Organización:**
+* Inhabilita los campos de identidad civil. Requiere obligatoriamente las mismas credenciales de acceso globales (*Nickname*, *Email*, *Contraseña*).
+
+
+* Exige datos fiscales institucionales: *Razón Social*, *CUIT* (validado algorítmicamente mediante módulo 11), *Teléfono de Contacto* y un *Nombre de Fantasía* opcional.
+
+
+* Exige la carga obligatoria del **Domicilio Fiscal Legal** (*Provincia*, *Ciudad*, *Calle*, *Número*), validando que la provincia/ciudad existan en el maestro de normalización y persistiendo la dirección en la tabla `Ubicacion` y el comercio en `Persona_Juridica`.
+
+
+* **Seguridad de Persistencia:** La contraseña nunca se guardará en texto plano; el backend debe procesarla con el algoritmo de hashing **BCrypt** antes de impactar en la base de datos.
+
+
+* **Estado de Verificación Inicial (Persona Jurídica):** Toda organización registrada ingresará en estado `"PENDIENTE_VERIFICACION"`, bloqueando su capacidad de publicar hasta que un administrador valide sus datos fiscales de forma manual.
 
 ---
 
-### HU 02: Inicio de Sesión
-> **Como** usuario registrado (Participante, Organizador o Admin)  
-> **Quiero** autenticarme en la plataforma  
-> **Para** acceder a mis funciones y gestionar mis datos de forma segura.
+### HU 02: Inicio de Sesión y Autenticación
+
+> **Como** usuario registrado
+> **Quiero** ingresar mis credenciales de acceso
+> **Para** recibir un token digital que me permita navegar según mi rol de forma segura.
 
 #### Criterios de Aceptación:
-* **Validación de Credenciales:**
-  * El sistema debe verificar que el email exista en la base de datos y que el hash de la contraseña coincida con el ingresado.
-  * En caso de error en cualquiera de los dos campos, el sistema debe mostrar el mensaje genérico: *"Email o contraseña incorrectos"*.
-* **Generación de Identidad (JWT):**
-  * Al ser una autenticación exitosa, el servidor debe generar un **Token JWT** que contenga en su interior el `id_usuario`, el `nickname` y el `rol`.
-  * El token debe estar firmado con la *Secret Key* definida en el servidor.
-* **Persistencia de Sesión:**
-  * El sistema debe enviar el token al cliente, y el navegador debe almacenarlo de forma segura (`localStorage` o *Cookie*) para enviarlo en las cabeceras de futuras peticiones.
-* **Enrutamiento por Rol:**
-  * **Participante:** Redirigir al catálogo de eventos con opciones de inscripción habilitadas.
-  * **Organizador:** Redirigir al Dashboard de gestión de eventos propios y estadísticas.
-  * **Admin:** Redirigir al panel de supervisión global y moderación.
-* **Control de Estado:**
-  * El sistema debe impedir el inicio de sesión si el campo estado del usuario es **INACTIVO** o **SUSPENDIDO**, mostrando un mensaje que indique que debe contactar al soporte.
-* **Control de Intentos Fallidos (Seguridad de Cuenta):**
-  * El sistema debe llevar un contador de intentos fallidos por email.
-  * Al alcanzar el **tercer intento consecutivo** con contraseña incorrecta, el sistema cambiará automáticamente el estado del usuario a **BLOQUEADO** o **INACTIVO**.
-  * Una vez bloqueada, el sistema rechazará cualquier intento de login (incluso con contraseña correcta) y mostrará el mensaje: *"Cuenta bloqueada por seguridad. Por favor, restablezca su contraseña"*.
-* **Registro de Auditoría:**
-  * Cada intento fallido debe quedar registrado en los **Logs del servidor** con la IP (opcional) y la fecha para detectar patrones de ataque.
+
+* **Validación de Credenciales:** El sistema debe verificar que el email exista y que el hash de la contraseña coincida. Ante fallas, retornará el mensaje genérico: *"Email o contraseña incorrectos"*.
+
+
+* **Generación y Persistencia de Identidad (JWT):** Ante una autenticación exitosa, el backend generará un **Token JWT** firmado que encapsule el `id_usuario`, `nickname` y `rol`. El cliente lo almacenará de forma segura en las cabeceras de sus peticiones.
+
+
+* **Control de Intentos Fallidos (Bloqueo Automático):** El backend llevará un contador síncrono de intentos consecutivos por email. Al alcanzar el **tercer (3°) intento fallido**, mutará automáticamente el estado del usuario a `"BLOQUEADO"`, denegando accesos posteriores y redirigiendo al flujo de desbloqueo.
+
+
+* **Control de Estado de Cuenta:** El sistema impedirá el inicio de sesión a cualquier cuenta cuyo estado sea diferente de `"ACTIVO"` (rebota usuarios en estado `"SUSPENDIDO"`, `"BLOQUEADO"` o `"DE_BAJA"`).
+
+
 
 ---
 
-## Módulo 2: Panel del Organizador
+## Módulo 2: Panel del Organizador y Gestión de Eventos
 
 ### HU 03: Crear y Modificar Eventos
-> **Como** Organizador  
-> **Quiero** crear y editar mis eventos  
-> **Para** mantener la información actualizada.
+
+> **Como** Organizador
+> **Quiero** registrar o actualizar la información de una actividad
+> **Para** publicar la oferta cultural y parametrizar sus accesos.
 
 #### Criterios de Aceptación:
-* **Validación de Fechas, Horarios y Cronograma:**
-  * La fecha de inicio del evento debe ser obligatoriamente posterior a la fecha y hora actual del servidor.
-  * La fecha de finalización del show no puede ser anterior ni igual a la fecha de inicio.
-  * El sistema debe permitir estructurar un itinerario con múltiples instancias de días y horarios vinculados a la tabla Evento_Cronograma.
+
+* **Validación de Campos de Texto Obligatorios:**
+  * El formulario exige completar obligatoriamente: Nombre, Descripción, Categoría y Ubicacion (Con sus campos) o enlace si es virtual.
+
+
+* **Vinculación Automática de Autoría:** Al crear el evento, el backend asocia el identificador extraído del JWT. Si el creador es *Persona Jurídica*, el evento se firma públicamente con su *Nombre de Fantasía* (o Razón Social); si es *Persona Física*, se firma con su *Nombre y Apellido* civil.
+
+
+* **Estructuración de Agenda (Cronogramas):** El formulario exige definir de forma obligatoria una o múltiples instancias de días y horarios independientes representando los cronogramas de un evento. La fecha de inicio debe ser posterior a la hora actual del servidor.
+
+
+* **Parametrización de Tickets por Cronograma:** El sistema no usará un cupo global. Exige asociar a cada cronograma específico uno o más tickets, definiendo tipo (*VIP*, *General*), precio decimal (donde 0.00 es gratuito) y `cupo_maximo`.
+
+
+* **Regla de Consistencia en Ediciones:** El backend bloqueará la modificación de precios o la reducción de `cupo_maximo` en aquellos tickets que ya cuenten con inscripciones activas (`cupo_actual > 0`).
+* **Control de Límites por Suscripción (Plan Free):** Al intentar guardar un evento, el backend comprobará en la tabla `Suscripcion` el plan del organizador. Si posee el **Plan Free** y alcanzó la cuota máxima de publicaciones permitidas, bloqueará la acción y solicitará un upgrade.
+
 * **Validación de Archivos Multimedia (Imágenes):**
   * El sistema debe permitir la subida de una o varias imagenes promocionales (Maximo 3 por evento).
   * El backend validará estrictamente que el archivo corresponda a formatos de imagen permitidos (JPG/PNG) y que su peso no exceda el límite máximo de 2MB.
   * El sistema enviará estas imagenes a una API externa de moderacion.
   * Si la API detecta contenido sensible (material sexual o explícito, expresiones ofensivas, exhibición de armamento, promoción de sustancias ilícitas, manifestaciones doctrinarias de carácter político o religioso radical, o contenido que promueva la polarización ideológica y el activismo social de confrontación), el evento se guardará automáticamente con estado "Rechazado", se registrará el intento en la auditoría de logs y no se mostrará en la cartelera pública.
-  * El backend debe procesar la subida a **Cloudinary**, recibir las URLs y guardarlas en la base de datos en caso de no haber problema.
-* **Integridad de Autoría y Sesión:**
-  * Al crear el evento, el sistema debe asociar automáticamente el `id_organizador` (obtenido del JWT) para asegurar que nadie más pueda editarlo.
-  * Al modificar un evento, el backend validará de forma estricta que el ID extraído del JWT coincida con el dueño original de la publicación. Si no coincide, bloqueará la edición lanzando un Error 403 (Prohibido).
-* **Validación de Campos de Texto Obligatorios:**
-  * El formulario exige completar obligatoriamente: Nombre, Descripción, Categoría y Dirección física (o enlace si es virtual).
-* **Parametrización Nativa de Tickets (Por Sectores):**
-  *   El sistema no utilizará un cupo global único. Requerirá la definición de al menos un sector de acceso.
-  *   Por cada sector se enviará el nombre, el precio (donde 0.00 representa una entrada gratuita) y el cupo_maximo.
-  *   El cupo_maximo de cada sector debe ser un número entero positivo y se persistirá en la tabla intermedia Evento_Ticket.
-* **Regla de Consistencia en la Modificación:**
-  * Al editar un evento, el backend validará que el nuevo cupo_maximo ingresado sea igual o mayor al cupo_actual (las entradas ya vendidas a los participantes).
-  *  Si se intenta fijar un cupo menor al de personas ya inscriptas, el sistema rechazará la transacción e informará el error para proteger las reservas.
-* **Control de Límites por Suscripción (Plan):**
-  * Al intentar crear un evento, el backend debe consultar la tabla Suscripcion para verificar el plan del organizador.
-  * Si el usuario posee el Plan Free y superó el límite máximo de eventos activos permitidos, el sistema debe rechazar la creación y solicitar un upgrade a Plan Pro.
+  * El backend debe procesar la subida a **Cloudinary**, recibir las URLs y guardarlas en la base de datos en caso de no haber problema.    
+
 * **Filtro Avanzado de Moderación de Contenido (Segunda Capa Automática):**
   * Antes de persistir los datos, el backend enviará los textos (Título y Descripción) a una API externa de moderación.
   * Si la API detecta lenguaje ofensivo, inapropiado o que viole las políticas comunitarias, el evento se guardará automáticamente con estado "Rechazado", se registrará el intento en la auditoría de logs y no se mostrará en la cartelera pública.
 
----
 
-### HU 04: Visualización y Listado de Eventos
-> **Como** Organizador  
-> **Quiero** ver un listado de todos los eventos que he creado  
-> **Para** tener un control de mis actividades y acceder rápidamente a sus opciones.
-
-#### Criterios de Aceptación:
-* El listado solo debe mostrar eventos con fecha de creacion y cantidad de inscriptos que hayan sido creados por el usuario organizador autenticado en el momento.
-* El listado debe indicar claramente el estado actual del evento: **"Activo"**, **"Finalizado"** o **"Dado de Baja"**.
-* El listado debe indicar si un evento fue rechazado por moderacion automatica con la opcion de poder visualizar que tipo de rechazo es y cual es el motivo.
-* El sistema debe permitir filtrar el listado por el estado del evento.
+* **Integridad de Autoría y Sesión:**
+  * Al crear el evento, el sistema debe asociar automáticamente el `id_organizador` (obtenido del JWT) para asegurar que nadie más pueda editarlo.
+  * Al modificar un evento, el backend validará de forma estricta que el ID extraído del JWT coincida con el dueño original de la publicación. Si no coincide, bloqueará la edición lanzando un Error 403 (Prohibido).
 
 ---
 
-### HU 05: Dar de Baja un Evento
-> **Como** Organizador  
-> **Quiero** poder cancelar o dar de baja un evento  
-> **Para** informar a los interesados que la actividad no se realizará.
+### HU 04: Visualización y Dashboard del Organizador
+
+> **Como** Organizador
+> **Quiero** visualizar un listado consolidado de mis actividades
+> **Para** controlar las métricas y los estados de mis publicaciones.
 
 #### Criterios de Aceptación:
-* El sistema **no debe borrar el registro** de la base de datos (borrado lógico), sino cambiar su estado a **INACTIVO** o **CANCELADO**.
-* El sistema debe denegar la eliminacion de eventos proximos a darse, permitiendo la eliminacion en casos criticos, aplicando un efecto en cascada a las inscripciones y pagos realizados para el mismo.
-* Una vez dado de baja, el sistema debe impedir nuevas inscripciones de manera automática.
+
+* **Filtros e Integridad:** El listado se paginará y mostrará exclusivamente los eventos de la autoría del token activo. Permitirá filtrar por el estado del organizador (`"Publicado"`, `"Cancelado"`).
+
+
+* **Visibilidad de Auditoría:** Si un evento fue rechazado de forma síncrona por las APIs de moderación automatizada, la tarjeta del evento mostrará el estado `"RECHAZADO_SISTEMA"` se podrá acceder al modal que contiene la informacion detallada del rechazo, con codigo y motivo.
+
+
 
 ---
 
-### HU 06: Consultar Estadísticas de Eventos
-> **Como** Organizador  
-> **Quiero** visualizar métricas de mis eventos (Visitas y puntuación)  
-> **Para** evaluar el éxito de mis convocatorias.
+### HU 05: Cancelación y Borrado Lógico de Eventos
+
+> **Como** Organizador
+> **Quiero** dar de baja una actividad publicada
+> **Para** suspender la venta de entradas e invalidar los accesos previos.
 
 #### Criterios de Aceptación:
-* **Conteo de Visitas Únicas:** El sistema debe registrar cada vez que un usuario distinto accede al detalle del evento.
-* **Cálculo de Puntuación:** El promedio debe calcularse en tiempo real (o mediante una consulta agregada) basada en las reseñas de los participantes.
-* El Sistema debe mostrar cantidad total de cupos disponibles asi como tambien los cupos que han sido ocupados totales y por cada evento.
+
+* **Borrado Lógico:** El sistema nunca eliminará físicamente los registros, sino que mutará el estado del evento a `"DADO_DE_BAJA"`.
+
+
+* **Efecto en Cascada Automático:** Al dar de baja un evento con inscripciones activas, el sistema inhabilitará inmediatamente la compra de nuevos tickets y disparará una rutina interna para invalidar las inscripciones realizadas, devolviendo los pagos realizados por las mismas en caso de haber sido entradas de pago.
+
+
 
 ---
 
-### HU 07: Diferenciación de Organizadores (Físico vs. Jurídico)
-> **Como** Organizador  
-> **Quiero** elegir si mi perfil es personal o institucional  
-> **Para** que mis eventos reflejen correctamente quién es el responsable legal.
+### HU 06: Gestión de Membresías (Plan Pro)
+
+> **Como** Organizador
+> **Quiero** adquirir la suscripción premium
+> **Para** remover los límites de publicación y habilitar analíticas avanzadas.
 
 #### Criterios de Aceptación:
-* **Comportamiento Dinámico:**
-  * Si se selecciona **"Persona Física"**, el sistema oculta los campos de empresa y obliga a llenar Nombre/Apellido.
-  * Si se selecciona **"Persona Jurídica"**, obliga a ingresar CUIT y Razón Social.
-* **Validación:** El sistema debe aplicar el algoritmo de validación de CUIT para asegurar que el número sea real antes de guardar en la tabla `Persona_Juridica`.
-* **Visualización Pública:**
-  * Si el organizador es persona física, el detalle del evento mostrará: `Nombre + Apellido`.
-  * Si es persona jurídica, mostrará: `nombre_fantasia`.
+
+* **Proceso Transaccional Automatizado:** Al confirmarse la simulación del pago, el backend creará el registro en la tabla `Pago` y mutará síncronamente la tabla `Suscripcion` definiendo el `tipo_plan = 'PRO'`, calculando los tiempos de vigencia.
+
+* Los usuarios en **Plan Free** solo visualizarán el conteo simple de visitas únicas y la puntuación promedio.
+
+
+* Los usuarios en **Plan Pro** desbloquearán el acceso a los endpoints de estadísticas avanzadas y gráficos analíticos aggregate.
+
+
 
 ---
 
-### HU 08: Gestión de Membresías
-> **Como** Organizador  
-> **Quiero** subir de nivel mi cuenta a Pro  
-> **Para** acceder a estadísticas avanzadas y eliminar límites de publicaciones.
+##  Módulo 3: Panel del Participante y Asistencia
+
+### HU 07: Inscripción y Adquisición de Tickets
+
+> **Como** Participante
+> **Quiero** reservar una entrada para un cronograma específico
+> **Para** asegurar mi asistencia al evento.
 
 #### Criterios de Aceptación:
-* **Proceso Automático:** Al confirmar la suscripción, el sistema debe disparar un proceso automático que cambie el plan de la cuenta de "Gratis" a "Pro".
-* **Lógica por Plan:**
-  * Los usuarios con **Plan Gratis** solo pueden ver el conteo de visitas simple y putuacion promedio y el sistema validará que no superen el límite de eventos activos permitidos.
-  * Los usuarios con **Plan Pro** desbloquean el acceso al botón de **"Estadísticas Avanzadas"** (A definir a futuro).
+
+* **Validación Síncrona de Cupos:** Antes de procesar la inscripción, el backend validará que el `cupo_actual` sea estrictamente menor al `cupo_maximo` configurado en el ticket. Si se agota, el sistema bloqueará la transacción.
+* **Flujo Transaccional de Pago:** Para ticket de pago, tras aprobarse la simulación de la pasarela, se creará el registro en la tabla `Pago`, se cambiará el estado de la `Inscripcion` a `"CONFIRMADA"`, se incrementará el `cupo_actual` en uno (+1) y se generará un hash criptográfico único (`codigo_qr_hash`).
+* **Unicidad:** El backend aplicará una restricción única para asegurar que un participante no pueda generar inscripciones duplicadas para el mismo cronograma de evento.
+
+
 
 ---
 
-## Módulo 3: Panel del Participante
+### HU 08: Cancelación de Inscripciones
 
-### HU 09: Inscripción a Eventos
-> **Como** Participante  
-> **Quiero** inscribirme en un evento de mi interés  
-> **Para** asegurar mi lugar y recibir información sobre la actividad.
+> **Como** Participante
+> **Quiero** anular una reserva previa
+> **Para** liberar mi cupo y permitir el ingreso de otro usuario.
 
 #### Criterios de Aceptación:
-* **Validación de Cupo:** El sistema debe verificar que la cantidad de inscritos actuales sea menor al `cupo_maximo`. Si no hay cupo, el botón de inscripción debe estar deshabilitado.
-* **Unicidad:** Un participante no puede inscribirse dos veces al mismo evento.
-* **Restricción de Estado:** Solo los usuarios con estado **ACTIVO** pueden inscribirse.
-* **Persistencia:** Al procesar la inscripción, se registra la fecha exacta y se muestra un mensaje de éxito.
+
+* **Límite Temporal de Negocio:** La cancelación voluntaria solo estará permitida mediante el frontend hasta **24 horas antes** del inicio fijado en el cronograma.
+
+
+* **Liberación de Recursos:** Al procesar la baja, el estado de la inscripción mutará a `"CANCELADA"`, se decrementará en uno (-1) el campo `cupo_actual` del ticket.
+
+
 
 ---
 
-### HU 10: Cancelación de Inscripción
-> **Como** Participante  
-> **Quiero** poder cancelar mi inscripción a un evento  
-> **Para** liberar mi cupo si decido no asistir y que otro usuario pueda aprovecharlo.
+### HU 09: Puntuación y Reseña de Eventos
+
+> **Como** Participante
+> **Quiero** calificar con estrellas y comentarios una actividad finalizada
+> **Para** aportar feedback cualitativo al organizador.
 
 #### Criterios de Aceptación:
-* **Límite Temporal:** La cancelación sólo es permitida hasta un tiempo determinado antes del inicio del evento (**ej. 24 horas antes**), para evitar perjuicios al organizador.
-* **Estado:** Al cancelar, se cambia el estado de la inscripción a **CANCELADO**.
-* **Actualización:** El sistema debe reflejar inmediatamente que hay un lugar disponible más en el cupo del evento.
+
+* **Escala y Restricción Estricta:** El sistema capturará un valor entero obligatorio (1 al 5 estrellas) y un campo de texto para la reseña. Solo se permite **una (1) valoración por usuario por cronograma**.
+
+
+* **Moderación Inteligente Obligatoria:** Al enviar el formulario, el texto del comentario será analizado de forma síncrona por las APIs externas de moderación NLP. Si la API detecta toxicidad o insultos, la persistencia en la tabla `Valoracion` se bloqueará de inmediato.
 
 ---
 
-### HU 11: Historial de Inscripciones
-> **Como** Participante  
-> **Quiero** ver un listado de todos los eventos a los que me he inscrito  
-> **Para** recordar mis actividades pasadas y las próximas a las que debo asistir.
+## Módulo 4: Catálogo Público e Interfaz
+
+### HU 10: Navegación, Búsqueda y Multi-Filtros
+
+> **Como** visitante de la plataforma
+> **Quiero** explorar la cartelera pública mediante buscadores y selectores combinables
+> **Para** encontrar rápidamente actividades de mi interés.
 
 #### Criterios de Aceptación:
-* El historial debe permitir segmentar y diferenciar claramente entre **"Próximos eventos"** y **"Eventos pasados"**.
-* Desde el historial, el usuario puede hacer clic para ver la información completa del evento o acceder a la opción de **puntuar** si el evento ya finalizó.
+
+* **Filtros de Visibilidad Públicos:** El catálogo indexará de forma anónima y paginada únicamente los eventos cuyo estado de sistema sea `"APROBADO"` y estado de organizador sea `"Publicado"`, ocultando automáticamente eventos pasados.
+
+
+* **Motor Case-Insensitive:** La barra de búsqueda de texto permitirá coincidencias parciales y será insensible a mayúsculas/minúsculas o tildes.
+
+
+* **Estructura de Multi-filtrado:** El usuario podrá combinar en simultáneo filtros por `Categoria`, rangos de fechas de `Evento_Cronograma` y selectores geográficos anidados en cascada resolviendo las tablas `Provincia` y `Ciudad`.
+
+
 
 ---
 
-### HU 12: Puntuación y Reseña de Eventos
-> **Como** Participante  
-> **Quiero** calificar y dejar un comentario sobre un evento al que asistí  
-> **Para** ayudar a otros usuarios a conocer la calidad de la actividad y dar feedback al organizador.
+### HU 11: Detalle del Evento y Registro de Tráfico
+
+> **Como** usuario
+> **Quiero** acceder a la ficha técnica completa de un evento seleccionado
+> **Para** consultar su descripción multimedia, cronogramas y disponibilidad de tickets.
 
 #### Criterios de Aceptación:
-* **Escala:** El sistema debe permitir una puntuación numérica de **1 a 5 estrellas**.
-* **Restricción:** Cada participante puede dejar **solo una reseña** por evento.
-* **Recálculo:** Al guardar la puntuación, el promedio general del evento debe actualizarse automáticamente.
+
+* **Registro de Auditoría Pasivo (Métricas):** Al renderizarse la página de detalle, el backend capturará la interacción insertando un registro en la tabla `Visita` (almacenando el ID del evento, la marca de tiempo y el ID del usuario si está autenticado).
+
+
+* **Cálculo de Disponibilidad:** La interfaz mostrará la cabtudad de cupos actuales disponibles por cada cronograma.
+
 
 ---
 
-## Módulo 4: Catálogo Público y UX
+## Módulo 5: Automatización de Seguridad y Moderación Externa
 
-### HU 13: Navegación y Catálogo Público
-> **Como** visitante o usuario de la plataforma  
-> **Quiero** ver un catálogo de eventos organizados  
-> **Para** conocer qué actividades hay disponibles en la ciudad.
+### HU 12: Moderación Inteligente Automática (Texto y Multimedia)
+
+> **Como** Sistema de Seguridad
+> **Quiero** interceptar las cargas de datos e imágenes hacia APIs externas de IA
+> **Para** sanitizar la plataforma y mitigar contenido inapropiado o archivos maliciosos de forma síncrona.
 
 #### Criterios de Aceptación:
-* **Filtro de Estado:** El catálogo solo debe mostrar eventos que tengan el estado **APROBADO** y **ACTIVO**. No aparecen eventos borrados o pendientes de moderación.
-* **Filtro Temporal:** El sistema debe ocultar automáticamente los eventos cuya fecha de finalización ya haya pasado.
-* **Información Básica:** Cada tarjeta del catálogo debe mostrar: imagen, título, fecha, ubicación y categoría.
+
+* **Capa de Moderación NLP (Texto):** Durante cualquier inserción de texto plano (Registros, Eventos, Reseñas), el backend consultará síncronamente APIs externas (ej. *Perspective* o *OpenAI Moderation*). Si se superan los umbrales de toxicidad, se abortará la transacción devolviendo un mensaje de error.
+
+
+* **Validación Multimedia:** El backend comprobará que los archivos promocionales sean estrictamente `.jpg` o `.png` y que no excedan el tamaño de **2MB** por archivo, abortando la petición antes de consumir ancho de banda de almacenamiento.
+
+
+* **Capa de Moderación Visual (Cloudinary):** Las imágenes cargadas pasarán por los algoritmos de moderación visual automatizados de la API de Cloudinary. Si se clasifica la imagen como contenido sensible (*Adulto, Violencia, Desnudez*), el backend mutará automáticamente el estado del evento, guardará el código del error en `motivo_codigo` e impedirá su publicacion.
+
+
 
 ---
 
-### HU 14: Búsqueda y Filtros de Eventos
-> **Como** usuario interesado  
-> **Quiero** filtrar y buscar eventos por nombre, categoría, fecha y ubicación  
-> **Para** encontrar rápidamente las actividades que se ajusten a mis preferencias.
+## Módulo 6: Administración Global
+
+### HU 13: Panel de Control Administrativo (Superusuario)
+
+> **Como** Administrador Global
+> **Quiero** disponer de herramientas de anulación manual, ABM de categorias y cambio de estado de suscripciones, 
+> **Para** supervisar la calidad del ecosistema y actuar ante excepciones comerciales.
 
 #### Criterios de Aceptación:
-* **Flexibilidad del Buscador:** Debe ser **insensible a mayúsculas** (*case-insensitive*) y permitir coincidencias parciales (ej: buscar *"básquet"* debe retornar *"Torneo de Básquetbol"*).
-* **Multi-filtro:** El usuario debe poder aplicar varios filtros en simultáneo (ej: Categoría *"Deportes"* + Ubicación *"Centro"*).
-* **Vistas Vacías:** Si no hay resultados, el sistema debe mostrar el mensaje claro: *"No se encontraron eventos que coincidan con tu búsqueda"*.
 
----
+* **Gestion de los estados de los Eventos:** El administrador podrá forzar y sobreescribir manualmente el estado de cualquier evento, actuando como segundo nivel humano frente a las decisiones de las APIs automatizadas. Podrá mutar el estado tanto para aprobacion como para rechazo manual, registrando la justificación.
 
-### HU 15: Detalle del Evento y Registro de Visitas
-> **Como** usuario  
-> **Quiero** acceder a la página de detalle de un evento  
-> **Para** ver la descripción completa, el cupo disponible y los datos del organizador.
 
-#### Criterios de Aceptación:
-* **Métrica de Visita:** Al cargar la página de detalle, el backend debe disparar un evento que sume una visita al contador del evento.
-* **Disponibilidad:** Se debe mostrar el cupo actualizado calculando: `Cupo Total - Inscritos actuales`.
-* **Responsable:** Si el organizador es Persona Jurídica muestra la Razón Social; si es Física, muestra Nombre y Apellido.
+* **Gestión de Cuentas:** Permitirá modificar de forma discrecional el estado de cualquier `Usuario` a `"SUSPENDIDO"` o `"BANEADO"`, provocando la invalidación inmediata de sus credenciales en los endpoints de autenticación.
 
----
 
-### HU 16: Interfaz Adaptativa (Menú Dinámico)
-> **Como** usuario del sistema  
-> **Quiero** que el menú de navegación cambie según mi estado de sesión  
-> **Para** acceder solo a las opciones que me corresponden por mi rol.
+* **Restricciones en el ABM de Categorías:** Control completo (CRUD) de la tabla `Categoria`. El sistema bloqueará de forma estricta el borrado de una categoría si la base de datos detecta integridad referencial con eventos asociados (evita registros huérfanos).
 
-#### Criterios de Aceptación:
-* **Sin Sesión:** Si no hay un JWT válido, el menú público muestra: `Inicio`, `Explorar`, `Login` y `Registro`.
-* **Con Sesión (Según Rol extraído del JWT):**
-  * **Organizador:** Muestra `Mis Eventos`, `Crear Evento`, `Estadísticas`, `Mi Perfil`.
-  * **Participante:** Muestra `Mis Inscripciones`, `Mi Perfil`.
-  * **Administrador:** Muestra `Panel de Moderación`, `Gestión de Usuarios`.
 
----
+* **Bypass de Privilegios:** El administrador podrá intervenir manualmente la tabla `Suscripcion` de cualquier organizador para alterar su `tipo_plan` (*Free* o *Pro*) o extender la vigencia sin requerir transacciones de pago en la pasarela simulada.
 
-## Módulo 5: Administración y Seguridad Global
 
-### HU 17: Filtro Automático de Contenido Inadecuado
-> **Como** Administrador del sistema  
-> **Quiero** que la plataforma detecte y rechace palabras ofensivas automáticamente  
-> **Para** mantener un entorno respetuoso sin necesidad de revisar cada publicación manualmente.
 
-#### Criterios de Aceptación:
-* **Motor de Filtrado:** El sistema debe contar con una librería o componente que detecte y bloquee palabras prohibidas (profanidades, insultos, términos discriminatorios).
-* **Puntos de Control:** Al momento de crear/editar un evento, registrar un usuario o realizar un comentario, el backend debe escanear cada entrada de texto de los formularios.
-* **Bloqueo:** Si se detecta una palabra prohibida, el sistema **no debe persistir** los datos y devolverá el mensaje: *"El contenido contiene lenguaje no permitido. Por favor, revísalo"*.
-
----
-
-### HU 18: Validación de Integridad de Archivos (Multimedia)
-> **Como** Administrador  
-> **Quiero** asegurar que solo se suban imágenes válidas y livianas  
-> **Para** optimizar el almacenamiento y evitar archivos maliciosos.
-
-#### Criterios de Aceptación:
-* **Formatos Soportados:** Solo se aceptan extensiones `.jpg`, `.jpeg` y `.png`. Cualquier otra extensión (como `.exe` o `.pdf`) será rechazada en el filtro de Spring Boot o Cloudinary.
-* **Control de Peso:** Tamaño máximo fijado en **2MB**. Si lo supera, arroja el mensaje: *"La imagen excede el tamaño máximo permitido"*.
-* **Sanitización:** El sistema debe renombrar el archivo internamente antes de la subida para mitigar ataques de inyección por nombre de archivo.
-
----
-
-### HU 19: Detección de Contenido Sensible
-> **Como** Sistema de seguridad  
-> **Quiero** disparar alertas ante patrones de contenido sensible  
-> **Para** proteger a los ciudadanos de Río Grande de contenido inadecuado.
-
-#### Criterios de Aceptación:
-* **Análisis Automatizado:** La imagen se analizará mediante la API de Cloudinary al subirse; si se detecta contenido sensible (**Adulto o Violencia**), la URL no se guardará en la base de datos y el evento quedará automáticamente bloqueado.
-
----
-
-### HU 20: Administración Global
-> **Como** Administrador  
-> **Quiero** gestionar estados de eventos, usuarios y categorías  
-> **Para** mantener la calidad, seguridad y orden de la plataforma.
-
-#### Criterios de Aceptación:
-* **Modificación de Eventos:** El administrador puede sobrescribir el estado de cualquier evento (Activo/Inactivo) mediante acciones rápidas en su panel.
-* **Modificación de Usuarios:** Puede cambiar el estado de cualquier persona a **SUSPENDIDO** o **ACTIVO**. Si está suspendido, el Login rechazará su acceso.
-* **CRUD de Categorías:** Control total de la tabla Categorías. **Regla de integridad:** No se puede eliminar una categoría si cuenta con eventos asociados.
-* **Bypass de Membresías:** El administrador tiene la facultad de cambiar el plan de un organizador manualmente sin requerir pasarela de pago.
