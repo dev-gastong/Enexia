@@ -106,7 +106,7 @@
 #### Criterios de Aceptación:
 * El listado solo debe mostrar eventos con fecha de creacion y cantidad de inscriptos que hayan sido creados por el usuario organizador autenticado en el momento.
 * El listado debe indicar claramente el estado actual del evento: **"Activo"**, **"Finalizado"** o **"Dado de Baja"**.
-* El listado debe indicar si un evento fue rechazado por moderacion automatica con el tipo de rechazo y el motivo.
+* El listado debe indicar si un evento fue rechazado por moderacion automatica con la opcion de poder visualizar que tipo de rechazo es y cual es el motivo.
 * El sistema debe permitir filtrar el listado por el estado del evento.
 
 ---
@@ -118,6 +118,7 @@
 
 #### Criterios de Aceptación:
 * El sistema **no debe borrar el registro** de la base de datos (borrado lógico), sino cambiar su estado a **INACTIVO** o **CANCELADO**.
+* El sistema debe denegar la eliminacion de eventos proximos a darse, permitiendo la eliminacion en casos criticos, aplicando un efecto en cascada a las inscripciones y pagos realizados para el mismo.
 * Una vez dado de baja, el sistema debe impedir nuevas inscripciones de manera automática.
 
 ---
@@ -130,7 +131,7 @@
 #### Criterios de Aceptación:
 * **Conteo de Visitas Únicas:** El sistema debe registrar cada vez que un usuario distinto accede al detalle del evento.
 * **Cálculo de Puntuación:** El promedio debe calcularse en tiempo real (o mediante una consulta agregada) basada en las reseñas de los participantes.
-* **Privacidad:** Estos datos sólo son visibles para el Organizador dueño del evento y para el Administrador.
+* El Sistema debe mostrar cantidad total de cupos disponibles asi como tambien los cupos que han sido ocupados totales y por cada evento.
 
 ---
 
@@ -156,10 +157,10 @@
 > **Para** acceder a estadísticas avanzadas y eliminar límites de publicaciones.
 
 #### Criterios de Aceptación:
-* **Proceso Automático:** Al confirmar la suscripción, el sistema debe disparar un proceso automático que cambie el `id_plan` de la cuenta de "Gratis" a "Pro".
+* **Proceso Automático:** Al confirmar la suscripción, el sistema debe disparar un proceso automático que cambie el plan de la cuenta de "Gratis" a "Pro".
 * **Lógica por Plan:**
-  * Los usuarios con **Plan Gratis** solo pueden ver el conteo de visitas simple y el sistema validará que no superen el límite de eventos activos permitidos.
-  * Los usuarios con **Plan Pro** desbloquean el acceso al botón de **"Estadísticas Avanzadas"** (promedio de puntuación detallado y gráficos).
+  * Los usuarios con **Plan Gratis** solo pueden ver el conteo de visitas simple y putuacion promedio y el sistema validará que no superen el límite de eventos activos permitidos.
+  * Los usuarios con **Plan Pro** desbloquean el acceso al botón de **"Estadísticas Avanzadas"** (A definir a futuro).
 
 ---
 
