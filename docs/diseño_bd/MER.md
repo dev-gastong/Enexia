@@ -221,7 +221,7 @@ erDiagram
     Usuario ||--o{ Suscripcion : "adquiere"
 
     %% CAMBIO 1: Ajuste de cardinalidades de Pago a 1:1 absoluto (||--||)
-    Inscripcion ||--|| Pago : "genera"
-    Suscripcion ||--|| Pago : "genera"
+    Inscripcion ||--o| Pago : "genera"
+    Suscripcion ||--o| Pago : "genera"
     
     Usuario ||--o{ Historial_Interacciones : "rastrea"
