@@ -4,8 +4,6 @@ erDiagram
         int id_persona PK
         varchar tipo_persona
         timestamp fecha_registro
-        timestamp fecha_baja
-        varchar estado
     }
     Rol {
         int id_rol PK
