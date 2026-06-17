@@ -34,5 +34,5 @@ El sistema debe impedir el inicio de sesión a cualquier usuario cuyo estado en 
 
 ## Otras rutas
 
-* **Anterior:** [Objetivos](https://www.google.com/search?q=../README.md)
-* **Siguiente:** [Gestión de Eventos (Organizadores)](https://www.google.com/search?q=.%2Fmodulo_2.md)
+* **Anterior:** [Objetivos](../README.md)
+* **Siguiente:** [Gestión de Eventos (Organizadores)](./modulo_2.md)
