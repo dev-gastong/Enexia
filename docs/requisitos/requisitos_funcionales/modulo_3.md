@@ -29,6 +29,6 @@ El sistema debe proveer al participante un panel privado donde visualizar, de fo
 
 ## Otras rutas
 
-* **Anterior:** [Objetivos](https://www.google.com/search?q=../README.md)
-* **Anterior:** [Gestión de Eventos (Organizadores)](https://www.google.com/search?q=./modulo_2.md)
-* **Siguiente:** [Interfaz Pública](https://www.google.com/search?q=./modulo_4.md)
+* **Anterior:** [Objetivos](../README.md)
+* **Anterior:** [Gestión de Eventos (Organizadores)](./modulo_2.md)
+* **Siguiente:** [Interfaz Pública](./modulo_4.md)
