@@ -17,9 +17,9 @@ graph TD
     V[Visita]
     PRT[Password Reset Token]
 
-    %% Módulo de Tickets Local
-    TT[Tipo_Ticket]
-    ET[Evento_Ticket]
+    %% Módulo de Tickets Local (Actualizado a Cronograma Ticket)
+    TT[Tipo Ticket]
+    CT[Cronograma Ticket]
     
     EC[Evento Cronograma]
     EM[Evento Multimedia]
@@ -37,9 +37,9 @@ graph TD
 
     %% Rombos de Relación Base y Nuevos
     R1{es}
-    
     R3{tiene}
-    R4{organiza}
+    R4{crea / organiza}
+    R_PJ_Ev{respalda} 
     R5{realiza}
     R8{solicita}
     R9{posee}
@@ -48,9 +48,9 @@ graph TD
     R11{detalla}
 
     %% Tickets Nativos
-    R_Ev_ET{ofrece}
-    R_TT_ET{se parametriza como}
-    R_ET_Ins{asigna cupo en}
+    R_Ev_CT{ofrece}
+    R_TT_CT{se parametriza como}
+    R_CT_Ins{asigna cupo en}
 
     %% Corporativos
     R_U_MO{pertenece a}
@@ -67,15 +67,16 @@ graph TD
     R_Ciu_Pro{contiene}
     R_Pro_Pa{contiene}
 
-    %% AJUSTADO: Rombos de Valoración (Puntuación) vinculados al Cronograma
+    %% Ajustado: Valoraciones
     R_EC_Pun{recibe}
     R_Us_Pun{da}
     
+    %% Visitas y Auditoría
     R_Ev_Vis{registra}
     R_Us_Vis{hace}
     R_U_Hist{rastrea}
 
-    %% AJUSTADO: Rombos de Pagos a Cardinalidad 1:1
+    %% Ajustado: Pagos Opcionales (0..1)
     R_Ins_Pag{genera}
     R_Sus_Pag{genera}
     R_Us_Sus{adquiere}
@@ -88,12 +89,13 @@ graph TD
     U ---|"1"| R9 -->|"N"| UR
     R ---|"1"| R_UR_R -->|"N"| UR
 
-    %% Miembros de Organización Intermedia
+    %% Miembros de Organización (Independiente y opcional para el Usuario)
     U ---|"1"| R_U_MO -->|"N"| MO
     PJ ---|"1"| R_PJ_MO -->|"N"| MO
 
-    %% Gestión y Clasificación de Eventos
+    %% Gestión y Clasificación de Eventos (Soporte Humano + Empresa Opcional)
     U ---|"1"| R4 -->|"N"| E
+    PJ ---|"0..1"| R_PJ_Ev -->|"N"| E
     C ---|"1"| R10 -->|"N"| E
     EES ---|"1"| R_Ev_EES -->|"N"| E
     EEO ---|"1"| R_Ev_EEO -->|"N"| E
@@ -103,9 +105,9 @@ graph TD
     E ---|"1"| R_Ev_Mul -->|"N"| EM
     E ---|"1"| R11 -->|"1"| ED
 
-    %% Tickets
-    E ---|"1"| R_Ev_ET -->|"N"| ET
-    TT ---|"1"| R_TT_ET -->|"N"| ET
+    %% Relación de Tickets vinculados al Cronograma (Arreglado de ET a CT)
+    EC ---|"1"| R_Ev_CT -->|"N"| CT
+    TT ---|"1"| R_TT_CT -->|"N"| CT
 
     %% Normalización Geográfica
     Ubi ---|"1"| R_ED_Ubi -->|"1"| ED
@@ -114,22 +116,22 @@ graph TD
     Pa ---|"1"| R_Pro_Pa -->|"N"| Pro
     PJ ---|"N"| R_PJ_Ubi ---> |"1"| Ubi
 
-    %% Inscripciones y Visitas
+    %% Inscripciones, Visitas y Tokens
     U ---|"1"| R5 -->|"N"| I
-    ET ---|"1"| R_ET_Ins -->|"N"| I
+    CT ---|"1"| R_CT_Ins -->|"N"| I
     
     U ---|"1"| R_Us_Vis -->|"N"| V
     E ---|"1"| R_Ev_Vis -->|"N"| V
     U ---|"1"| R8 -->|"N"| PRT
 
-    %% CAMBIO 2: Conexión de Valoración al Cronograma y Unicidad de Usuario (1:1)
-    U ---|"1"| R_Us_Pun -->|"1"| Pun
+    %% CORREGIDO: Un Usuario da "N" valoraciones en total a la app, pero "1" por Cronograma
+    U ---|"1"| R_Us_Pun -->|"N"| Pun
     EC ---|"1"| R_EC_Pun -->|"N"| Pun
 
-    %% CAMBIO 1: Ajuste de Pagos a Cardinalidad 1:1
-    I ---|"1"| R_Ins_Pag -->|"1"| Pag
-    U ---|"1"| R_Us_Sus -->|"1"| S
-    S ---|"1"| R_Sus_Pag -->|"1"| Pag
+    %% CORREGIDO: Pagos diferidos (0..1) para evitar bloqueos transaccionales
+    I ---|"1"| R_Ins_Pag -->|"0..1"| Pag
+    U ---|"1"| R_Us_Sus -->|"N"| S
+    S ---|"1"| R_Sus_Pag -->|"0..1"| Pag
 
     %% Auditoría
     U ---|"1"| R_U_Hist -->|"N"| H
