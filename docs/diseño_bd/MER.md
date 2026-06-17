@@ -214,7 +214,7 @@ erDiagram
     
     %% CAMBIO 2: Valoración conectada a Cronograma (1:N) y a Usuario (1:1)
     Evento_Cronograma ||--o{ Valoracion : "recibe"
-    Usuario ||--|| Valoracion : "da"
+    Usuario ||--o{ Valoracion : "da"
     
     Evento ||--o{ Visita : "registra"
     Usuario ||--o{ Visita : "hace"
