@@ -41,7 +41,7 @@ El sistema se delimita bajo los siguientes parámetros:
 * **Enexia:** Nombre oficial de la plataforma web de gestión y difusión de eventos.
 * **MVP (Producto Mínimo Viable):** Versión básica y funcional del sistema que incluye únicamente las características esenciales para salir al mercado.
 * **Persona jurídica:** Organización legalmente constituida como empresa, ONG, club o institución.
-* **Persona no jurídica:** Individuo o particular autónomo que se registra en la plataforma para organizar eventos o participar de los mismos.
+* **Persona fisica:** Individuo o particular autónomo que se registra en la plataforma para organizar eventos o participar de los mismos.
 * **Plan de suscripción:** Modalidad de acceso a funcionalidades avanzadas mediante un pago periódico.
 
 ### 2.2 Componentes de Arquitectura y Desarrollo
@@ -56,7 +56,8 @@ El sistema se delimita bajo los siguientes parámetros:
 * **JWT (JSON Web Token):** Token de autenticación compacto y seguro usado para verificar la identidad del usuario en cada petición al servidor.
 * **CRUD:** Siglas en inglés para las operaciones básicas sobre datos: Crear (*Create*), Leer (*Read*), Actualizar (*Update*) y Eliminar (*Delete*).
 * **UML:** Lenguaje de Modelado Unificado, utilizado para representar gráficamente los diagramas de estructura y comportamiento del sistema.
-* **MER (Modelo Entidad-Relación):** Representación gráfica y técnica que define la estructura y las relaciones de la base de datos.
+* **MER (Modelo Entidad-Relación):** Modelo conceptual abstracto que define las estructuras de datos y sus relaciones lógicas a nivel de negocio.
+* **MER (Modelo Entidad-Relación):** Representación gráfica y técnica del esquema de datos que detalla tablas, columnas, tipos de datos, llaves (PK/FK) y cardinalidades.
 
 ---
 
