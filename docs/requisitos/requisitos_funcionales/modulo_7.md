@@ -1,19 +1,15 @@
-Aquí tienes la especificación completa y definitiva del **Módulo 7: Módulo de Segmentación de Perfiles de Organización**.
 
-Esta versión toma tus requerimientos originales y los fusiona con la terminología formal de tu base de datos (`Persona_Fisica`, `Persona_Juridica`) y el flujo exacto por pestañas que analizamos en tus prototipos (`image_9866b9.jpg` e `image_9866f5.jpg`), incluyendo la validación algorítmica del CUIT y la firma dinámica del organizador en la vista pública.
-
----
 
 ## Módulo 7: Módulo de Segmentación de Perfiles de Organización
 
 * #### **RF-7.1: Registro y Validación de Organizadores Independientes (Persona Física)**
 
 
-El sistema debe permitir el registro de usuarios que operen de forma autónoma bajo la modalidad de organizador independiente. Al activar el formulario correspondiente (`image_9866b9.jpg`), el backend exigirá de forma obligatoria y estricta las características civiles de identidad: *Nombre*, *Apellido*, *DNI* y *Fecha de Nacimiento*. El sistema validará la unicidad del DNI antes de impactar los datos en la tabla `Persona_Fisica` para evitar duplicidades de identidad en la plataforma.
+El sistema debe permitir el registro de usuarios que operen de forma autónoma bajo la modalidad de organizador independiente. Al activar el formulario correspondiente, el backend exigirá de forma obligatoria y estricta las características civiles de identidad: *Nombre*, *Apellido*, *DNI* y *Fecha de Nacimiento*. El sistema validará la unicidad del DNI antes de impactar los datos en la tabla `Persona_Fisica` para evitar duplicidades de identidad en la plataforma.
 * #### **RF-7.2: Registro e Integridad Fiscal de Organizaciones (Persona Jurídica)**
 
 
-El sistema debe permitir el alta de perfiles institucionales para empresas, organizaciones o instituciones. Al activar esta pestaña en la interfaz (`image_9866f5.jpg`), el sistema solicitará obligatoriamente los datos fiscales y corporativos: *Razón Social*, *CUIT*, *Teléfono de Contacto* y *Correo Corporativo*, dejando el *Nombre de Fantasía* como un campo opcional. Estos datos serán persistidos de forma aislada en la tabla `Persona_Juridica`.
+El sistema debe permitir el alta de perfiles institucionales para empresas, organizaciones o instituciones. Al activar esta pestaña en la interfaz, el sistema solicitará obligatoriamente los datos fiscales y corporativos: *Razón Social*, *CUIT*, *Teléfono de Contacto* y *Correo Corporativo*, dejando el *Nombre de Fantasía* como un campo opcional. Estos datos serán persistidos de forma aislada en la tabla `Persona_Juridica`.
 * #### **RF-7.3: Validación Algorítmica y Criptográfica del CUIT**
 
 
@@ -34,7 +30,3 @@ El sistema debe procesar en el backend la resolución de identidades para adapta
 * **Anterior:** [Objetivos](../README.md)
 * **Anterior:** [Panel de Administración Global](./modulo_6.md)
 * **Siguiente:** [Gestión de Membresías y Niveles de Acceso](./modulo_8.md)
-
----
-
-¡Quedó impecable y perfectamente integrado con los prototipos! Cuando quieras, pasame los textos del **Módulo 8** y cerramos esta etapa.
