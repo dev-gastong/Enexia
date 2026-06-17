@@ -50,5 +50,5 @@ El sistema debe recopilar, procesar y exponer al organizador las métricas de re
 ## Otras rutas
 
 * **Anterior:** [Objetivos](../README.md)
-* **Anterior:** [Gestión de Usuarios y Autenticación](/modulo_1.md)
-* **Siguiente:** [Participación](/modulo_3.md)
+* **Anterior:** [Gestión de Usuarios y Autenticación](./modulo_1.md)
+* **Siguiente:** [Participación](./modulo_3.md)
