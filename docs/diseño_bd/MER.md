@@ -126,7 +126,6 @@ erDiagram
         date fecha_inscripcion
         decimal precio_abonado
         varchar estado
-        varchar codigo_qr_hash
     }
     Valoracion {
         int id_puntuacion PK
