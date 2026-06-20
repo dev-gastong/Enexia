@@ -23,4 +23,4 @@ El sistema debe evaluar los reclamos de permisos contenidos en el JWT del usuari
 
 * **Anterior:** [Objetivos](../README.md)
 * **Anterior:** [Tipificación de Perfiles de Organización](./modulo_7.md)
-* **Siguiente:** [Requisitos no Funcionales](../requisitos_no_funcionales/Requisitos_No_Funcionales.md)
+* **Siguiente:** [Requisitos no Funcionales](../requisitos_no_funcionales/README.md)
