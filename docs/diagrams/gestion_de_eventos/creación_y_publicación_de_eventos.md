@@ -11,7 +11,7 @@ graph TD
         D17_Det[(EventoDetalle)]
         D11_Cro[(Evento_Cronograma)]
         D12_Mul[(Evento_Multimedia)]
-        D13_Tkt[(Evento_Ticket)]
+        D13_Tkt[(Cronograma_Ticket)]
         D14_TTk[(Tipo_Ticket)]
         D6_Logs[(Historial_Interacciones)]
     end
