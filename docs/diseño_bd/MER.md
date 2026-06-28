@@ -23,12 +23,37 @@ erDiagram
     Usuario {
         int id_usuario PK
         int id_persona_fisica FK
+        int id_estado_usuario_sistema FK
+        int id_estado_usuario FK
         varchar email
         varchar password
         varchar nickname
-        varchar estado
         datetime fecha_baja
     }
+
+    Usuario_Estado_Sistema{
+        int id_estado_usuario_sistema PK
+        varchar estado_usuario_sistema 
+    }
+
+    Usuario_Estado{
+        int id_estado_usuario PK
+        varchar estado_usuario
+    }
+
+    Historial_Estado_Usuario{
+        int id_historial PK
+        int id_usuario FK
+        int id_estado_usuario_sistema FK
+        int id_estado_usuario FK
+        timestamp fecha_cambio
+    }
+    Usuario ||--o{ Historial_Estado_Usuario : "registra historial de"
+    Usuario_Estado_Sistema ||--o{ Historial_Estado_Usuario : "se asienta en"
+    Usuario_Estado ||--o{ Historial_Estado_Usuario : "se asienta en"
+    Usuario_Estado_Sistema ||--o{ Usuario : "modera"
+    Usuario_Estado ||--o{ Usuario : "gestiona"
+
     Persona_Juridica {
         int id_persona_juridica PK
         varchar razon_social
@@ -91,6 +116,21 @@ erDiagram
         int id_estado_organizador PK
         varchar estado_organizador
     }
+
+    Historial_Estado_Evento{
+        int id_historial PK
+        int id_evento FK
+        int id_estado_organizador FK
+        int id_estado_sistema FK
+        int id_usuario FK
+        timestamp fecha_cambio
+    }
+    Evento ||--o{ Historial_Estado_Evento : "registra historial de"
+    Evento_Estado_Organizador ||--o{ Historial_Estado_Evento : "se asienta en"
+    Evento_Estado_Sistema ||--o{ Historial_Estado_Evento : "se asienta en"
+    Usuario ||--o{ Historial_Estado_Evento : "realiza cambio en"
+
+
     EventoDetalle {
         int id_evento PK, FK
         int id_ubicacion FK
@@ -119,14 +159,34 @@ erDiagram
         varchar nombre
         int id_provincia FK
     }
+
     Inscripcion {
         int id_inscripcion PK
         int id_cronograma_ticket FK
         int id_usuario FK
+        int id_estado_inscripcion FK
         date fecha_inscripcion
         decimal precio_abonado
-        varchar estado
     }
+
+    Inscripcion_Estado {
+        int id_estado_inscripcion PK
+        varchar nombre_estado 
+    }
+
+    Historial_Estado_Inscripcion {
+        int id_historial PK
+        int id_inscripcion FK
+        int id_estado_inscripcion FK
+        int id_usuario_cambio FK 
+        timestamp fecha_cambio
+    }
+
+    Inscripcion ||--o{ Historial_Estado_Inscripcion : "registra historial de"
+    Inscripcion_Estado ||--o{ Historial_Estado_Inscripcion : "se asienta en"
+    Inscripcion_Estado ||--o{ Inscripcion : "asigna"
+
+
     Valoracion {
         int id_puntuacion PK
         int id_cronograma FK
@@ -151,20 +211,57 @@ erDiagram
         int id_pago PK
         int id_inscripcion FK
         int id_suscripcion FK
+        int id_estado_pago FK
         decimal monto
         varchar metodo_pago
-        varchar estado_pago
         varchar token_operacion
         timestamp fecha_pago
     }
+
+    Pago_Estado {
+        int id_estado_pago PK
+        varchar nombre_estado
+    }
+
+    Historial_Estado_Pago {
+        int id_historial PK
+        int id_pago FK
+        int id_estado_pago FK
+        timestamp fecha_cambio
+        text notas_proveedor_pago 
+    }
+    Pago ||--o{ Historial_Estado_Pago : "registra historial de"
+    Pago_Estado ||--o{ Historial_Estado_Pago : "se asienta en"
+    Pago_Estado ||--o{ Pago : "monitorea"
+
+
     Suscripcion {
         int id_suscripcion PK
         int id_usuario FK
+        int id_estado_suscripcion FK
         varchar tipo_plan
         date fecha_inicio
         date fecha_fin
-        varchar estado
     }
+
+    Suscripcion_Estado {
+        int id_estado_suscripcion PK
+        varchar nombre_estado 
+    }
+
+    Historial_Estado_Suscripcion {
+        int id_historial PK
+        int id_suscripcion FK
+        int id_estado_suscripcion FK
+        timestamp fecha_cambio
+        varchar motivo_cambio 
+    }
+
+    Suscripcion ||--o{ Historial_Estado_Suscripcion : "registra historial de"
+    Suscripcion_Estado ||--o{ Historial_Estado_Suscripcion : "se asienta en"
+    Suscripcion_Estado ||--o{ Suscripcion : "controla"
+
+
     Historial_Interacciones {
         int id_historial PK
         int id_usuario FK
