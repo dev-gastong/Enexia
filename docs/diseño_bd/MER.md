@@ -37,7 +37,7 @@ erDiagram
     }
 
     Usuario_Estado{
-        int id_estado_usuario PK
+        int id_estado_usuario
         varchar estado_usuario
     }
 
@@ -297,7 +297,7 @@ erDiagram
     Tipo_Ticket ||--o{ Cronograma_Ticket : "se parametriza como"
     
     Ubicacion ||--|| EventoDetalle : "ubica"
-    Ubicacion ||--|| Persona_Juridica : "ubica"
+    Ubicacion ||--o{ Persona_Juridica : "ubica"
     Ciudad ||--o{ Ubicacion : "contiene"
     Provincia ||--o{ Ciudad : "contiene"
     Pais ||--o{ Provincia : "contiene"
