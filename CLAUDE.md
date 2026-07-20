@@ -51,7 +51,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |-------|-----------|---------|
 | **Backend** | Spring Boot | 3.x+ |
 | **Language (Backend)** | Java | 17+ (OpenJDK Temurin) |
-| **Build Tool** | Maven | Latest |
+| **Build Tool** | Gradle | Latest |
 | **Frontend** | HTML5, CSS3, JavaScript Vanilla | ES6+ |
 | **Database** | MySQL | TBD (version pending) |
 | **Auth** | JWT (JSON Web Tokens) | - |
@@ -106,26 +106,26 @@ Refer to `docs/requisitos/requisitos_funcionales/` for detailed specs:
 
 ## Setup & Commands
 
-### Backend (Spring Boot)
+### Backend (Spring Boot + Gradle)
 
 ```bash
 # Navigate to backend directory (when created)
 cd backend/
 
-# Build the project (Maven)
-mvn clean package
+# Build the project (Gradle)
+gradle build
 
 # Run tests
-mvn test
+gradle test
 
 # Run a specific test
-mvn test -Dtest=ClassName#methodName
+gradle test --tests ClassName
 
 # Run the application (development)
-mvn spring-boot:run
+gradle bootRun
 
-# Check code for issues
-mvn checkstyle:check  # (if configured)
+# Check dependencies
+gradle dependencies
 ```
 
 ### Frontend (HTML, CSS, JavaScript Vanilla)
