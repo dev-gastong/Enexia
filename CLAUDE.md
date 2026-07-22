@@ -4,17 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## ⚠️ Convención de Documentación
+## 📝 Important Note on Documentation Language
 
-**Todo "log histórico escrito"** (análisis, resúmenes, documentación de decisiones, registros de cambios) **debe estar redactado en español**. 
+⚠️ **KEEP THIS FILE IN ENGLISH** — It's Claude's reference guide.
 
-Esto incluye:
-- Archivos `.md` de análisis y comparativas
-- Documentos de memoria del proyecto
-- Reportes y summaries de investigación
-- Notas de investigación técnica
+📄 **Spanish version available:** `CLAUDE_es-ES.md` (for the user to read)
 
-El código fuente (Java, JavaScript, HTML, etc.) y comentarios de código pueden estar en inglés o español según preferencia del equipo.
+**Sync instruction:** Whenever you update `CLAUDE.md`, also update `CLAUDE_es-ES.md` to keep them in sync. The content structure should be identical; only the language differs.
 
 ---
 
