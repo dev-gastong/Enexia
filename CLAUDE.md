@@ -4,6 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## ⚠️ Convención de Documentación
+
+**Todo "log histórico escrito"** (análisis, resúmenes, documentación de decisiones, registros de cambios) **debe estar redactado en español**. 
+
+Esto incluye:
+- Archivos `.md` de análisis y comparativas
+- Documentos de memoria del proyecto
+- Reportes y summaries de investigación
+- Notas de investigación técnica
+
+El código fuente (Java, JavaScript, HTML, etc.) y comentarios de código pueden estar en inglés o español según preferencia del equipo.
+
+---
+
 ## Project Overview
 
 **Enexia** is a web platform for centralized management and dissemination of cultural, educational, social, sports, and gaming events in Tierra del Fuego. It's a full-stack MVP project with a focus on user experience, security, and scalability.
