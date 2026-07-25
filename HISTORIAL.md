@@ -1,6 +1,75 @@
 # 📅 Línea de Tiempo del Proyecto Enexia
 
-## Sesión: 2026-07-20 (Actual - Análisis y Configuración Inicial)
+## Sesión: 2026-07-25 (Actual - Sprint 1 Planning & Decisiones Arquitectónicas)
+
+### 🎯 Sprint 1 Kick-off Meeting
+* **14:00 - Revisión exhaustiva de documentación existente**
+  - *Archivos revisados*: Toda la carpeta `docs/` (requisitos, diseño BD, diagramas)
+  - *Impacto*: Comprensión completa de especificaciones funcionales y modelo de datos
+
+* **14:30 - Definición de Arquitectura Backend (Confirmada)**
+  - *Estructura*: Controller → Service → DTO → Repository + Config/Anotaciones/Excepciones/Utils/Logs
+  - *Directorio*: `backend/src/main/java/com/enexia/` con carpetas específicas
+  - *Impacto*: Hoja de ruta clara para estructura de código Spring Boot
+
+* **15:00 - Sprint 1 Scope Definition (MVP Autenticación)**
+  - *Sprint 1 includes*:
+    - ✅ Registro de Usuarios (Persona Física)
+    - ✅ Login con JWT
+    - ✅ Rate Limiting por IP (auditoría en tabla)
+    - ✅ Bloqueo en 3 intentos + Cooldown 5 min
+    - ✅ Moderación de texto (better-profanity)
+    - ✅ BCrypt + RBAC en backend
+    - ✅ JUnit 5 + Mockito testing (80%+ cobertura)
+  - *Sprint 1 excludes*:
+    - ❌ 2FA, CAPTCHA, Password Reset
+    - ❌ Persona Jurídica / CUIT validation
+    - ❌ Frontend (backend solo)
+  - *Impacto*: Claridad total sobre MVP vs. iteraciones futuras
+
+* **15:30 - Decisiones de Integraciones Externas**
+  - **Moderación de Texto**: `better-profanity` (librería Java, free, offline)
+  - **Email**: Mailtrap (10k/mes free) O Gmail App Password
+  - **Validación CUIT**: Solo formato inicialmente (AFIP API para Sprint 2+)
+  - **Almacenamiento**: No required en Sprint 1 (para Sprint 2+ events)
+  - *Impacto*: Stack de dependencias exacto definido
+
+* **16:00 - Base de Datos Setup**
+  - *Creación*: `CREATE DATABASE enexia CHARACTER SET utf8mb4`
+  - *Auto-create tables*: Spring JPA/Hibernate desde @Entity
+  - *Tablas prioritarias Sprint 1*: Persona_Fisica, Usuario, Usuario_Rol, Rol, Historial_Interacciones
+  - *Impacto*: MySQL ready, no scripts SQL manuales necesarios
+
+* **16:30 - Testing Strategy Defined**
+  - *Framework*: JUnit 5 + Mockito
+  - *Cobertura target*: 80%+ (critical paths)
+  - *Test cases*: Success + error paths (registration, login, blocking, cooldown)
+  - *Impacto*: Quality assurance clara desde día 1
+
+* **17:00 - Documentation & Git Workflow**
+  - Actualización de `CLAUDE.md` con arquitectura decidida
+  - Creación de `CLAUDE_es-ES.md` (sincronización)
+  - Nuevo archivo: `project-timeline.md` (línea de tiempo del proyecto)
+  - Actualización: `historial.md` (este documento)
+  - *Impacto*: Documentación actualizada, decisiones registradas
+
+### 📋 Decisiones Formalizadas
+
+| Aspecto | Decisión |
+|---------|----------|
+| **Arquitectura Backend** | Controller→Service→DTO→Repository+Config |
+| **Sprint 1 Focus** | Backend autenticación MVP (no frontend) |
+| **Seguridad MVP** | Rate limiting + bloqueo 3 intentos + cooldown |
+| **Moderación Texto** | better-profanity (libre, offline) |
+| **Email** | Mailtrap o Gmail App Password (gratuita) |
+| **BD** | MySQL + JPA auto-create |
+| **Testing** | JUnit 5 + Mockito, 80%+ cobertura |
+| **Frontend** | Después Sprint 1, HTML vanilla sin frameworks |
+| **VPS/Hardening** | Después Sprint 5 completo |
+
+---
+
+## Sesión: 2026-07-20 (Análisis y Configuración Inicial)
 
 ### 🚀 Inicio / Setup
 * **14:00 - Exploración del proyecto y stack tecnológico**
@@ -140,23 +209,41 @@
 └─ Configurar seguridad (JWT, BCrypt)
 ```
 
-### 🚀 Próximos Pasos Lógicos
+### 🚀 Próximos Pasos Lógicos - Sprint 1 (Backend Autenticación MVP)
 
-**Inmediato (Próxima sesión):**
-1. Generar estructura del frontend HTML vanilla
-2. Instalar y configurar Playwright
-3. Crear 2-3 tests E2E básicos (login, catalog, event detail)
+**Fase 1: Setup Infraestructura (1-2 días)**
+1. Crear estructura de carpetas: controller/, service/, dto/, repository/, model/, security/, exception/, config/, logger/
+2. Configurar build.gradle con dependencias: Spring Web, JPA, MySQL, Lombok, JWT, BCrypt, better-profanity
+3. Crear application.yml con datasource MySQL + JPA config
+4. Inicializar SLF4J logging
 
-**Corto plazo (Esta semana):**
-1. Implementar entidades JPA del backend
-2. Crear controladores REST básicos
-3. Resolver 5 gaps de diseño (moderation queue, error states, upsell)
+**Fase 2: Registro de Usuarios (2-3 días)**
+1. Crear DTOs: RegisterRequest, RegisterResponse
+2. Implementar endpoint POST /api/auth/register
+3. Validaciones: email único, password fuerte, DNI válido
+4. Integrar better-profanity para moderación de texto (nombre, apellido, nickname)
+5. Implementar BCrypt hashing
+6. Persistencia: Persona_Fisica + Usuario + Usuario_Rol + Rol
 
-**Mediano plazo (Próximas 2 semanas):**
-1. Completar API REST con todos los endpoints
-2. Implementar autenticación JWT
-3. Crear test suite completo con Playwright
-4. Configurar Cloudinary integration
+**Fase 3: Login Seguro + Rate Limiting (2-3 días)**
+1. Crear DTOs: LoginRequest, LoginResponse (incluye JWT token)
+2. Implementar endpoint POST /api/auth/login
+3. Rate Limiting: rastrear intentos fallidos por email en Historial_Interacciones
+4. Bloqueo automático: después 3 intentos → estado = "BLOQUEADO"
+5. Cooldown: 5 minutos de penalización (fecha_desbloqueo_cooldown)
+6. Generar JWT con secret key y roles en claims
+7. Auditoría: registrar cada intento en tabla
+
+**Fase 4: Testing (1-2 días)**
+1. AuthServiceTest: casos éxito + error (JUnit 5 + Mockito)
+2. AuthControllerTest: integration tests de endpoints
+3. Cobertura target: 80%+ en clases críticas
+
+**Post-Sprint 1 (Futuro):**
+1. Persona Jurídica + validación CUIT (Sprint 2)
+2. 2FA, CAPTCHA, Password Reset (Sprint 2+)
+3. Frontend HTML vanilla (después de Sprint 1)
+4. VPS hardening (después Sprint 5)
 
 ---
 
@@ -172,4 +259,4 @@
 
 **Última actualización:** 2026-07-20 18:45  
 **Por:** Claude Code  
-**Sesión ID:** 80e26a45-c2fd-4cc4-a9a3-c5f477da892f
+
