@@ -232,19 +232,69 @@ enexia/
 
 ---
 
-## Key Development Guidelines
+## Backend Architecture (Spring Boot - Java)
 
-### Backend (Java/Spring Boot)
+### Directory Structure
+```
+backend/src/main/java/com/enexia/
+├── config/              # @Configuration, JWT filters, CORS, security beans
+├── controller/          # @RestController endpoints (REST API)
+├── dto/                 # Request/Response DTOs (no entities exposed)
+├── service/             # @Service business logic layer
+├── repository/          # @Repository JPA (extends JpaRepository)
+├── model/               # @Entity JPA classes (mapped to DB)
+├── security/            # JWT utilities, BCrypt, RBAC logic
+├── exception/           # Custom exceptions (BadCredentialsEx, etc.)
+├── util/                # Validators, formatters, helpers (non-business logic)
+└── logger/              # SLF4J logging via @Slf4j annotation
+```
 
-- **Layered Architecture**: Controllers → Services → Repositories (strict separation)
-- **DTO Pattern**: Use DTOs for API requests/responses, not entities directly
-- **Exception Handling**: Custom exception classes with proper HTTP status codes
-- **Security**: 
-  - JWT filter on protected endpoints
-  - RBAC checks in `@PreAuthorize` or service layer
-  - Input validation (email, password strength, etc.)
-- **Logging**: Use SLF4J for server-side error logging (required by non-functional requirements)
-- **Database**: JPA/Hibernate for ORM; lazy-load relationships carefully
+### Key Development Guidelines
+
+#### Layered Architecture (Strict Separation)
+- **Controller** (@RestController): HTTP endpoints, input validation, HTTP response mapping
+- **Service** (@Service): Business logic, transactions, orchestration, security checks
+- **DTO**: Request/Response objects (never expose entities directly)
+- **Repository** (extends JpaRepository): CRUD + custom queries only
+- **Model** (@Entity): JPA mappings only (no business logic)
+
+#### DTO Pattern
+- Create separate `*Request` and `*Response` DTOs for every endpoint
+- Use `ModelMapper` or manual mapping to convert Entity ↔ DTO
+- Never expose entities in API responses
+
+#### Exception Handling
+- Create custom exceptions extending `RuntimeException` (e.g., `BadCredentialsException`, `AccountBlockedException`)
+- Use `@ControllerAdvice` with `@ExceptionHandler` to map exceptions to HTTP status codes
+- Return consistent error JSON: `{ "error": "...", "timestamp": "...", "status": 400 }`
+
+#### Security (Sprint 1 MVP)
+- **Authentication**: JWT (JSON Web Tokens) issued on successful login
+- **Authorization**: Extract roles from JWT; validate in `@PreAuthorize` on service methods or controller
+- **Password**: BCrypt hashing (never plain text)
+- **Rate Limiting**: Track login attempts by email/IP; block at 3 failures for 5 minutes
+- **Account Blocking**: After 3 failed attempts, set `estado_usuario` = "BLOQUEADO"
+- **Cooldown**: `fecha_desbloqueo_cooldown` timestamp prevents immediate retry
+- **Text Moderation**: `better-profanity` library for content filtering (Registro + Login + Events later)
+- **Input Validation**: Use `@Valid` + `@NotNull`, `@Email`, `@Pattern` on DTOs
+
+#### Logging
+- Use **SLF4J** via `@Slf4j` (Lombok) on @Service/@Controller classes
+- Log security events: login attempts, account blocks, invalid tokens
+- Persist audit trail in `Historial_Interacciones` table (user_id, action, endpoint, IP, timestamp)
+
+#### Database
+- **JPA/Hibernate** for ORM (Spring Boot auto-creates tables via `@Entity`)
+- Use `@ManyToOne`, `@OneToMany`, `@OneToOne` carefully (lazy-load preferred)
+- Never use N+1 queries; use `@Query` with `JOIN FETCH` when needed
+- Soft deletes: use `fecha_baja` or `estado` fields; never hard-delete
+
+#### Testing
+- **JUnit 5** for unit tests
+- **Mockito** for mocking dependencies
+- Test structure: `@DisplayName`, `@Test`, arrange-act-assert pattern
+- Test both success cases and error cases (exceptions)
+- For this sprint: test AuthService, login endpoint, rate limiting logic
 
 ### Frontend (HTML, CSS, JavaScript Vanilla)
 
@@ -272,15 +322,81 @@ enexia/
 
 ---
 
-## Important Implementation Notes
+## Sprint 1: Backend Authentication MVP (Current)
 
-- **Content Moderation**: Backend must validate titles/descriptions of events against offensive content before persisting (Module 2, RF-2.2)
-- **Cloudinary Integration**: Validate image formats (JPG/PNG), max 2MB, check for sensitive content
-- **State Tracking**: Events and users have multiple state fields (`estado_sistema`, `estado_organizador`, `estado_usuario`) — query the correct one per use case
-- **Quota Management**: `cupo_actual` must be incremented atomically on successful registration; prevent double-booking
-- **Account Locking**: After 3 failed login attempts, set user state to "BLOQUEADO"
-- **Soft Deletes**: Use `fecha_baja` field for users and `DADO_DE_BAJA` status for events (don't delete, just mark)
-- **Analytics**: Aggregate visits (unique per user) and average ratings from `Valoracion` table for event dashboards
+### Scope & Security Measures
+
+**Sprint 1 Goal**: Implement registration and login endpoints with core security measures.
+
+| Feature | Sprint 1 | Sprint 2+ |
+|---------|----------|----------|
+| User Registration (Persona Física) | ✅ | - |
+| JWT Authentication | ✅ | - |
+| Rate Limiting (IP-based) | ✅ | - |
+| Account Locking (3 failed attempts) | ✅ | - |
+| Cooldown (5 min penalty) | ✅ | - |
+| Text Moderation (better-profanity) | ✅ | - |
+| 2FA (Email verification) | ❌ | Sprint 2+ |
+| CAPTCHA | ❌ | Sprint 2+ |
+| Password Reset Flow | ❌ | Sprint 2+ |
+| Persona Jurídica Registration | ❌ | Sprint 2 |
+
+### External Integrations (Sprint 1)
+
+| Need | Solution | Notes |
+|------|----------|-------|
+| **Text Moderation** | `better-profanity` (Java library) | Free, lightweight, offline |
+| **Email Service** | Mailtrap (Free tier: 10k/month) or Gmail App Password | For future: password reset |
+| **CUIT Validation** | Format validation only (11 digits + check digit) | Real AFIP validation for later |
+| **Image Storage** | Not in Sprint 1 | Planned for Module 2 (Events) |
+
+### Database Setup (Sprint 1)
+
+```bash
+# 1. Create database
+mysql -u root -p
+CREATE DATABASE enexia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+EXIT;
+
+# 2. Spring Boot auto-creates tables via @Entity + application.yml
+# Set: spring.jpa.hibernate.ddl-auto=create-drop (dev) or validate (prod)
+```
+
+### Key Database Fields (Sprint 1 - Usuario table)
+
+```java
+@Entity
+public class Usuario {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String email;
+    private String password;          // BCrypt hashed
+    private String nickname;
+    
+    @Enumerated(EnumType.STRING)
+    private EstadoUsuario estado;     // ACTIVO, BLOQUEADO, SUSPENDIDO, DE_BAJA
+    
+    private Integer intentos_fallidos;    // Reset to 0 on success, increment on failure
+    private LocalDateTime fecha_desbloqueo_cooldown; // Null = no penalty
+    private Boolean requiere_captcha;     // False initially, True after 3 attempts
+    
+    private LocalDateTime fecha_baja;     // Soft delete field
+    private LocalDateTime fecha_registro;
+}
+```
+
+### Important Implementation Notes
+
+- **Content Moderation** (Sprint 1): Use `better-profanity` for registration names/nicknames
+- **Content Moderation** (Sprint 2+): Backend must validate titles/descriptions of events (Module 2, RF-2.2)
+- **State Tracking**: Users have `estado_usuario` (ACTIVO, BLOQUEADO, etc.) — check in login
+- **Rate Limiting**: Track failed attempts in `Historial_Interacciones` table by email/IP
+- **Account Locking**: After exactly 3 failed attempts, set estado = "BLOQUEADO" + send security email (Sprint 2)
+- **Soft Deletes**: Use `fecha_baja` field; never hard-delete users or events
+- **RBAC (Backend)**: Always validate roles in service layer via `@PreAuthorize` or manual checks; frontend can render UI conditionally, but backend enforces
+- **Cloudinary Integration**: Planned for Sprint 2 (Module 2 - Event Images); for now skip image uploads
+- **Analytics** (Future): Aggregate visits (unique per user) and avg ratings from `Valoracion` table for event dashboards
 
 ---
 

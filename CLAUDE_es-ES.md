@@ -6,7 +6,7 @@ Este archivo proporciona una guía en español sobre el proyecto Enexia. La vers
 
 ## 📝 Nota Importante
 
-⚠️ **ESTA ES LA VERSIÓN EN ESPAÑOL** — para que la entiendas.
+⚠️ **ESTA ES LA VERSIÓN EN ESPAÑOL**.
 
 📄 **Versión en inglés:** `CLAUDE.md` (referencia para Claude Code)
 
@@ -232,19 +232,69 @@ enexia/
 
 ---
 
-## Guías Clave de Desarrollo
+## Arquitectura del Backend (Spring Boot - Java)
 
-### Backend (Java/Spring Boot)
+### Estructura de Directorios
+```
+backend/src/main/java/com/enexia/
+├── config/              # @Configuration, filtros JWT, CORS, beans de seguridad
+├── controller/          # @RestController endpoints (API REST)
+├── dto/                 # DTOs Request/Response (sin exponer entidades)
+├── service/             # @Service lógica de negocio
+├── repository/          # @Repository JPA (extends JpaRepository)
+├── model/               # @Entity clases JPA (mapeadas a BD)
+├── security/            # Utilidades JWT, BCrypt, lógica RBAC
+├── exception/           # Excepciones personalizadas (BadCredentialsEx, etc.)
+├── util/                # Validadores, formateadores, helpers (lógica no empresarial)
+└── logger/              # Logging SLF4J vía anotación @Slf4j
+```
 
-- **Arquitectura en Capas**: Controllers → Services → Repositories (separación estricta)
-- **Patrón DTO**: Usar DTOs para solicitudes/respuestas de API, no entidades directamente
-- **Manejo de Excepciones**: Clases de excepción personalizadas con códigos HTTP adecuados
-- **Seguridad**: 
-  - Filtro JWT en endpoints protegidos
-  - Verificaciones RBAC en `@PreAuthorize` o capa de servicio
-  - Validación de entrada (email, fuerza de contraseña, etc.)
-- **Logging**: Usar SLF4J para logging de errores del servidor (requerido por requisitos no funcionales)
-- **Base de Datos**: JPA/Hibernate para ORM; cargar perezosamente las relaciones con cuidado
+### Guías Clave de Desarrollo
+
+#### Arquitectura en Capas (Separación Estricta)
+- **Controller** (@RestController): Endpoints HTTP, validación de entrada, mapeo de respuestas
+- **Service** (@Service): Lógica de negocio, transacciones, orquestación, verificaciones de seguridad
+- **DTO**: Objetos separados `*Request` y `*Response` (nunca exponer entidades directamente)
+- **Repository** (extends JpaRepository): CRUD + consultas personalizadas solamente
+- **Model** (@Entity): Mapeos JPA solamente (sin lógica de negocio)
+
+#### Patrón DTO
+- Crear DTOs `*Request` y `*Response` separados para cada endpoint
+- Usar `ModelMapper` o mapeo manual para convertir Entity ↔ DTO
+- Nunca exponer entidades en respuestas de API
+
+#### Manejo de Excepciones
+- Crear excepciones personalizadas extendiendo `RuntimeException` (ej: `BadCredentialsException`, `AccountBlockedException`)
+- Usar `@ControllerAdvice` con `@ExceptionHandler` para mapear excepciones a códigos HTTP
+- Retornar JSON de error consistente: `{ "error": "...", "timestamp": "...", "status": 400 }`
+
+#### Seguridad (Sprint 1 MVP)
+- **Autenticación**: JWT (JSON Web Tokens) emitido en login exitoso
+- **Autorización**: Extraer roles del JWT; validar en `@PreAuthorize` en métodos de servicio o controller
+- **Contraseña**: Hashing BCrypt (nunca en texto plano)
+- **Rate Limiting**: Rastrear intentos por email/IP; bloquear en 3 fallos por 5 minutos
+- **Bloqueo de Cuenta**: Después de 3 intentos fallidos, establecer `estado_usuario` = "BLOQUEADO"
+- **Cooldown**: Timestamp `fecha_desbloqueo_cooldown` previene reintentos inmediatos
+- **Moderación de Texto**: Librería `better-profanity` para filtrado de contenido (Registro + Login)
+- **Validación de Entrada**: Usar `@Valid` + `@NotNull`, `@Email`, `@Pattern` en DTOs
+
+#### Logging
+- Usar **SLF4J** vía `@Slf4j` (Lombok) en clases @Service/@Controller
+- Registrar eventos de seguridad: intentos de login, bloqueos de cuenta, tokens inválidos
+- Persistir auditoría en tabla `Historial_Interacciones` (user_id, acción, endpoint, IP, timestamp)
+
+#### Base de Datos
+- **JPA/Hibernate** para ORM (Spring Boot auto-crea tablas vía `@Entity`)
+- Usar `@ManyToOne`, `@OneToMany`, `@OneToOne` cuidadosamente (lazy-load preferido)
+- Evitar queries N+1; usar `@Query` con `JOIN FETCH` cuando sea necesario
+- Borrados lógicos: usar campos `fecha_baja` o `estado`; nunca hard-delete
+
+#### Testing
+- **JUnit 5** para pruebas unitarias
+- **Mockito** para mock de dependencias
+- Estructura: `@DisplayName`, `@Test`, patrón arrange-act-assert
+- Probar casos de éxito Y casos de error (excepciones)
+- Para este sprint: probar AuthService, endpoint de login, lógica de rate limiting
 
 ### Frontend (HTML, CSS, JavaScript Vanilla)
 
@@ -272,15 +322,81 @@ enexia/
 
 ---
 
-## Notas Importantes de Implementación
+## Sprint 1: Backend Autenticación MVP (Actual)
 
-- **Moderación de Contenido**: Backend debe validar títulos/descripciones de eventos contra contenido ofensivo antes de persistir (Módulo 2, RF-2.2)
-- **Integración Cloudinary**: Validar formatos de imagen (JPG/PNG), máx 2MB, verificar contenido sensible
-- **Seguimiento de Estado**: Eventos y usuarios tienen múltiples campos de estado (`estado_sistema`, `estado_organizador`, `estado_usuario`) — usar el correcto según caso de uso
-- **Gestión de Cupos**: `cupo_actual` debe incrementarse atómicamente en inscripción exitosa; prevenir doble reserva
-- **Bloqueo de Cuenta**: Después de 3 intentos fallidos de login, establecer estado del usuario a "BLOQUEADO"
-- **Eliminación Lógica**: Usar campo `fecha_baja` para usuarios y estado `DADO_DE_BAJA` para eventos (no eliminar, solo marcar)
-- **Analítica**: Agregar visualizaciones (únicas por usuario) y calificaciones promedio de tabla `Valoracion` para dashboards de eventos
+### Alcance y Medidas de Seguridad
+
+**Objetivo Sprint 1**: Implementar endpoints de registro y login con medidas de seguridad core.
+
+| Característica | Sprint 1 | Sprint 2+ |
+|---|---|---|
+| Registro de Usuarios (Persona Física) | ✅ | - |
+| Autenticación con JWT | ✅ | - |
+| Rate Limiting (por IP) | ✅ | - |
+| Bloqueo en 3 intentos fallidos | ✅ | - |
+| Cooldown (penalización 5 min) | ✅ | - |
+| Moderación de texto (better-profanity) | ✅ | - |
+| 2FA (Verificación por email) | ❌ | Sprint 2+ |
+| CAPTCHA | ❌ | Sprint 2+ |
+| Recuperación de Contraseña | ❌ | Sprint 2+ |
+| Registro de Persona Jurídica | ❌ | Sprint 2 |
+
+### Integraciones Externas (Sprint 1)
+
+| Necesidad | Solución | Notas |
+|---|---|---|
+| **Moderación de Texto** | Librería `better-profanity` (Java) | Gratuita, offline, lightweight |
+| **Servicio de Email** | Mailtrap (Free: 10k/mes) o Gmail App Password | Para futuro: recuperación de contraseña |
+| **Validación CUIT** | Solo validación de formato (11 dígitos + verificador) | Validación real con AFIP para después |
+| **Almacenamiento de Imágenes** | No necesario en Sprint 1 | Planeado para Módulo 2 (Eventos) |
+
+### Configuración de Base de Datos (Sprint 1)
+
+```bash
+# 1. Crear base de datos
+mysql -u root -p
+CREATE DATABASE enexia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+EXIT;
+
+# 2. Spring Boot auto-crea tablas vía @Entity + application.yml
+# Configurar: spring.jpa.hibernate.ddl-auto=create-drop (dev) o validate (prod)
+```
+
+### Campos Clave de BD (Sprint 1 - Tabla Usuario)
+
+```java
+@Entity
+public class Usuario {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String email;
+    private String password;          // Hasheado con BCrypt
+    private String nickname;
+    
+    @Enumerated(EnumType.STRING)
+    private EstadoUsuario estado;     // ACTIVO, BLOQUEADO, SUSPENDIDO, DE_BAJA
+    
+    private Integer intentos_fallidos;    // Reset a 0 en éxito, incrementar en fallo
+    private LocalDateTime fecha_desbloqueo_cooldown; // Null = sin penalización
+    private Boolean requiere_captcha;     // False inicialmente, True después 3 intentos
+    
+    private LocalDateTime fecha_baja;     // Campo de borrado lógico
+    private LocalDateTime fecha_registro;
+}
+```
+
+### Notas Importantes de Implementación
+
+- **Moderación de Contenido** (Sprint 1): Usar `better-profanity` para nombres/nicknames en registro
+- **Moderación de Contenido** (Sprint 2+): Backend debe validar títulos/descripciones de eventos (Módulo 2, RF-2.2)
+- **Seguimiento de Estado**: Usuarios tienen `estado_usuario` (ACTIVO, BLOQUEADO, etc.) — verificar en login
+- **Rate Limiting**: Rastrear intentos fallidos en tabla `Historial_Interacciones` por email/IP
+- **Bloqueo de Cuenta**: Después de exactamente 3 intentos fallidos, establecer estado = "BLOQUEADO" + enviar email de seguridad (Sprint 2)
+- **Eliminación Lógica**: Usar campo `fecha_baja`; nunca hard-delete usuarios o eventos
+- **RBAC (Backend)**: Siempre validar roles en capa de servicio vía `@PreAuthorize` o verificaciones manuales; frontend puede renderizar UI condicionalmente, pero backend es la autoridad final
+- **Integración Cloudinary**: Planeada para Sprint 2 (Módulo 2 - Imágenes de Eventos); por ahora saltar cargas de imagen
+- **Analítica** (Futuro): Agregar visualizaciones (únicas por usuario) y calificación promedio de tabla `Valoracion` para dashboards de eventos
 
 ---
 
