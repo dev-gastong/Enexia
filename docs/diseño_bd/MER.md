@@ -28,8 +28,15 @@ erDiagram
         varchar email
         varchar password
         varchar nickname
+        int intentos_fallidos
+        boolean requiere_captcha
+        datetime fecha_desbloqueo_cooldown
         datetime fecha_baja
     }
+    %% Campos de control de seguridad del login (RF-1.4 / DFD Login):
+    %% intentos_fallidos: contador de intentos consecutivos fallidos (reset a 0 en login exitoso).
+    %% requiere_captcha: se activa (True) al 3er intento fallido.
+    %% fecha_desbloqueo_cooldown: penalizacion temporal (+5m al 3er intento, +30m al 6to).
 
     Usuario_Estado_Sistema{
         int id_estado_usuario_sistema PK

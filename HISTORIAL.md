@@ -1,6 +1,34 @@
 # 📅 Línea de Tiempo del Proyecto Enexia
 
-## Sesión: 2026-07-25 (Actual - Sprint 1 Planning & Decisiones Arquitectónicas)
+## Sesión: 2026-07-26 (Sprint 1 · Fase 1 — Codificación del Modelo de Datos)
+
+### 🗄️ Modelo de Datos JPA + Base de Datos
+* **Tarea:** Codificar entidades, atributos y relaciones del DER/MER con anotaciones JPA, y crear la BD.
+* **Base de datos:** `CREATE DATABASE enexia` en MariaDB 10.4.32 (XAMPP, root sin password). El usuario inició el servidor MySQL manualmente.
+* **Entidades creadas:** 37 entidades `@Entity` + 2 `@Embeddable` de clave compuesta, en `enexia/src/main/java/com/enexia/rg/model/`.
+  - 1:1 con PK compartida (`@MapsId`): `PersonaFisica`→`Persona`, `EventoDetalle`→`Evento`.
+  - Tablas de unión con `@EmbeddedId`: `UsuarioRol`, `MiembrosOrganizacion` (con `rol_en_empresa`).
+  - `Pago` con FK opcionales `@OneToOne` (`Inscripcion`/`Suscripcion`, 1:0..1).
+  - `Pais` con PK `String` (varchar) sin `@GeneratedValue`.
+* **Verificación:**
+  - `./gradlew compileJava` → BUILD SUCCESSFUL.
+  - `./gradlew bootRun` → arranque OK, Hibernate generó DDL sin errores.
+  - `SHOW TABLES` → **37 tablas** con todas las FK; PKs compuestas y compartidas confirmadas.
+* **Config:** `application.properties` con datasource MySQL + `ddl-auto=update`, `show-sql=true`, `open-in-view=false`.
+* **Decisiones clave:** PKs numéricas como `Long`; estados como entidades relacionadas (no enums) fiel al MER; solo lado propietario `@ManyToOne` (sin colecciones inversas por ahora).
+* **⚠️ Gap flagged:** `Usuario` no tiene los campos de seguridad del login (`intentos_fallidos`, `fecha_desbloqueo_cooldown`, `requiere_captcha`, `fecha_registro`) porque no están en el MER. **Pendiente decidir** antes de Fase 3 (Login).
+* **Auditoría check-rules:** Sin violaciones en capa `model/` (reglas de DTO/RBAC/moderación/concurrencia aplican a Controller/Service, aún no existentes). Entidades soportan borrado lógico (`fecha_baja`), cupos (`cupo_actual`/`cupo_maximo`) y estados de moderación (FK).
+* **Logs generados:** `docs/log/SPRINT_LOG.md` (maestro) y `docs/log/sprint_1/2026-07-26_modelo_datos.md` (detalle del día).
+
+### 🔒 Resolución del gap de seguridad de `Usuario` (opción A)
+* **Decisión del usuario:** actualizar primero la documentación (fuente de verdad) y luego el código.
+* **MER actualizado** (`docs/diseño_bd/MER.md`): se agregaron a `Usuario` los campos `intentos_fallidos` (int), `requiere_captcha` (boolean) y `fecha_desbloqueo_cooldown` (datetime), con comentarios explicativos del RF-1.4 / DFD Login. `fecha_registro` NO se agregó (ya existe en `Persona`). El DER (`graph TD` conceptual) no lista atributos → sin cambios.
+* **Entidad `Usuario.java` actualizada** con los 3 campos (`Integer`, `Boolean`, `LocalDateTime`).
+* **Verificación:** `compileJava` OK; `bootRun` ejecutó `ALTER TABLE usuario`; `DESCRIBE usuario` confirma las 3 columnas nuevas.
+
+---
+
+## Sesión: 2026-07-25 (Sprint 1 Planning & Decisiones Arquitectónicas)
 
 ### 🎯 Sprint 1 Kick-off Meeting
 * **14:00 - Revisión exhaustiva de documentación existente**
