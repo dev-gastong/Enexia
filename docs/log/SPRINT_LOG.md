@@ -20,6 +20,8 @@ Este archivo indexa el progreso por Sprints. El detalle diario vive en subcarpet
 |-------|-----------|---------|
 | 2026-07-26 | **Modelo de datos JPA** | 37 entidades + 2 clases `@Embeddable` de clave compuesta, mapeadas 1:1 con el MER. Ver [sprint_1/2026-07-26_modelo_datos.md](./sprint_1/2026-07-26_modelo_datos.md) |
 | 2026-07-26 | **Base de datos `enexia`** | Creada en MariaDB (XAMPP). 37 tablas generadas por Hibernate con todas las FK. |
+| 2026-07-31 | **Repositories + DTOs (esqueleto Fase 2)** | 37 `JpaRepository` + 10 DTOs Request/Response. Ver [REGISTRO_ACADEMICO_FASE2_REPOSITORIES_DTOs.md](./REGISTRO_ACADEMICO_FASE2_REPOSITORIES_DTOs.md) |
+| 2026-08-04 | **DFD Nivel 1 y 2 — Módulos 3 a 8** | 26 diagramas Mermaid (Participación, Interfaz Pública, Moderación, Admin, Perfiles Organización, Membresías) en `docs/tempDFD/`, validados con `check-rules`. Ver [REGISTRO_ACADEMICO_DFD_MODULOS_3-8.md](./REGISTRO_ACADEMICO_DFD_MODULOS_3-8.md) |
 
 ### 💡 Decisiones de Arquitectura (ADR)
 - **ADR-01 — PKs numéricas como `Long`**: El MER indica `int`, pero se usa `Long` con `@GeneratedValue(IDENTITY)` (práctica estándar Java/JPA y consistente con el ejemplo de `CLAUDE.md`).
