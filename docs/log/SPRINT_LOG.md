@@ -22,6 +22,8 @@ Este archivo indexa el progreso por Sprints. El detalle diario vive en subcarpet
 | 2026-07-26 | **Base de datos `enexia`** | Creada en MariaDB (XAMPP). 37 tablas generadas por Hibernate con todas las FK. |
 | 2026-07-31 | **Repositories + DTOs (esqueleto Fase 2)** | 37 `JpaRepository` + 10 DTOs Request/Response. Ver [REGISTRO_ACADEMICO_FASE2_REPOSITORIES_DTOs.md](./REGISTRO_ACADEMICO_FASE2_REPOSITORIES_DTOs.md) |
 | 2026-08-04 | **DFD Nivel 1 y 2 — Módulos 3 a 8** | 26 diagramas Mermaid (Participación, Interfaz Pública, Moderación, Admin, Perfiles Organización, Membresías) en `docs/tempDFD/`, validados con `check-rules`. Ver [REGISTRO_ACADEMICO_DFD_MODULOS_3-8.md](./REGISTRO_ACADEMICO_DFD_MODULOS_3-8.md) |
+| 2026-08-12 | **Revisión y Corrección DFD Módulo 3** | 5 diagramas revisados; corrección transversal RBAC (JWT válido + usuario activo, no "rol participante"). Diagramas promovidos a `docs/diagrams/modulo_3_participacion/`. Ver [REGISTRO_ACADEMICO_REVISION_DFD_MODULO3_20260812.md](./REGISTRO_ACADEMICO_REVISION_DFD_MODULO3_20260812.md) |
+| 2026-08-12 | **Implementación: JWT Multi-Roles Architecture** | Usuario.java: agregada relación @OneToMany + método getRoles(). UsuarioLoginResponse.java: agregado campo roles[]. CLAUDE.md: documentación actualizada. BD ya estaba preparada. Ver [REGISTRO_ACADEMICO_JWT_MULTIROLES_20260812.md](./REGISTRO_ACADEMICO_JWT_MULTIROLES_20260812.md) |
 
 ### 💡 Decisiones de Arquitectura (ADR)
 - **ADR-01 — PKs numéricas como `Long`**: El MER indica `int`, pero se usa `Long` con `@GeneratedValue(IDENTITY)` (práctica estándar Java/JPA y consistente con el ejemplo de `CLAUDE.md`).
@@ -36,6 +38,13 @@ Este archivo indexa el progreso por Sprints. El detalle diario vive en subcarpet
 - **Servidor MySQL apagado**: El servicio MariaDB de XAMPP no estaba corriendo; el usuario lo inició manualmente. Root sin contraseña (default XAMPP).
 - **Normalización de nombres camelCase**: El MER escribió `emailCorporativo` y `telefonoContacto` en camelCase (inconsistente con el resto). La estrategia de nombres físicos de Hibernate los normalizó a `email_corporativo` / `telefono_contacto`, quedando consistentes con las otras 36 tablas. **Desviación menor documentada.**
 - **✅ Gap de login RESUELTO (opción A)**: El MER de `Usuario` no incluía los campos de control del login. Decisión del usuario: **actualizar primero la documentación**. Se agregaron al MER (`docs/diseño_bd/MER.md`) y a la entidad `Usuario`: `intentos_fallidos` (int), `requiere_captcha` (boolean), `fecha_desbloqueo_cooldown` (datetime). `fecha_registro` NO se agregó a `Usuario` porque ya existe en `Persona` (normalizado). Columnas verificadas en la BD tras `bootRun`.
+
+### 📌 Resumen de Sesión
+| Fecha | Evento |
+|-------|--------|
+| 2026-08-12 | **Sesión Mañana:** Revisión DFD M3 + JWT Multi-Roles Architecture. Ver [RESUMEN_SESION_20260812.md](./RESUMEN_SESION_20260812.md) |
+| 2026-08-12 | **Sesión Tarde:** Verificación código roles ✅, Análisis M4 (4 DFDs) + Correcciones, Limpieza tempDFD ✅, Hallazgo M5.1. Ver [REGISTRO_ACADEMICO_REVISION_M4_20260812_TARDE.md](./REGISTRO_ACADEMICO_REVISION_M4_20260812_TARDE.md) |
+| 2026-08-12 | **Sesión Noche:** Análisis sincronía moderación, Alineación doc ↔ Figma, Cambio M2.2/M5.1/M5.4 a asíncrona ✅. Ver [RESOLUCION_SINCRONIZACION_MODERACION_20260812.md](./RESOLUCION_SINCRONIZACION_MODERACION_20260812.md) |
 
 ### ⏭️ Próximos Pasos (Backlog)
 1. ✅ ~~Decidir sobre los campos de seguridad faltantes en `Usuario`~~ — Resuelto (opción A: MER + entidad actualizados).

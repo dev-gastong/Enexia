@@ -8,14 +8,30 @@ El sistema debe permitir a los usuarios con permisos de *Organizador* registrar 
 * Si el usuario se registró como **Persona Física**, el evento figurará respaldado a título personal por el Nombre y Apellido civiles del creador.
 
 
-* #### **RF-2.2: Moderación Síncrona de Texto en la Carga**
+* #### **RF-2.2: Moderación Asíncrona de Texto en la Carga**
 
 
-Durante los procesos de creación o edición de un evento, el backend debe interceptar el título y la descripción para procesarlos mediante el filtro de seguridad nativo. Si el algoritmo detecta lenguaje ofensivo, discriminatorio o inapropiado, el sistema bloqueará la persistencia en la base de datos, retornará un mensaje de advertencia descriptivo al frontend y mutará el estado del sistema del evento a un código de rechazo por auditoría (`Evento_Estado_Sistema`).
+Durante los procesos de creación o edición de un evento, el backend debe crear un registro inicial de Evento con estado "EN_PROCESO" persistiendo ÚNICAMENTE los metadatos mínimos requeridos:
+* **id_evento** (PK autogenerado)
+* **id_organizador** (FK del JWT del creador)
+* **estado_sistema** = "EN_PROCESO"
+* **fecha_creacion** (timestamp)
+
+El organizador carga el formulario completo en una única petición: título, descripción e imágenes promocionales (máximo 3). Este registro "skeleton" permite que el organizador vea inmediatamente su evento en el dashboard con status "Validando contenido...". El backend dispara de forma asíncrona un pipeline secuencial de validaciones:
+
+**Fase 1 - Validación de Texto:** El sistema intercepta el título y la descripción mediante APIs de moderación (Perspective, OpenAI, etc.). 
+* Si el algoritmo detecta lenguaje ofensivo, discriminatorio o inapropiado: el sistema mutará el estado del evento a "RECHAZADO_SISTEMA", notificará la infracción al usuario, **descartará las imágenes cargadas SIN procesarlas** (optimización de recursos de red y cómputo), la remitirá al Panel de Administración para revisión manual, y NO persistirá datos del evento (título, descripción, ubicación, cronogramas, multimedia, tickets). Pipeline terminado.
+* Si la validación es exitosa: procede a **Fase 2 - Validación de Multimedia**.
+
+**Fase 2 - Validación de Multimedia:** Solo se ejecuta si el texto fue aprobado. El backend procesa cada imagen de forma asíncrona mediante Cloudinary (RF-5.3). Las imágenes aprobadas son persistidas en `Evento_Multimedia`; las rechazadas son descartadas.
+* Si TODAS las imágenes son rechazadas: el evento transitará a "RECHAZADO_SISTEMA" y quedará pendiente de revisión manual.
+* Si AL MENOS UNA imagen es aprobada: el backend persiste los datos completos del evento (EventoDetalle, Evento_Cronograma, Cronograma_Ticket), muta el estado a "APROBADO_SISTEMA", y el evento se hace visible en el catálogo público.
+
+Esta estrategia garantiza que solo información moderada e íntegra ingrese a la base de datos, cumpliendo con la regla arquitectónica de "moderación antes de persistir datos de contenido".
 * #### **RF-2.3: Persistencia y Validación Multimedia (Integración Cloudinary)**
 
 
-El sistema debe permitir la carga de una URL de portada y galerías de imágenes promocionales para el evento. El backend validará estrictamente que los archivos cumplan con los formatos JPG o PNG y que su peso no exceda el límite estricto de 2MB. El almacenamiento de estos recursos se delegará de forma optimizada en Cloudinary, supeditado a sus análisis automáticos contra contenido sensible (violencia o desnudez).
+El sistema debe permitir la carga de una o varias imágenes promocionales (máximo 3 por evento) como parte del formulario de creación de evento. El procesamiento de estas imágenes ocurre de forma asíncrona, SOLO si la validación de texto (RF-2.2, Fase 1) fue exitosa. El backend validará estrictamente que cada archivo cumpla con los formatos JPG o PNG y que su peso no exceda el límite estricto de 2MB (RF-5.2). Cada imagen será enviada a Cloudinary para análisis automático de contenido sensible (RF-5.3). Las imágenes aprobadas serán vinculadas al evento; las rechazadas serán descartadas. **La lógica final es:** Si al menos una imagen es aprobada, el evento alcanza estado "APROBADO_SISTEMA" y es visible en catálogo. Si ninguna imagen es aprobada, el evento es rechazado.
 * #### **RF-2.4: Estructuración de Agenda (Eventos Cronograma)**
 
 
@@ -31,7 +47,9 @@ El sistema debe permitir definir si un tipo de ticket es gratuito o de pago (con
 * #### **RF-2.7: Modificación y Actualización de Eventos**
 
 
-El sistema debe permitir al organizador modificar toda la información general, el material multimedia y las descripciones de sus eventos existentes. Sin embargo, para proteger la integridad de las transacciones ya realizadas, el backend restringirá la modificación de precios o la reducción de cupos máximos en aquellos tipos de tickets que ya cuenten con inscripciones activas por parte de los participantes.
+El sistema debe permitir al organizador modificar toda la información general, el material multimedia y las descripciones de sus eventos existentes. **Cualquier cambio en contenido sensible (título, descripción, imágenes) de un evento PUBLICADO dispara automáticamente un nuevo ciclo de moderación asíncrona** (RF-2.2 y RF-2.3) antes de permitir que los cambios sean visibles en el catálogo. Durante este período, el evento transitará a estado "EN_REVISIÓN" y los cambios quedarán en borrador. Si la re-moderación es exitosa, los cambios se publican; si es rechazada, se revierte a la versión anterior y se notifica al organizador. 
+
+Sin embargo, para proteger la integridad de las transacciones ya realizadas, el backend restringirá la modificación de precios o la reducción de cupos máximos en aquellos tipos de tickets que ya cuenten con inscripciones activas por parte de los participantes. Estos cambios (precio/cupo) NO requieren re-moderación, solo validación de integridad transaccional.
 * #### **RF-2.8: Listado Centralizado y Panel de Control Personal**
 
 

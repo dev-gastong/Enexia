@@ -1,5 +1,7 @@
 package com.enexia.rg.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,4 +16,5 @@ public class UsuarioLoginResponse {
     private String email;
     private String token;
     private String tipoToken = "Bearer";
+    private List<String> roles;
 }

@@ -1,11 +1,11 @@
 ```mermaid
 graph TD
     %% Punto de Inicio Único
-    INICIO([INICIO: Solicitud de Creación]) --> Org([Organizador vía HTTP / Postman])
-    Org -->|Petición con Formulario + Cabecera Authorization Bearer JWT| P2_0[2.0: Validar Firma y Vigencia del Token JWT]
+    INICIO([INICIO: Solicitud de Creación]) --> Org([Organizador vía HTTP])
+    Org -->|Petición con Formulario + JWT Bearer| P2_0[2.0: Validar JWT]
     
     %% Almacenes de Datos
-    subgraph Almacenes de Seguridad y Eventos
+    subgraph Almacenes
         D20_Sus[(Suscripcion)]
         D10_Ev[(Evento)]
         D17_Det[(EventoDetalle)]
@@ -14,65 +14,177 @@ graph TD
         D13_Tkt[(Cronograma_Ticket)]
         D14_TTk[(Tipo_Ticket)]
         D6_Logs[(Historial_Interacciones)]
+        D22_Est[(Evento_Estado_Sistema)]
     end
 
     %% Entidades Externas
-    API_Mod([API Externa de Moderación: Cloudinary / IA])
+    API_Mod([API Externa: Perspective / Cloudinary / IA])
+    Notif([Servicio de Notificaciones - Email/In-App])
 
-    %% 0. CONTROL DE AUTENTICACIÓN JWT
-    P2_0 --> C_Token{¿El JWT es Válido, Firmado y Vigente?}
-    C_Token -- No --> Err_Auth([Error 401: No Autorizado / Token Inválido])
+    %% ===== FASE SÍNCRONA (Inmediata) =====
+    P2_0 --> C_Token{¿JWT válido y vigente?}
+    C_Token -- No --> Err_Auth([Error 401: No Autorizado])
     C_Token -- Sí --> P2_1[2.1: Verificar Límites de Suscripción]
 
-    %% 1. CONTROL DE PLAN 
-    P2_1 -->|1. Solicitar Plan de Usuario| D20_Sus
-    D20_Sus -->|2. Retornar Estado y Tipo de Plan| P2_1
-    P2_1 --> C_Plan{¿Supera Límite de Eventos Activos?}
-    C_Plan -- Sí --> Err_Plan([Mensaje: Límite Excedido. Actualizá a Pro])
+    P2_1 -->|Consultar plan| D20_Sus
+    D20_Sus -->|Retornar estado plan| P2_1
+    P2_1 --> C_Plan{¿Supera limite de eventos?}
+    C_Plan -- Sí --> Err_Plan([Error: Límite Excedido. Upgrade a Pro])
     C_Plan -- No --> P2_2[2.2: Validar Fechas y Horarios]
 
-    %% 2. VALIDACION DE FECHAS Y CAMPOS LOCALES
-    P2_2 --> C_FechaInicio{¿Fecha Inicio es Posterior a Hoy?}
-    C_FechaInicio -- No --> Err_Fechas([Mensaje: Fechas u Horarios Inválidos])
-    C_FechaInicio -- Sí --> C_FechaFin{¿Fecha Fin es Posterior o Igual a Inicio?}
-    C_FechaFin -- No --> Err_Fechas
-    C_FechaFin -- Sí --> P2_3[2.3: Validar Campos Obligatorios y Formatos]
+    P2_2 --> C_Fechas{¿Fechas válidas y futuras?}
+    C_Fechas -- No --> Err_Fechas([Error: Fechas u horarios inválidos])
+    C_Fechas -- Sí --> P2_3[2.3: Validar Campos Obligatorios]
 
-    P2_3 --> C_Campos{¿Campos Obligatorios Están Completos?}
-    C_Campos -- No --> Err_Campos([Mensaje: Verifique los Campos Obligatorios])
-    C_Campos -- Sí --> C_Cupo{¿El Cupo Máximo es Mayor a Cero?}
-    C_Cupo -- No --> Err_Campos
-    C_Cupo -- Sí --> P2_3A[2.3A: Enviar Multimedia y Texto a API de Moderación]
+    P2_3 --> C_Campos{¿Campos obligatorios completos?}
+    C_Campos -- No --> Err_Campos([Error: Campos incompletos])
+    C_Campos -- Sí --> P2_4[2.4: Guardar Evento EN_PROCESO]
 
-    %% 3. LLAMADA A LA API EXTERNA
-    P2_3A -->|1. Enviar Imagen Binaria y Descripciones| API_Mod
-    API_Mod -->|2. Retornar Resultado del Análisis| P2_3A
-    P2_3A --> C_Sensible{¿La API detectó Contenido Sensible?}
+    %% ===== PERSISTENCIA INMEDIATA: SKELETON ONLY (RF-2.2) =====
+    %% RFC-2.2: Crear registro minimo con metadatos solamente
+    P2_4 -->|1. Crear Evento Skeleton| D10_Ev
+    P2_4 -->|   - id_evento PK| D10_Ev
+    P2_4 -->|   - id_organizador FK| D10_Ev
+    P2_4 -->|   - estado_sistema = EN_PROCESO| D10_Ev
+    P2_4 -->|   - fecha_creacion| D10_Ev
+    P2_4 -->|2. Registrar Auditoría de Creación| D6_Logs
     
-    %% CAMINO NEGATIVO: Se persiste como RECHAZADO directamente
-    C_Sensible -- Sí --> P2_4_Err[2.4_Err: Registrar Rechazo Automático]
-    P2_4_Err -->|1. Marcar Intento como RECHAZADO| D10_Ev
-    P2_4_Err -->|2. Registrar Infracción en Auditoría| D6_Logs
-    P2_4_Err --> Err_Sensible([Mensaje: Contenido Rechazado por la API de Seguridad])
-    
-    %% CAMINO POSITIVO: Se guarda como APROBADO de una
-    C_Sensible -- No --> P2_4[2.4: Procesar y Persistir Evento Limpio]
+    P2_4 --> P2_4_Success[2.4: TRANSACCIÓN EXITOSA]
+    P2_4_Success -->|Response 200 OK| Success_Sync([Evento creado: Estado EN_PROCESO - Visible en dashboard])
 
-    %% 4. PERSISTENCIA EN CASCADA ACTUALIZADA
-    P2_4 -->|1. Guardar Registro Base Estado APROBADO| D10_Ev
-    P2_4 -->|2. Guardar Descripción Ampliada y Ubicación| D17_Det
-    P2_4 -->|3. Guardar Fechas y Horarios del Show| D11_Cro
-    P2_4 -->|4. Guardar URLs Finales de Cloudinary| D12_Mul
-    P2_4 -->|5. Consultar Catálogo de Tipos de Entradas| D14_TTk
-    P2_4 -->|6. Registrar Precios y Cupos Específicos| D13_Tkt
-    P2_4 -->|7. Registrar Operación Exitosa| D6_Logs
-    
-    P2_4 -->|Response 200 OK| Success_Ev([Evento Publicado: Ya está visible en cartelera])
+    %% ===== DISPARO ASÍNCRONO (Background Task) =====
+    P2_4_Success --> P2_5_ASYNC["🔄 ASYNC: 2.5 Disparar Moderación en Background"]
 
-    %% Unificación en un Único Punto de Fin
+    %% ===== FASE ASÍNCRONA (Background) =====
+    P2_5_ASYNC --> P2_5A[2.5A: Enviar Título, Descripción e Imágenes a API]
+    P2_5A -->|POST a Perspective/Cloudinary| API_Mod
+    API_Mod -->|Retorna score de toxicidad/análisis| P2_5A
+    
+    P2_5A --> C_Sensible{¿Detectó contenido sensible?}
+
+    %% Rama A: Contenido Limpio - Persistir datos completos (RF-2.2)
+    C_Sensible -- No --> P2_5B[2.5B: Persistir Datos Completos del Evento]
+    P2_5B -->|Guardar EventoDetalle| D17_Det
+    P2_5B -->|Guardar Cronogramas| D11_Cro
+    P2_5B -->|Guardar Multimedia URLs| D12_Mul
+    P2_5B -->|Guardar Tipos de Ticket| D14_TTk
+    P2_5B -->|Guardar Cronograma_Ticket| D13_Tkt
+    P2_5B --> P2_5B_STATE[2.5B: Cambiar Estado a APROBADO_SISTEMA]
+    P2_5B_STATE -->|Actualizar Evento Estado=APROBADO| D10_Ev
+    P2_5B_STATE -->|Registrar aprobación en auditoría| D6_Logs
+    P2_5B_STATE --> P2_5B_NOTIF[2.5B: Enviar Notificación al Organizador]
+    P2_5B_NOTIF -->|Tu evento fue aprobado y ya es visible| Notif
+    P2_5B_NOTIF --> FIN_APPROVED([✅ Evento PUBLICADO en catálogo])
+
+    %% Rama B: Contenido Sensible
+    C_Sensible -- Sí --> P2_5C[2.5C: Cambiar Estado a RECHAZADO_SISTEMA]
+    P2_5C -->|Actualizar Evento Estado=RECHAZADO| D10_Ev
+    P2_5C -->|Guardar motivo_codigo de infracción| D10_Ev
+    P2_5C -->|Registrar rechazo en auditoría| D6_Logs
+    
+    P2_5C --> P2_5C_NOTIF[2.5C: Notificar Organizador + Admin]
+    P2_5C_NOTIF -->|Email: Tu evento fue rechazado por...| Notif
+    P2_5C_NOTIF -->|Admin ve en panel de revisión| Notif
+    
+    P2_5C --> FIN_REJECTED([❌ Evento RECHAZADO - En espera de revisión manual])
+
+    %% ===== NOTA IMPORTANTE =====
+    NOTA["⚠️ RFC-6.1: Admin puede REVERTIR decisión automática<br/>(cambiar RECHAZADO → APROBADO_MANUAL)"]
+
+    %% Unificación de Salidas (Punto de Fin Único)
     Err_Auth --> FIN([FIN])
     Err_Plan --> FIN
     Err_Fechas --> FIN
     Err_Campos --> FIN
-    Err_Sensible --> FIN
-    Success_Ev --> FIN
+    FIN_APPROVED --> FIN
+    FIN_REJECTED --> FIN
+    NOTA -.-> FIN
+
+    style P2_4_Success fill:#eef,stroke:#333
+    style P2_5_ASYNC fill:#fef,stroke:#f33,stroke-dasharray: 5 5
+    style FIN_APPROVED fill:#efe,stroke:#3a3
+    style FIN_REJECTED fill:#fee,stroke:#a33
+    style NOTA fill:#fff,stroke:#f90,stroke-dasharray: 3 3
+```
+
+---
+
+## 📋 CAMBIOS CLAVE vs VERSIÓN SÍNCRONA
+
+### **ANTES (Síncrona - Problemática):**
+```
+User crea evento
+    ↓
+Valida JWT, plan, fechas
+    ↓
+Espera API de moderación (500ms-2s) ← BLOQUEA
+    ↓
+Si aprobado → guarda APROBADO
+Si rechazado → guarda RECHAZADO
+    ↓
+Response al user
+```
+
+### **DESPUÉS (Asíncrona - Correcta):**
+```
+User crea evento
+    ↓
+Valida JWT, plan, fechas (rápido)
+    ↓
+Guarda inmediatamente con estado EN_PROCESO
+    ↓
+Response 200 OK → "Tu evento está siendo validado..."
+    ↓
+[Background] API de moderación corre en paralelo
+    ↓
+Resultado → Cambia estado a APROBADO/RECHAZADO
+    ↓
+Notifica al usuario del cambio
+    ↓
+Si rechazado → Admin lo ve en panel para revisar
+```
+
+---
+
+## 🎯 Ventajas del Flujo Asíncrono
+
+| Aspecto | Síncrona (ANTES) | Asíncrona (DESPUÉS) |
+|--------|--------|--------|
+| **Experiencia del User** | Espera 500ms-2s | Feedback inmediato (200 OK) |
+| **Dashboard del Org** | Vacío hasta que se aprueba | Muestra evento EN_PROCESO inmediatamente |
+| **Timeout de API** | Bloquea creación | No afecta (ocurre después) |
+| **Auditoría** | Parcial | Completa (aprobado + notificado + estado) |
+| **Admin Override** | Difícil de revertir | Fácil (RF-6.1: cambiar estado) |
+| **Escalabilidad** | Baja (bloquea) | Alta (background tasks) |
+
+---
+
+## 💡 Flujo de Estados del Evento
+
+```
+INICIO (en formulario)
+    ↓
+EN_PROCESO (creado, validando)
+    ├─→ APROBADO_SISTEMA (moderación OK) ← visible en catálogo
+    ├─→ RECHAZADO_SISTEMA (moderación falló) ← oculto, en panel admin
+    └─→ APROBADO_MANUAL (admin lo revierte)
+        RECHAZADO_MANUAL (admin confirma rechazo)
+```
+
+---
+
+## 📝 Notas de Implementación
+
+1. **Background Task:** Usar Job Queue (sidekiq, celery, etc.) para disparar moderación
+2. **Notificaciones:** Enviar email/in-app cuando estado cambie
+3. **Admin Panel:** Debe mostrar eventos EN_PROCESO y RECHAZADO_SISTEMA para revisión
+4. **Rollback:** Si API cae → evento queda EN_PROCESO (manual recovery)
+5. **Timeout:** Si moderación >N minutos → timeout, marcar como EN_REVISIÓN_MANUAL
+
+---
+
+**Versión:** PROPUESTA para revisión 2026-08-12  
+**Estado:** Pendiente aprobación  
+**Cambios respecto a DFD original:** Cambio a asíncrono (RF-2.2 actualizado)
+```
+

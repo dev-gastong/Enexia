@@ -269,8 +269,8 @@ backend/src/main/java/com/enexia/
 - Return consistent error JSON: `{ "error": "...", "timestamp": "...", "status": 400 }`
 
 #### Security (Sprint 1 MVP)
-- **Authentication**: JWT (JSON Web Tokens) issued on successful login
-- **Authorization**: Extract roles from JWT; validate in `@PreAuthorize` on service methods or controller
+- **Authentication**: JWT (JSON Web Tokens) issued on successful login with `roles[]` array (multi-role support)
+- **Authorization**: Extract roles[] array from JWT; validate in `@PreAuthorize("hasAnyRole(...)")` on service methods or controller
 - **Password**: BCrypt hashing (never plain text)
 - **Rate Limiting**: Track login attempts by email/IP; block at 3 failures for 5 minutes
 - **Account Blocking**: After 3 failed attempts, set `estado_usuario` = "BLOQUEADO"
@@ -306,10 +306,12 @@ backend/src/main/java/com/enexia/
 - **Authentication**: 
   - Store JWT in `sessionStorage` or `localStorage` (consider security implications)
   - Implement token validation and refresh logic in `js/auth.js`
+  - JWT payload includes `roles[]` array (supports multiple roles per user)
 - **Role-Based UI (RBAC)**:
   - Separate HTML pages per user role (e.g., `pages/organizer-dashboard.html`, `pages/participant-dashboard.html`, `pages/admin-dashboard.html`)
   - Backend validates roles; frontend serves role-specific pages
-  - On login/redirect, JavaScript checks user role from JWT and redirects to the appropriate dashboard
+  - On login/redirect, JavaScript checks `roles[]` array from JWT and renders UI accordingly (navbar buttons, menu items)
+  - Use helper functions: `hasRole(role)`, `hasAnyRole(...roles)` to check roles
   - Example: Participant clicks to view events → goes to `pages/event-catalog.html`; Organizer goes to `pages/organizer-dashboard.html`
 - **Multi-Page Architecture** (Not SPA):
   - Each page has its own `.html` file (e.g., `pages/login.html`, `pages/event-details.html`)
