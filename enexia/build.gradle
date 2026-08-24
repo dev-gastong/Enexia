@@ -45,3 +45,15 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.compilerArgs << '-Xlint:deprecation'
+}
+
+// Sin esto la JVM arranca con la codificacion del sistema (windows-1252 en esta
+// maquina) y los acentos de los mensajes en espanol salen corruptos en las
+// respuestas JSON y en los logs.
+tasks.withType(JavaExec).configureEach {
+	jvmArgs '-Dfile.encoding=UTF-8'
+}

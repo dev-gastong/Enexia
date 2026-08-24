@@ -1,0 +1,50 @@
+# Lista de terminos bloqueados para moderacion de texto (DFD Registro 1.1.1A).
+#
+# FORMATO
+#   - Un termino por linea.
+#   - Las lineas que empiezan con # son comentarios.
+#   - Las lineas vacias se ignoran.
+#   - No hace falta escribir variantes con acentos, mayusculas ni numeros por
+#     letras (l33t): el servicio normaliza el texto antes de comparar, asi que
+#     "P3ND3J0" y "pendejo" se detectan con una sola entrada.
+#
+# ALCANCE
+#   Lista intencionalmente breve y conservadora. Su objetivo es demostrar el
+#   mecanismo de moderacion, no ser exhaustiva. Ampliarla es cambiar este
+#   archivo: no requiere tocar codigo ni recompilar.
+
+# --- Insultos comunes en espanol rioplatense ---
+puto
+puta
+pelotudo
+pelotuda
+boludo
+boluda
+forro
+gil
+tarado
+tarada
+imbecil
+idiota
+estupido
+estupida
+mogolico
+subnormal
+conchudo
+conchuda
+sorete
+pajero
+trolo
+
+# --- Terminos discriminatorios ---
+negrodemierda
+sudaca
+villero
+
+# --- Suplantacion de identidad institucional ---
+# Evita que alguien se registre como "admin_enexia" y confunda a otros usuarios.
+administrador
+admin
+soporteenexia
+enexiaoficial
+moderador
