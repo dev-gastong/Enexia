@@ -25,7 +25,7 @@ public class Valoracion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_valoracion")
-    private Long idValoracion;
+    private Long idvaloracion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_cronograma")
