@@ -195,7 +195,7 @@ erDiagram
 
 
     Valoracion {
-        int id_puntuacion PK
+        int id_valoracion PK
         int id_cronograma FK
         int id_usuario FK
         int valor
