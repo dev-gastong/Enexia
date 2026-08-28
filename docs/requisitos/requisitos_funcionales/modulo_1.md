@@ -5,12 +5,13 @@
 
 El sistema debe proveer un flujo de registro estructurado en pasos e interfaces interactivas para segmentar los perfiles de acceso:
 * **Paso 1 (Selección de Perfil):** El sistema debe permitir al usuario elegir su propósito en la plataforma, distinguiendo entre *Participante* (para explorar y asistir) y *Organizador* (para crear y gestionar eventos). 
-  * **Asignación de roles:** 
+  * **Asignación de roles (Sprint 1):** 
     - Los usuarios que se registren como **PARTICIPANTE** reciben solo ese rol.
     - Los usuarios que se registren como **ORGANIZADOR** reciben **ambos roles: ORGANIZADOR + PARTICIPANTE**, permitiéndoles crear eventos propios Y participar en eventos de otros organizadores.
-  * Si opta por la vía de organizador, la interfaz ofrecerá dos botones excluyentes para especificar si operará como *Persona Física* o *Persona Jurídica*.
-* **Paso 2 (Pestaña Persona Física / Participante):** Al activar esta pestaña, el sistema exigirá obligatoriamente las credenciales de acceso (*Nickname/Usuario*, *Correo Electrónico* y *Contraseña*) junto con los datos de identidad civil (*Nombre*, *Apellido*, *DNI* y *Fecha de Nacimiento*), persistiendo la información en la tabla `Persona_Fisica`.
-* **Paso 2 (Pestaña Persona Jurídica / Organización):** Al activar esta pestaña, el sistema inhabilitará los campos de identidad física y exigirá de forma obligatoria las credenciales de acceso, los datos fiscales institucionales (*Razón Social*, *CUIT*, *Teléfono de Contacto* y un *Nombre de Fantasía* opcional) junto con la estructura de Domicilio Fiscal Legal (*Provincia*, *Ciudad*, *Calle*, *Número Exterior* e *Interior/Depto* opcional), guardando la dirección en la tabla `Ubicacion` y el comercio en `Persona_Juridica`.
+    - **Justificación:** Evita que los organizadores deban crear una cuenta separada solo para participar en eventos. Garantiza que todos los participantes en eventos sean siempre Personas Físicas (individuos), manteniendo coherencia conceptual en la plataforma.
+
+* **Paso 2 (Pestaña Persona Física):** Al activar esta pestaña, el sistema exigirá obligatoriamente las credenciales de acceso (*Nickname/Usuario*, *Correo Electrónico* y *Contraseña*) junto con los datos de identidad civil (*Nombre*, *Apellido*, *DNI* y *Fecha de Nacimiento*), persistiendo la información en la tabla `Persona_Fisica`.
+  - **Nota Sprint 2:** En versiones futuras (Sprint 2), los organizadores podrán crear Personas Jurídicas (empresas/organizaciones) como contenedores administrativos a través de un flujo posterior al registro inicial. Los miembros de esas organizaciones seguirán siendo Personas Físicas que participan en eventos a través de roles administrativos, no mediante registros separados de Persona Jurídica.
 
 
 * #### **RF-1.2: Autenticación Segura y Emisión de JWT**

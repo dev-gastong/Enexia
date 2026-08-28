@@ -53,11 +53,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
        (BD)     (Images)       (Notifications)
 ```
 
-### Role Assignment Strategy (Sprint 1)
+### Role Assignment Strategy & Participation Model
 
+**Sprint 1: Personas Físicas Only**
 - **PARTICIPANTE** (Persona Física): Receives **PARTICIPANTE role only** — can browse, register, and participate in events.
 - **ORGANIZADOR** (Persona Física): Receives **ORGANIZADOR + PARTICIPANTE roles** — can create/manage events AND participate in others' events.
-- **ORGANIZADOR** (Persona Jurídica, Sprint 2): Via `Miembros_Organizacion`, individual members are Personas Físicas with PARTICIPANTE role; the organization itself does not have a direct role. This ensures all actual participants are rooted in Persona Física.
+  - **Rationale:** Avoids forcing organizers to create separate accounts for participation. Keeps the system lightweight for MVP.
+
+**Sprint 2: Personas Jurídicas as Administrative Containers**
+- **Persona Jurídica** (Organization/Company): Created by an ORGANIZADOR Persona Física; not a login entity.
+  - **Key principle:** Companies do not participate in events. Participation is always by Personas Físicas (people).
+  - Members: Registered via `Miembros_Organizacion` table, linking Personas Físicas as organization members/admins.
+  - Event authorship: Events created "under" an organization are attributed to the company name, but organized/managed by Persona Física members.
+  - **Rationale:** Ensures conceptual coherence — all actual event participants are individual people (Personas Físicas), never abstract entities. This models real-world behavior: a company doesn't attend a concert; its employees do.
 
 ---
 

@@ -2,14 +2,27 @@
 
 ## Módulo 7: Módulo de Segmentación de Perfiles de Organización
 
+---
+
+### **Sprint 1: Personas Físicas**
+
 * #### **RF-7.1: Registro y Validación de Organizadores Independientes (Persona Física)**
 
 
 El sistema debe permitir el registro de usuarios que operen de forma autónoma bajo la modalidad de organizador independiente. Al activar el formulario correspondiente, el backend exigirá de forma obligatoria y estricta las características civiles de identidad: *Nombre*, *Apellido*, *DNI* y *Fecha de Nacimiento*. El sistema validará la unicidad del DNI antes de impactar los datos en la tabla `Persona_Fisica` para evitar duplicidades de identidad en la plataforma.
+
+---
+
+### **Sprint 2: Personas Jurídicas como Contenedores Administrativos**
+
 * #### **RF-7.2: Registro e Integridad Fiscal de Organizaciones (Persona Jurídica)**
 
 
-El sistema debe permitir el alta de perfiles institucionales para empresas, organizaciones o instituciones. Al activar esta pestaña en la interfaz, el sistema solicitará obligatoriamente los datos fiscales y corporativos: *Razón Social*, *CUIT*, *Teléfono de Contacto* y *Correo Corporativo*, dejando el *Nombre de Fantasía* como un campo opcional. Estos datos serán persistidos de forma aislada en la tabla `Persona_Juridica`.
+El sistema debe permitir el alta de perfiles institucionales para empresas, organizaciones o instituciones. Una Persona Física con rol ORGANIZADOR puede crear una Persona Jurídica como contenedor administrativo a través de un flujo separado (no como parte del registro inicial). Al completar este flujo, la Persona Física quedará automáticamente registrada como miembro propietario de esa organización a través de la tabla `Miembros_Organizacion`.
+
+**Principio clave:** Una Persona Jurídica no puede participar directamente en eventos. Los participantes son siempre Personas Físicas. Cuando un evento se crea "bajo" una organización, es un miembro de esa organización (Persona Física) quien lo organiza, pero aparece a nombre corporativo.
+
+El sistema solicitará obligatoriamente los datos fiscales y corporativos: *Razón Social*, *CUIT*, *Teléfono de Contacto* y *Correo Corporativo*, dejando el *Nombre de Fantasía* como un campo opcional. Estos datos serán persistidos de forma aislada en la tabla `Persona_Juridica`.
 * #### **RF-7.3: Validación Algorítmica y Criptográfica del CUIT**
 
 

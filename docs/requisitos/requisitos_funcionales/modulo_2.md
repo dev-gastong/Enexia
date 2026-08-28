@@ -4,8 +4,13 @@
 
 
 El sistema debe permitir a los usuarios con permisos de *Organizador* registrar un nuevo evento en la plataforma, capturando obligatoriamente el nombre, la categoría, la descripción detallada y la ubicación geográfica de la actividad. El backend debe resolver de forma automática la autoría del contenido:
-* Si el usuario se registró como **Persona Jurídica**, el evento se publicará bajo el nombre de la Razón Social o Nombre de Fantasía validado.
-* Si el usuario se registró como **Persona Física**, el evento figurará respaldado a título personal por el Nombre y Apellido civiles del creador.
+
+**Sprint 1:**
+* El evento figurará respaldado a título personal por el Nombre y Apellido civiles del creador (Persona Física).
+
+**Sprint 2 (cuando Persona Jurídica esté implementada):**
+* Si el evento es creado por una Persona Física actuando como miembro/administrador de una Persona Jurídica, el evento se publicará bajo el nombre de la Razón Social o Nombre de Fantasía de la organización.
+* Si el evento es creado directamente por una Persona Física sin asociación a empresa, figurará a título personal por el Nombre y Apellido civiles del creador.
 
 
 * #### **RF-2.2: Moderación Asíncrona de Texto en la Carga**
