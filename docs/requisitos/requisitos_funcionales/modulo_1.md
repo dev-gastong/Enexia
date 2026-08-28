@@ -4,7 +4,11 @@
 
 
 El sistema debe proveer un flujo de registro estructurado en pasos e interfaces interactivas para segmentar los perfiles de acceso:
-* **Paso 1 (Selección de Perfil):** El sistema debe permitir al usuario elegir su propósito en la plataforma, distinguiendo entre *Participante* (para explorar y asistir) y *Organizador* (para crear y gestionar eventos). Si opta por la vía de organizador, la interfaz ofrecerá dos botones excluyentes para especificar si operará como *Persona Física* o *Persona Jurídica*.
+* **Paso 1 (Selección de Perfil):** El sistema debe permitir al usuario elegir su propósito en la plataforma, distinguiendo entre *Participante* (para explorar y asistir) y *Organizador* (para crear y gestionar eventos). 
+  * **Asignación de roles:** 
+    - Los usuarios que se registren como **PARTICIPANTE** reciben solo ese rol.
+    - Los usuarios que se registren como **ORGANIZADOR** reciben **ambos roles: ORGANIZADOR + PARTICIPANTE**, permitiéndoles crear eventos propios Y participar en eventos de otros organizadores.
+  * Si opta por la vía de organizador, la interfaz ofrecerá dos botones excluyentes para especificar si operará como *Persona Física* o *Persona Jurídica*.
 * **Paso 2 (Pestaña Persona Física / Participante):** Al activar esta pestaña, el sistema exigirá obligatoriamente las credenciales de acceso (*Nickname/Usuario*, *Correo Electrónico* y *Contraseña*) junto con los datos de identidad civil (*Nombre*, *Apellido*, *DNI* y *Fecha de Nacimiento*), persistiendo la información en la tabla `Persona_Fisica`.
 * **Paso 2 (Pestaña Persona Jurídica / Organización):** Al activar esta pestaña, el sistema inhabilitará los campos de identidad física y exigirá de forma obligatoria las credenciales de acceso, los datos fiscales institucionales (*Razón Social*, *CUIT*, *Teléfono de Contacto* y un *Nombre de Fantasía* opcional) junto con la estructura de Domicilio Fiscal Legal (*Provincia*, *Ciudad*, *Calle*, *Número Exterior* e *Interior/Depto* opcional), guardando la dirección en la tabla `Ubicacion` y el comercio en `Persona_Juridica`.
 

@@ -290,8 +290,14 @@ public class AuthService {
         usuario.setFechaBaja(null);          // null = cuenta vigente (RF-1.6)
         usuario = usuarioRepository.save(usuario);
 
-        // --- Paso 1.1.6: asignar el rol elegido.
+        // --- Paso 1.1.6: asignar rol(es).
+        // Si elige ORGANIZADOR, obtiene ambos roles (ORGANIZADOR + PARTICIPANTE)
+        // para poder crear eventos Y participar en los de otros.
+        // Los PARTICIPANTES reciben solo ese rol.
         RolNombre rolElegido = RolNombre.valueOf(peticion.getPerfil().toUpperCase());
+        List<String> rolesAsignados = new ArrayList<>();
+
+        // Asignar el rol elegido
         Rol rol = rolRepository.findByNombreRolIgnoreCase(rolElegido.name())
                 .orElseThrow(() -> new ReglaNegocioException(
                         "El rol " + rolElegido + " no esta cargado en el catalogo"));
@@ -300,19 +306,33 @@ public class AuthService {
         usuarioRol.setUsuario(usuario);
         usuarioRol.setRol(rol);
         usuarioRolRepository.save(usuarioRol);
+        rolesAsignados.add(rolElegido.name());
+
+        // Si es ORGANIZADOR, agregar tambien el rol PARTICIPANTE
+        if (rolElegido == RolNombre.ORGANIZADOR) {
+            Rol rolParticipante = rolRepository.findByNombreRolIgnoreCase(RolNombre.PARTICIPANTE.name())
+                    .orElseThrow(() -> new ReglaNegocioException(
+                            "El rol PARTICIPANTE no esta cargado en el catalogo"));
+
+            UsuarioRol usuarioRolParticipante = new UsuarioRol();
+            usuarioRolParticipante.setUsuario(usuario);
+            usuarioRolParticipante.setRol(rolParticipante);
+            usuarioRolRepository.save(usuarioRolParticipante);
+            rolesAsignados.add(RolNombre.PARTICIPANTE.name());
+        }
 
         // --- Paso 1.1.7 (ente corporativo): Sprint 2.
 
         auditoriaService.registrar(usuario, AuditoriaService.ACCION_REGISTRO_EXITOSO,
-                "Alta de cuenta con perfil " + rolElegido, request);
-        log.info("Usuario {} registrado con rol {}", usuario.getIdUsuario(), rolElegido);
+                "Alta de cuenta con perfil " + rolElegido + ", roles asignados: " + rolesAsignados, request);
+        log.info("Usuario {} registrado con roles {}", usuario.getIdUsuario(), rolesAsignados);
 
         return new UsuarioRegistroResponse(
                 usuario.getIdUsuario(),
                 usuario.getEmail(),
                 usuario.getNickname(),
                 EstadoUsuarioNombre.ACTIVO.name(),
-                List.of(rolElegido.name()),
+                rolesAsignados,
                 "Cuenta creada correctamente. Ya podes iniciar sesion.");
     }
 

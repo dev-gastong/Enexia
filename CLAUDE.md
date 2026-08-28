@@ -53,6 +53,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
        (BD)     (Images)       (Notifications)
 ```
 
+### Role Assignment Strategy (Sprint 1)
+
+- **PARTICIPANTE** (Persona Física): Receives **PARTICIPANTE role only** — can browse, register, and participate in events.
+- **ORGANIZADOR** (Persona Física): Receives **ORGANIZADOR + PARTICIPANTE roles** — can create/manage events AND participate in others' events.
+- **ORGANIZADOR** (Persona Jurídica, Sprint 2): Via `Miembros_Organizacion`, individual members are Personas Físicas with PARTICIPANTE role; the organization itself does not have a direct role. This ensures all actual participants are rooted in Persona Física.
+
 ---
 
 ## Technology Stack
@@ -75,7 +81,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The system revolves around these key entities (see `docs/diseño_bd/MER.md` for full ERD):
 
 - **Persona**: Base entity (Física = Individual, Jurídica = Organization)
-- **Usuario**: User account with roles (Participante, Organizador, Administrador)
+- **Usuario**: User account with roles (Participante, Organizador, Administrador). **Design note:** Organizadores receive both ORGANIZADOR + PARTICIPANTE roles to create events AND participate in others' events; only Personas Físicas can register directly. Personas Jurídicas manage participants through Miembros_Organizacion (Sprint 2).
 - **Evento**: Event created by organizers with state tracking
 - **Evento_Cronograma**: Multiple dates/times for a single event
 - **Cronograma_Ticket**: Ticket types, pricing, and quota management per date
