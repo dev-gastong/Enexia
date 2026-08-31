@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel - Enexia</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="barra">
+    <a class="barra__marca" href="../index.html">Enex<span>ia</span></a>
+    <nav class="barra__nav">
+        <span class="barra__link" id="barraUsuario"></span>
+        <button class="btn btn--secundario" id="btnSalir" style="padding:6px 14px;font-size:13px">
+            Cerrar sesion
+        </button>
+    </nav>
+</header>
+
+<main class="contenedor">
+
+    <h1 class="titulo-pagina">Sesion activa</h1>
+    <p class="bajada">
+        Lo que sigue sale del JWT que emitio el backend. Sirve para comprobar que
+        el token llega bien, que contiene los roles y cuando vence.
+    </p>
+
+    <div class="split">
+
+        <div>
+            <!-- Identidad -->
+            <div class="tarjeta">
+                <div class="tarjeta__cabecera">
+                    <h2 class="tarjeta__titulo">Usuario autenticado</h2>
+                </div>
+                <div class="tarjeta__cuerpo">
+                    <div class="datos" id="datosUsuario"></div>
+                </div>
+            </div>
+
+            <!-- RBAC en el frontend -->
+            <div class="tarjeta" style="margin-top:20px">
+                <div class="tarjeta__cabecera">
+                    <h2 class="tarjeta__titulo">Vistas segun el rol (RF-1.3)</h2>
+                    <p class="tarjeta__sub">
+                        Cada bloque aparece solo si el token trae el rol correspondiente.
+                        El backend vuelve a validarlo igual en cada peticion.
+                    </p>
+                </div>
+                <div class="tarjeta__cuerpo">
+
+                    <div class="acceso" data-rol="PARTICIPANTE" style="margin-bottom:12px">
+                        <h3 class="acceso__titulo" style="font-size:16px">Catalogo de eventos</h3>
+                        <p class="acceso__desc">
+                            Visible con el rol PARTICIPANTE. Explorar, inscribirse y valorar
+                            eventos (Modulos 3, 4 y 5).
+                        </p>
+                    </div>
+
+                    <div class="acceso" data-rol="ORGANIZADOR" style="margin-bottom:12px">
+                        <h3 class="acceso__titulo" style="font-size:16px">Gestion de mis eventos</h3>
+                        <p class="acceso__desc">
+                            Visible con el rol ORGANIZADOR. Crear, editar y publicar eventos
+                            (Modulo 2).
+                        </p>
+                    </div>
+
+                    <div class="acceso" data-rol="ADMINISTRADOR" style="margin-bottom:12px">
+                        <h3 class="acceso__titulo" style="font-size:16px">Panel de administracion</h3>
+                        <p class="acceso__desc">
+                            Visible con el rol ADMINISTRADOR. Gestion de usuarios, eventos y
+                            categorias (Modulo 6).
+                        </p>
+                    </div>
+
+                    <div class="aviso aviso--visible aviso--info" id="notaRoles"></div>
+                </div>
+            </div>
+
+            <!-- Almacenamiento del token -->
+            <div class="tarjeta" style="margin-top:20px">
+                <div class="tarjeta__cabecera">
+                    <h2 class="tarjeta__titulo">Donde se guarda el token</h2>
+                </div>
+                <div class="tarjeta__cuerpo">
+                    <div class="datos">
+                        <div class="dato">
+                            <span class="dato__clave">Almacen</span>
+                            <span class="dato__valor">sessionStorage</span>
+                        </div>
+                        <div class="dato">
+                            <span class="dato__clave">Clave</span>
+                            <span class="dato__valor">enexia_token</span>
+                        </div>
+                        <div class="dato">
+                            <span class="dato__clave">Duracion</span>
+                            <span class="dato__valor">Se borra al cerrar la pestana</span>
+                        </div>
+                        <div class="dato">
+                            <span class="dato__clave">Se envia como</span>
+                            <span class="dato__valor">Authorization: Bearer &lt;token&gt;</span>
+                        </div>
+                    </div>
+                    <p class="campo__ayuda" style="margin-top:12px">
+                        Con <code class="inline">localStorage</code> la sesion sobreviviria al
+                        cierre del navegador, pero el token quedaria expuesto por mas tiempo.
+                        Ninguno de los dos frena un XSS: para eso hace falta una cookie
+                        HttpOnly, prevista para Sprint 2.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Token crudo y payload decodificado -->
+        <div>
+            <div class="consola">
+                <div class="consola__cabecera">
+                    <p class="consola__titulo">JWT emitido</p>
+                    <span class="consola__meta" id="cuentaRegresiva"></span>
+                </div>
+                <div class="consola__peticion" id="tokenCrudo"></div>
+                <pre class="consola__cuerpo" id="payloadDecodificado"></pre>
+            </div>
+
+            <div class="tarjeta" style="margin-top:20px">
+                <div class="tarjeta__cabecera">
+                    <h2 class="tarjeta__titulo">Anatomia del token</h2>
+                </div>
+                <div class="tarjeta__cuerpo">
+                    <div class="datos">
+                        <div class="dato">
+                            <span class="dato__clave">cabecera</span>
+                            <span class="dato__valor">Algoritmo de firma y tipo</span>
+                        </div>
+                        <div class="dato">
+                            <span class="dato__clave">payload</span>
+                            <span class="dato__valor">sub (email), roles, iat, exp, iss</span>
+                        </div>
+                        <div class="dato">
+                            <span class="dato__clave">firma</span>
+                            <span class="dato__valor">HMAC con la clave secreta del servidor</span>
+                        </div>
+                    </div>
+                    <p class="campo__ayuda" style="margin-top:12px">
+                        Las tres partes viajan en Base64Url, que <strong>no</strong> es cifrado:
+                        cualquiera puede leer el payload. Lo que no puede es alterarlo, porque
+                        la firma dejaria de coincidir y el backend rechazaria el token.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+/* Puerta de entrada: sin sesion valida no se muestra nada. */
+if (!Auth.exigirSesion('auth/login.html')) {
+    throw new Error('Sin sesion');
+}
+
+const usuario = Auth.usuario();
+const payload = Auth.payload();
+const roles = Auth.roles();
+
+/* ------------------------------------------------------------ Identidad */
+
+document.getElementById('barraUsuario').textContent = usuario.email;
+
+document.getElementById('datosUsuario').innerHTML = `
+    <div class="dato">
+        <span class="dato__clave">id_usuario</span>
+        <span class="dato__valor">${usuario.idUsuario}</span>
+    </div>
+    <div class="dato">
+        <span class="dato__clave">Email</span>
+        <span class="dato__valor">${usuario.email}</span>
+    </div>
+    <div class="dato">
+        <span class="dato__clave">Roles</span>
+        <span class="dato__valor">${roles.map(UI.chipRol).join(' ')}</span>
+    </div>
+    <div class="dato">
+        <span class="dato__clave">Emitido (iat)</span>
+        <span class="dato__valor">${payload && payload.iat ? UI.fechaLegible(new Date(payload.iat * 1000)) : '-'}</span>
+    </div>
+    <div class="dato">
+        <span class="dato__clave">Vence (exp)</span>
+        <span class="dato__valor">${UI.fechaLegible(Auth.expiraEn())}</span>
+    </div>
+`;
+
+/* ------------------------------------------------------ RBAC en pantalla */
+
+document.querySelectorAll('[data-rol]').forEach(bloque => {
+    if (!Auth.hasRole(bloque.dataset.rol)) {
+        bloque.remove();
+    }
+});
+
+document.getElementById('notaRoles').innerHTML = roles.includes('ORGANIZADOR')
+    ? 'Esta cuenta se registro como <strong>Organizador</strong>, por eso ve las dos '
+      + 'secciones: puede gestionar sus eventos y participar en los de otros.'
+    : 'Esta cuenta se registro como <strong>Participante</strong>, asi que solo ve el '
+      + 'catalogo. La seccion de gestion existe, pero el rol no la habilita.';
+
+/* --------------------------------------------------------------- Token */
+
+const token = Auth.token();
+document.getElementById('tokenCrudo').textContent = token;
+document.getElementById('payloadDecodificado').innerHTML = UI.colorearJson(payload);
+
+/* Cuenta regresiva hasta el vencimiento */
+function refrescarCuenta() {
+    const restantes = Auth.segundosRestantes();
+    const caja = document.getElementById('cuentaRegresiva');
+
+    if (restantes <= 0) {
+        caja.textContent = 'token vencido';
+        caja.style.color = '#fca5a5';
+        return;
+    }
+
+    const h = String(Math.floor(restantes / 3600)).padStart(2, '0');
+    const m = String(Math.floor((restantes % 3600) / 60)).padStart(2, '0');
+    const s = String(restantes % 60).padStart(2, '0');
+    caja.textContent = `vence en ${h}:${m}:${s}`;
+}
+
+refrescarCuenta();
+setInterval(refrescarCuenta, 1000);
+
+/* -------------------------------------------------------------- Salida */
+
+document.getElementById('btnSalir').addEventListener('click', () => {
+    Auth.cerrarSesion();
+    window.location.href = 'auth/login.html';
+});
+</script>
+
+</body>
+</html>

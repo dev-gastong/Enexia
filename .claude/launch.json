@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "enexia-backend",
+      "runtimeExecutable": "enexia\\gradlew.bat",
+      "runtimeArgs": ["-p", "enexia", "bootRun"],
+      "port": 8080
+    },
+    {
+      "name": "enexia-frontend",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8000", "--directory", "frontend"],
+      "port": 8000
+    }
+  ]
+}

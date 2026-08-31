@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enexia - Modulo 1: Usuarios y Autenticacion</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="barra">
+    <a class="barra__marca" href="index.html">Enex<span>ia</span></a>
+    <nav class="barra__nav">
+        <span class="pulso" id="pulso">
+            <span class="pulso__punto"></span> Verificando API...
+        </span>
+    </nav>
+</header>
+
+<main class="contenedor">
+
+    <section class="hero">
+        <h1 class="hero__titulo">Modulo 1: Usuarios y Autenticacion</h1>
+        <p class="hero__sub">
+            Banco de pruebas visual del Sprint 1. Cada formulario muestra al lado
+            la respuesta HTTP real del backend: status, cabeceras y JSON.
+        </p>
+    </section>
+
+    <div class="accesos">
+        <a class="acceso" href="pages/auth/register.html">
+            <h2 class="acceso__titulo">Registro &rarr;</h2>
+            <p class="acceso__desc">
+                RF-1.1. Alta de Persona Fisica con seleccion de perfil.
+                Valida formato, unicidad de email y DNI, moderacion de texto y
+                asignacion de roles.
+            </p>
+        </a>
+
+        <a class="acceso" href="pages/auth/login.html">
+            <h2 class="acceso__titulo">Login &rarr;</h2>
+            <p class="acceso__desc">
+                RF-1.2, RF-1.4 y RF-1.6. Emite el JWT, controla el estado de la
+                cuenta y aplica la escala de penalizacion por intentos fallidos.
+            </p>
+        </a>
+    </div>
+
+    <section class="pasos">
+        <h2 class="tarjeta__titulo">Antes de empezar</h2>
+        <ol>
+            <li>Levantar el backend: <code class="inline">cd enexia</code> y luego <code class="inline">.\gradlew.bat bootRun</code> (queda en el puerto 8080).</li>
+            <li>Servir este frontend desde el puerto 8000: <code class="inline">cd frontend</code> y luego <code class="inline">python -m http.server 8000</code>.</li>
+            <li>Abrir <code class="inline">http://localhost:8000</code>. Abrir el archivo con doble clic NO funciona: el origen <code class="inline">file://</code> lo bloquea la politica CORS del backend.</li>
+        </ol>
+    </section>
+
+    <section class="pasos">
+        <h2 class="tarjeta__titulo">Que cubre este banco de pruebas</h2>
+        <div class="datos" style="margin-top:14px">
+            <div class="dato"><span class="dato__clave">201 Created</span><span class="dato__valor">Registro exitoso, devuelve los roles asignados</span></div>
+            <div class="dato"><span class="dato__clave">200 OK</span><span class="dato__valor">Login exitoso, devuelve el JWT</span></div>
+            <div class="dato"><span class="dato__clave">400 Bad Request</span><span class="dato__valor">VALIDACION_FALLIDA / REGLA_NEGOCIO</span></div>
+            <div class="dato"><span class="dato__clave">401 Unauthorized</span><span class="dato__valor">CREDENCIALES_INVALIDAS</span></div>
+            <div class="dato"><span class="dato__clave">403 Forbidden</span><span class="dato__valor">CUENTA_BLOQUEADA / CUENTA_EN_COOLDOWN</span></div>
+            <div class="dato"><span class="dato__clave">409 Conflict</span><span class="dato__valor">RECURSO_DUPLICADO (email o nickname en uso)</span></div>
+            <div class="dato"><span class="dato__clave">422 Unprocessable</span><span class="dato__valor">CONTENIDO_INAPROPIADO (moderacion de texto)</span></div>
+            <div class="dato"><span class="dato__clave">429 Too Many Requests</span><span class="dato__valor">RATE_LIMIT_EXCEDIDO (20 intentos / 15 min por IP)</span></div>
+        </div>
+    </section>
+
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script>
+    UI.sondearApi();
+
+    // Si ya hay sesion abierta, se ofrece ir directo al panel.
+    if (Auth.autenticado()) {
+        document.querySelector('.accesos').insertAdjacentHTML('beforebegin', `
+            <div class="aviso aviso--visible aviso--info">
+                Ya hay una sesion iniciada como <strong>${Auth.usuario().email}</strong>.
+                <a href="pages/dashboard.html">Ir al panel</a>.
+            </div>
+        `);
+    }
+</script>
+
+</body>
+</html>
