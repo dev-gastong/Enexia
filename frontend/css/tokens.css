@@ -1,0 +1,263 @@
+/* =====================================================================
+   Enexia - Tokens de diseno
+   Paleta "Atardecer Fueguino" (naranja & morado)
+   ---------------------------------------------------------------------
+   UNICA fuente de verdad para color, forma y tipografia.
+   Ninguna otra hoja ni pagina debe escribir un color en hexadecimal:
+   si hace falta un tono nuevo, se agrega aca.
+
+   Todos los valores de color fueron medidos contra WCAG 2.1 AA sobre la
+   pagina renderizada (foto, filtro, velos y halos compuestos), no sobre
+   estimaciones. Los ratios anotados son el resultado de esa medicion.
+   El auditor esta en js/auditoria-contraste.js.
+
+   Como usarlo:
+       <link rel="stylesheet" href="../../css/tokens.css">
+       <link rel="stylesheet" href="../../css/styles.css">
+   tokens.css SIEMPRE va primero.
+   ===================================================================== */
+
+:root {
+
+/* =====================================================================
+   1. MARCA
+   ---------------------------------------------------------------------
+   El par naranja/morado no es arbitrario: ya convive en el isotipo de
+   Enexia (#F28C1E y #9B3FB5). La marca los emparejo antes que la
+   interfaz. Ademas leen como atardecer austral y como espectaculo.
+
+   REPARTO DE ROLES
+   El naranja es EXCLUSIVO de la accion. Es el unico elemento calido de
+   la pantalla, asi que el boton no compite con nada; y al ser casi
+   complementario del morado, salta al maximo.
+   El morado ocupa todo lo demas: enlaces, iconos, foco, chips y
+   remates de titular.
+
+   LIMITE DEL NARANJA
+   El naranja del isotipo no sirve como relleno de boton. Medido con
+   texto blanco encima:
+       #F28C1E -> 2.46   el del logo, descartado
+       #EA580C -> 3.56   descartado
+       #D9480F -> 4.30   descartado por poco
+       #C2410C -> 5.18   elegido
+   ===================================================================== */
+
+    /* --- Accion (CTA) --------------------------------------------- */
+    --accion:             #c2410c;  /* blanco encima: 5.18:1 */
+    --accion-hover:       #9a330a;  /* 7.36:1 - oscurece, NUNCA aclara */
+    --accion-tinte:       #fbeae1;
+    --accion-borde:       #f0c9b4;
+    --sobre-accion:       #ffffff;
+
+    /* --- Acento (enlaces, iconos, foco, chips) -------------------- */
+    --acento:             #7c3aed;  /* 5.70:1 en blanco */
+    --acento-fuerte:      #6d28d9;  /* 7.10:1 en blanco, 6.17:1 en tinte,
+                                       4.73:1 sobre la foto del hero    */
+    --acento-tinte:       #f3ecfd;
+    --acento-borde:       #d9c7fb;
+
+    /* --- Colores literales del isotipo ---------------------------- */
+    --naranja-marca:      #f28c1e;  /* decorativo: nunca lleva texto   */
+    --morado-marca:       #9b3fb5;  /* 5.57:1 en blanco, si lleva      */
+
+    /* --- Sombras y foco de la accion ------------------------------ */
+    --sombra-accion:      0 2px 10px rgba(194, 65, 12, .30);
+    --foco-accion:        0 0 0 3px rgba(124, 58, 237, .20);
+
+
+/* =====================================================================
+   2. NEUTROS
+   ---------------------------------------------------------------------
+   Base clara deliberada: en un catalogo de eventos el protagonista es
+   la imagen que sube el organizador, no el chrome de la interfaz.
+   Llevan un tinte violaceo apenas perceptible para que el gris no se
+   sienta frio al lado del morado.
+   ===================================================================== */
+
+    --blanco:             #ffffff;
+    --lienzo:             #faf8fa;  /* fondo de pagina */
+    --superficie:         #ffffff;  /* tarjetas, inputs */
+    --superficie-alt:     #f5f2f7;  /* zonas hundidas dentro de una tarjeta */
+
+    --borde:              #eae5ee;
+    --borde-campo:        #d8d1de;
+    --borde-fuerte:       #bdb4c6;
+
+    --texto:              #1f1a2e;  /* 16.86:1 sobre blanco */
+    --texto-secundario:   #5c5470;  /*  7.10:1 sobre blanco */
+    --texto-sobre-foto:   #423a55;  /* mas oscuro: vive sobre la foto lavada */
+
+
+/* =====================================================================
+   3. ESCENARIO DEL LOGIN
+   ---------------------------------------------------------------------
+   Capas de fondo. Viven aca y no en la pagina porque codifican color de
+   marca. El velo del hero va a sangre: sus bordes izquierdo, derecho y
+   superior coinciden con los de la pantalla, asi que ninguno se ve, y
+   el unico limite propio es el inferior muriendo hacia abajo.
+   ===================================================================== */
+
+    --foto-filtro:        saturate(.68) brightness(1.05);
+
+    /* Atardecer: violeta frio sobre la cordillera, derivando a un
+       blanco calido y ambarino donde se apoya la tarjeta. */
+    --velo: linear-gradient(118deg,
+        rgba(246, 243, 249, .91)  0%,
+        rgba(230, 224, 241, .80) 38%,
+        rgba(252, 246, 241, .90) 72%,
+        rgba(253, 250, 247, .96) 100%);
+
+    --velo-hero: linear-gradient(to bottom,
+        rgba(251, 249, 252, .47)  0%,
+        rgba(251, 249, 252, .45) 58%,
+        rgba(251, 249, 252, .24) 82%,
+        rgba(251, 249, 252, 0)  100%);
+
+    --halo-1: radial-gradient(circle,
+        rgba(124, 58, 237, .10) 0%, rgba(124, 58, 237, 0) 70%);
+    --halo-2: radial-gradient(circle,
+        rgba(194, 65, 12, .10) 0%, rgba(194, 65, 12, 0) 70%);
+
+
+/* =====================================================================
+   4. ESTADOS SEMANTICOS
+   ---------------------------------------------------------------------
+   Cada estado es un par texto + tinte, verificado como par.
+   ===================================================================== */
+
+    --ok:                 #065f46;   --ok-tinte:     #d1fae5;   /* 6.78:1 */
+    --error:              #991b1b;   --error-tinte:  #fee2e2;   /* 6.80:1 */
+    --alerta:             #92400e;   --alerta-tinte: #fef3c7;   /* 6.37:1 */
+    --info:               #1e40af;   --info-tinte:   #dbeafe;   /* 7.15:1 */
+
+    --ok-borde:           #6ee7b7;
+    --error-borde:        #fca5a5;
+    --alerta-borde:       #fcd34d;
+    --info-borde:         #93c5fd;
+
+    --error-hover:        #7f1616;
+
+
+/* =====================================================================
+   5. CATEGORIAS DE EVENTO  (Modulos 2 y 3)
+   ---------------------------------------------------------------------
+   La entidad Categoria es de primera clase en el MER y el producto tiene
+   cinco dominios. Codificarlos por color es lo que hace legible un
+   catalogo de un vistazo.
+
+   NINGUNA usa naranja ni morado, a proposito: esos dos matices ya son
+   la accion y el acento de la interfaz. Una etiqueta del mismo color
+   que el boton se lee como si fuera clickeable.
+
+   Por eso "Cultural" NO es morado y "Deportivo" NO es naranja, que
+   serian las asignaciones obvias. Quedan reservados 40 grados de matiz
+   alrededor de cada color de UI.
+
+   "Gaming" va en grafito: con dos matices reservados no entran cinco
+   colores bien separados, y un neutro no compite por matiz con nada.
+   ===================================================================== */
+
+    --cat-cultural:       #be185d;   --cat-cultural-tinte:  #fce7f0;  /* 5.13:1 */
+    --cat-educativo:      #1e40af;   --cat-educativo-tinte: #e4eafb;  /* 7.25:1 */
+    --cat-social:         #0e7490;   --cat-social-tinte:    #e0f2f7;  /* 4.65:1 */
+    --cat-deportivo:      #166534;   --cat-deportivo-tinte: #e4f2e9;  /* 6.17:1 */
+    --cat-gaming:         #334155;   --cat-gaming-tinte:    #e8ecf1;  /* 8.73:1 */
+
+
+/* =====================================================================
+   6. CHIPS DE ROL  (Modulo 1)
+   ===================================================================== */
+
+    --rol-participante:   #1e40af;   --rol-participante-tinte:  #dbeafe;  /* 7.15:1 */
+    --rol-organizador:    #5b21b6;   --rol-organizador-tinte:   #ede9fe;  /* 7.57:1 */
+    --rol-admin:          #92400e;   --rol-admin-tinte:         #fef3c7;  /* 6.37:1 */
+    --rol-neutro:         #374151;   --rol-neutro-tinte:        #e5e7eb;  /* 8.33:1 */
+
+
+/* =====================================================================
+   7. LAYOUT
+   ---------------------------------------------------------------------
+   Tope de ancho de la composicion. En monitores mas anchos el contenido
+   se centra en vez de estirarse: sin el tope, en 1920px el texto queda
+   pegado al borde izquierdo y la tarjeta al derecho, con un vacio de
+   812px en el medio. El fondo sigue a sangre.
+   ===================================================================== */
+
+    --ancho-contenido:    1560px;
+
+
+/* =====================================================================
+   8. FORMA
+   ===================================================================== */
+
+    --radio-sm:           6px;
+    --radio:              10px;
+    --radio-campo:        12px;
+    --radio-tarjeta:      28px;
+    --radio-pildora:      999px;
+
+    --sombra:             0 1px 2px rgba(31, 26, 46, .06),
+                          0 1px 3px rgba(31, 26, 46, .10);
+    --sombra-md:          0 4px 12px rgba(31, 26, 46, .08);
+    --sombra-tarjeta:     0 12px 40px rgba(31, 26, 46, .11),
+                          0 2px 6px  rgba(31, 26, 46, .05);
+
+
+/* =====================================================================
+   9. TIPOGRAFIA
+   ===================================================================== */
+
+    --sans:   'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --marca:  'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+    --mono:   ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+
+/* =====================================================================
+   10. CONSOLA DEL BANCO DE PRUEBAS
+   ---------------------------------------------------------------------
+   Superficie oscura deliberada: imita una terminal, por eso no sigue la
+   paleta clara del producto. Vive aca igual para que nada quede
+   hardcodeado en styles.css.
+   ===================================================================== */
+
+    --consola-fondo:      #0d1526;
+    --consola-borde:      #1e2d47;
+    --consola-texto:      #cbd5e1;
+    --consola-tenue:      #64748b;
+    --consola-vacia:      #475569;
+    --consola-acento:     #7dd3fc;
+
+    --json-clave:         #7dd3fc;
+    --json-texto:         #86efac;
+    --json-num:           #fbbf24;
+    --json-bool:          #c4b5fd;
+    --json-null:          #64748b;
+
+    --http-ok-fondo:      rgba(  5, 150, 105, .18);  --http-ok-texto:     #6ee7b7;
+    --http-alerta-fondo:  rgba(217, 119,   6, .18);  --http-alerta-texto: #fcd34d;
+    --http-error-fondo:   rgba(220,  38,  38, .18);  --http-error-texto:  #fca5a5;
+    --http-error-fuerte:  rgba(220,  38,  38, .25);
+    --http-red-fondo:     rgba(100, 116, 139, .25);  --http-red-texto:    #94a3b8;
+
+    --pulso-ok:           #34d399;   --pulso-ok-halo:  rgba( 52, 211, 153, .2);
+    --pulso-mal:          #f87171;   --pulso-mal-halo: rgba(248, 113, 113, .2);
+
+    /* Barra de navegacion del banco de pruebas */
+    --barra-fondo:        #3b1d63;   /* morado profundo de la marca */
+    --barra-texto:        rgba(255, 255, 255, .82);
+    --barra-marca:        #c4a5f5;
+
+
+/* =====================================================================
+   11. ALIAS DE COMPATIBILIDAD
+   ---------------------------------------------------------------------
+   Nombres que styles.css ya usaba. Apuntan al sistema nuevo.
+   En codigo nuevo usa los nombres de arriba, no estos.
+   ===================================================================== */
+
+    --fondo:              var(--lienzo);
+    --texto-suave:        var(--texto-secundario);
+    --primario:           var(--accion);
+    --primario-hover:     var(--accion-hover);
+    --primario-tinte:     var(--accion-tinte);
+}

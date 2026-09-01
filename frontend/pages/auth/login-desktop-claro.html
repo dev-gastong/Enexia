@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesion - Enexia (paleta clara)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<!-- Sistema de diseno: unica fuente de color, forma y tipografia. -->
+<link rel="stylesheet" href="../../css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Login Desktop / Paleta clara "austral"
+   Reproduccion del frame de Figma "Login Desktop" (node 77:884).
+
+   El color, la forma y la tipografia NO viven aca: vienen de
+   css/tokens.css, enlazado arriba. Este bloque solo tiene el layout y
+   los componentes propios de esta pantalla.
+
+   Lo unico local es la foto de fondo, que es especifica del login.
+   ===================================================================== */
+
+:root {
+    /* Unico punto a tocar para cambiar la imagen de fondo. */
+    --login-bg-image: url('../../assets/login-bg.png');
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--lienzo);
+    color: var(--texto-secundario);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ===================================================================
+   1. Escenario: la misma foto, pero lavada en vez de oscurecida
+   =================================================================== */
+
+.pantalla {
+    position: relative;
+    display: flex;
+    min-height: 900px;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--lienzo);
+}
+
+.pantalla__foto {
+    position: absolute;
+    top: 0;
+    left: -9.55%;
+    width: 119.1%;
+    height: 100%;
+    background-image: var(--login-bg-image);
+    background-size: cover;
+    background-position: center;
+    /* La cordillera es textura, pero con mas cuerpo que antes. */
+    filter: var(--foto-filtro);
+    pointer-events: none;
+}
+
+/* Velo con temperatura: arranca frio sobre la cordillera (hielo) y
+   deriva a un blanco calido hacia la derecha (fuego), donde se apoya
+   la tarjeta. La opacidad baja en el tramo medio le devuelve
+   profundidad al paisaje. */
+.pantalla__velo {
+    position: absolute;
+    inset: 0;
+    background: var(--velo);
+    pointer-events: none;
+}
+
+.halo {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.halo--sup-izq {
+    top: -120px;
+    left: -100px;
+    width: 600px;
+    height: 600px;
+    background: var(--halo-1);
+}
+
+/* Cae justo detras de la tarjeta: da una base verde tenue que hace
+   resaltar el boton sin competirle. */
+.halo--inf-der {
+    right: -60px;
+    bottom: -80px;
+    width: 500px;
+    height: 500px;
+    background: var(--halo-2);
+}
+
+/* El fondo sigue siendo full-bleed; lo que se topa es solo el contenido.
+   Sin este tope, en un monitor de 1920px el texto queda pegado al borde
+   izquierdo y la tarjeta al derecho, con un vacio de 812px en el medio. */
+/* Velo del hero. Le devuelve legibilidad al texto sin aplanar el resto
+   del paisaje.
+
+   Va a sangre: sus bordes izquierdo, derecho y superior coinciden con
+   los de la pantalla, asi que ninguno de los tres llega a verse. El
+   unico limite propio es el inferior, que muere en degradado hacia
+   abajo. Antes era un radial anclado al bloque de texto y su elipse
+   quedaba cortada por el borde izquierdo de la caja: ahi aparecia el
+   canto duro. */
+.velo-hero {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 78%;
+    background: var(--velo-hero);
+    pointer-events: none;
+}
+
+.pantalla__contenido {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    max-width: var(--ancho-contenido);
+    margin: 0 auto;
+}
+
+/* ===================================================================
+   2. Columna izquierda
+   =================================================================== */
+
+.presentacion {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 64px 80px;
+}
+
+.presentacion__marca { width: 105px; height: 50px; }
+
+.presentacion__cuerpo { width: 512px; max-width: 100%; }
+
+.ciudades {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 49px;
+    padding: 0;
+    list-style: none;
+}
+
+.ciudad {
+    padding: 5px 13px;
+    border: 1px solid var(--acento-borde);
+    border-radius: 28px;
+    background: var(--acento-tinte);
+    color: var(--acento-fuerte);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    white-space: nowrap;
+}
+
+.presentacion__titulo {
+    margin: 0 0 23px;
+    color: var(--texto);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 52.8px;
+    letter-spacing: -1.44px;
+}
+
+/* El remate repite el verde del boton: la mirada baja del titular al
+   CTA por el mismo color. */
+.presentacion__titulo em {
+    display: block;
+    color: var(--acento-fuerte);
+    font-style: normal;
+}
+
+.presentacion__bajada {
+    margin: 0;
+    max-width: 400px;
+    color: var(--texto-sobre-foto);
+    font-size: 16px;
+    line-height: 26.4px;
+}
+
+.presentacion__pie {
+    color: var(--texto-sobre-foto);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+/* ===================================================================
+   3. Columna derecha: tarjeta solida sobre lienzo claro
+   =================================================================== */
+
+.panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 520px;
+    flex: 0 0 520px;
+    padding: 40px 64px 40px 0;
+}
+
+.tarjeta {
+    position: relative;
+    width: 448px;
+    max-width: 100%;
+    padding: 49px 41px;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--superficie);
+    box-shadow: var(--sombra-tarjeta);
+}
+
+.tarjeta__cabecera {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 40px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 50px;
+    padding-bottom: 4px;
+    text-decoration: none;
+}
+
+.logo__marca { display: block; width: 20px; height: 20px; }
+
+.logo__texto {
+    color: var(--texto);
+    font-family: var(--marca);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 28px;
+}
+
+.tarjeta__lema {
+    max-width: 280px;
+    margin: 0;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+}
+
+.tarjeta__titulo {
+    margin: 0 0 4px;
+    color: var(--texto);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
+    letter-spacing: -.36px;
+}
+
+.tarjeta__sub {
+    margin: 0 0 32px;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+/* --- Campos --------------------------------------------------------- */
+
+.campo { margin-bottom: 16px; }
+.campo--password { margin-bottom: 8px; }
+
+.campo__fila {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.campo__etiqueta {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: .3px;
+}
+
+.campo__fila .campo__etiqueta { margin-bottom: 0; }
+
+.campo__enlace {
+    color: var(--acento);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.campo__enlace:hover { text-decoration: underline; }
+
+.entrada {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 17px;
+    border: 1px solid var(--borde-campo);
+    border-radius: var(--radio-campo);
+    background: var(--superficie);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.entrada:focus-within {
+    border-color: var(--acento);
+    box-shadow: var(--foco-accion);
+}
+
+/* Los SVG usan stroke="currentColor", asi que el color del icono sale
+   del token y no esta escrito dentro del marcado. */
+.entrada__icono {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    display: block;
+    color: var(--acento);
+}
+
+.entrada input {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    outline: none;
+}
+
+.entrada input::placeholder { color: var(--texto-secundario); }
+
+.entrada__accion {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    line-height: 0;
+    color: var(--acento);
+}
+
+.entrada__accion svg { display: block; width: 16px; height: 16px; }
+
+/* --- Acciones ------------------------------------------------------- */
+
+/* Esmeralda solido: blanco encima da 5.48:1, contra el 2.82:1 que
+   daba el celeste de la version oscura. Es el unico relleno de color
+   de la tarjeta, asi que domina sin competencia. */
+.boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 25px;
+    padding: 14px 0;
+    border: 0;
+    border-radius: var(--radio-campo);
+    background: var(--accion);
+    color: var(--sobre-accion);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: .16px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: var(--sombra-accion);
+    transition: background .15s ease, transform .15s ease;
+}
+
+/* El hover oscurece, nunca aclara: un verde mas claro romperia el
+   contraste con el texto blanco. */
+.boton:hover { background: var(--accion-hover); }
+.boton:active { transform: translateY(1px); }
+
+.boton svg { display: block; width: 16px; height: 16px; }
+
+.separador {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0 6px;
+    color: var(--texto-secundario);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.separador::before,
+.separador::after {
+    content: "";
+    flex: 1 1 0;
+    height: 1px;
+    background: var(--borde);
+}
+
+.boton--secundario {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 15px 1px;
+    /* Contorno e icono en verde; la etiqueta se queda en el neutro
+       oscuro para no competirle al relleno solido del CTA. */
+    border: 1px solid var(--acento);
+    border-radius: var(--radio-campo);
+    background: var(--superficie);
+    color: var(--texto);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: .16px;
+    text-decoration: none;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.boton--secundario:hover {
+    background: var(--acento-tinte);
+    border-color: var(--acento-fuerte);
+}
+
+/* El icono va en verde aunque la etiqueta sea neutra. */
+.boton--secundario svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    color: var(--acento);
+}
+
+.tarjeta__nota {
+    margin: 32px 0 0;
+    color: var(--texto-secundario);
+    font-size: 11px;
+    line-height: 16.5px;
+    text-align: center;
+}
+
+.tarjeta__nota span { color: var(--acento-fuerte); }
+
+/* ===================================================================
+   4. Adaptacion a pantallas menores
+   =================================================================== */
+
+/* Al apilarse, el hero se centra junto con la tarjeta. Si el texto
+   quedara alineado a la izquierda con la tarjeta centrada debajo, la
+   composicion se ve desbalanceada.
+
+   El corte esta en 1200px y no mas abajo porque es donde deja de entrar
+   el layout lado a lado: la tarjeta ocupa 520px fijos y el bloque de
+   texto pide 512 mas 160 de padding, o sea 1192 minimos. Por debajo de
+   eso el texto se comprimia y quedaba sobre una zona mas oscura de la
+   foto: a 1101px el remate caia a 2.97:1, apenas por debajo del minimo. */
+@media (max-width: 1199px) {
+    .pantalla { height: auto; min-height: 100vh; }
+    .pantalla__contenido { flex-direction: column; align-items: center; }
+
+    .presentacion {
+        width: 100%;
+        padding: 48px 40px 0;
+        align-items: center;
+        text-align: center;
+    }
+
+    /* Se topa el ancho: a 1100px el bloque ocuparia mas de 1000px y las
+       lineas quedarian demasiado largas para leer comodo. */
+    .presentacion__cuerpo {
+        width: 100%;
+        max-width: 560px;
+    }
+
+    .ciudades { justify-content: center; }
+
+    .presentacion__bajada {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .presentacion__pie { margin-top: 40px; }
+
+    /* Apilado la pagina es mucho mas alta, asi que el velo cubre una
+       fraccion menor: tiene que morir antes de llegar a la tarjeta. */
+    .velo-hero { height: 46%; }
+
+    .panel { width: 100%; flex: 0 0 auto; padding: 40px; }
+}
+
+@media (max-width: 560px) {
+    .presentacion { padding: 32px 24px 0; }
+    .presentacion__titulo { font-size: 34px; line-height: 40px; letter-spacing: -1px; }
+    .panel { padding: 32px 20px 48px; }
+    .tarjeta { padding: 36px 24px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="pantalla">
+
+    <div class="pantalla__foto" role="presentation"></div>
+    <div class="pantalla__velo" role="presentation"></div>
+    <div class="halo halo--sup-izq" role="presentation"></div>
+    <div class="halo halo--inf-der" role="presentation"></div>
+    <div class="velo-hero" role="presentation"></div>
+
+    <div class="pantalla__contenido">
+
+        <!-- ====================== Columna izquierda ====================== -->
+        <section class="presentacion">
+
+            <div class="presentacion__marca"></div>
+
+            <div class="presentacion__cuerpo">
+                <ul class="ciudades">
+                    <li class="ciudad">R&iacute;o Grande</li>
+                    <li class="ciudad">Tolhuin</li>
+                    <li class="ciudad">Ushuaia</li>
+                </ul>
+
+                <h1 class="presentacion__titulo">
+                    Todos los eventos de<br>
+                    Tierra del Fuego,
+                    <em>en un solo lugar.</em>
+                </h1>
+
+                <p class="presentacion__bajada">
+                    Descubr&iacute;, registrate y gestion&aacute; eventos culturales,
+                    deportivos y comunitarios de tu regi&oacute;n. Gratis para
+                    participantes.
+                </p>
+            </div>
+
+            <p class="presentacion__pie">&copy; 2025 Enexia &middot; Tierra del Fuego, Argentina</p>
+        </section>
+
+        <!-- ====================== Columna derecha ======================== -->
+        <section class="panel">
+            <div class="tarjeta">
+
+                <div class="tarjeta__cabecera">
+                    <a class="logo" href="../../index.html">
+                        <svg class="logo__marca" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                            <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                            <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                            <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                            <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                            <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                            <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                            <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                            <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                            <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                            <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                            <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                            <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#ffffff"/>
+                            <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#ffffff"/>
+                            <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#ffffff"/>
+                        </svg>
+                        <span class="logo__texto">NEXIA</span>
+                    </a>
+
+                    <p class="tarjeta__lema">La plataforma de eventos de Tierra del Fuego</p>
+                </div>
+
+                <h2 class="tarjeta__titulo">Bienvenido de nuevo</h2>
+                <p class="tarjeta__sub">Inici&aacute; sesi&oacute;n para continuar</p>
+
+                <form id="formLogin" novalidate>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="email">Usuario o correo electr&oacute;nico</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12.6667 14V12.6667C12.6667 11.1949 11.4718 10 10 10H6C4.52822 10 3.33333 11.1949 3.33333 12.6667V14"/>
+                                    <path d="M5.33333 4.66667C5.33333 6.13844 6.52822 7.33333 8 7.33333C9.47178 7.33333 10.6667 6.13844 10.6667 4.66667C10.6667 3.19489 9.47178 2 8 2C6.52822 2 5.33333 3.19489 5.33333 4.66667Z"/>
+                                </g>
+                            </svg>
+                            <input type="email" id="email" name="email" placeholder="tu@correo.com" autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="campo campo--password">
+                        <div class="campo__fila">
+                            <label class="campo__etiqueta" for="password">Contrase&ntilde;a</label>
+                            <a class="campo__enlace" href="password-reset.html">&iquest;Olvidaste tu contrase&ntilde;a?</a>
+                        </div>
+                        <div class="entrada">
+                            <svg class="entrada__icono" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3.33333 7.33333H12.6667C13.4025 7.33333 14 7.93078 14 8.66667V13.3333C14 14.0692 13.4025 14.6667 12.6667 14.6667H3.33333C2.59745 14.6667 2 14.0692 2 13.3333V8.66667C2 7.93078 2.59745 7.33333 3.33333 7.33333Z"/>
+                                    <path d="M4.66667 7.33333V4.66667C4.66667 2.82695 6.16028 1.33333 8 1.33333C9.83972 1.33333 11.3333 2.82695 11.3333 4.66667V7.33333"/>
+                                </g>
+                            </svg>
+                            <input type="password" id="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+                            <button type="button" class="entrada__accion" id="verClave" aria-label="Mostrar contrase&ntilde;a">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M7.15567 3.384C10.3471 3.00368 13.4012 4.79575 14.6257 7.76733C14.6812 7.91701 14.6812 8.08166 14.6257 8.23133C14.3803 8.82513 14.0566 9.38343 13.6629 9.89133M9.38967 9.43867C8.60492 10.1966 7.3575 10.1858 6.58603 9.4143C5.81457 8.64284 5.80373 7.39542 6.56167 6.61067"/>
+                                        <path d="M11.653 11.666C9.86361 12.726 7.70201 12.9564 5.72942 12.2973C3.75684 11.6382 2.16785 10.1547 1.375 8.232C1.31944 8.08233 1.31944 7.91767 1.375 7.768C1.9661 6.33457 3.00611 5.1315 4.33901 4.33933M1.33367 1.33333L14.667 14.6667"/>
+                                    </g>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="boton" id="btnEnviar">
+                        Iniciar sesi&oacute;n
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <p class="separador">&iquest;No ten&eacute;s cuenta?</p>
+
+                <a class="boton--secundario" href="register.html">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.6667 14V12.6667C10.6667 11.1949 9.47178 10 8 10H4C2.52822 10 1.33333 11.1949 1.33333 12.6667V14"/>
+                            <path d="M3.33333 4.66667C3.33333 6.13844 4.52822 7.33333 6 7.33333C7.47178 7.33333 8.66667 6.13844 8.66667 4.66667C8.66667 3.19489 7.47178 2 6 2C4.52822 2 3.33333 3.19489 3.33333 4.66667Z"/>
+                            <path d="M12.6667 5.33333V9.33333M14.6667 7.33333H10.6667"/>
+                        </g>
+                    </svg>
+                    Crear cuenta gratis
+                </a>
+
+                <p class="tarjeta__nota">
+                    Solo disponible en R&iacute;o Grande, Tolhuin y Ushuaia <span>&#127757;</span>
+                </p>
+
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script>
+document.getElementById('verClave').addEventListener('click', () => {
+    const campo = document.getElementById('password');
+    const oculto = campo.type === 'password';
+    campo.type = oculto ? 'text' : 'password';
+    document.getElementById('verClave')
+        .setAttribute('aria-label', oculto ? 'Ocultar contraseña' : 'Mostrar contraseña');
+});
+</script>
+
+</body>
+</html>
