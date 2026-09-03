@@ -3,45 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Iniciar sesion - Enexia</title>
+<title>Iniciar sesion - Enexia (paleta clara)</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 
+<!-- Sistema de diseno: unica fuente de color, forma y tipografia. -->
+<link rel="stylesheet" href="/css/tokens.css">
+
 <style>
 /* =====================================================================
-   Enexia - Login Desktop
+   Enexia - Login Desktop / Paleta clara "austral"
    Reproduccion del frame de Figma "Login Desktop" (node 77:884).
-   HTML + CSS vanilla, sin frameworks (requisito del proyecto).
+
+   El color, la forma y la tipografia NO viven aca: vienen de
+   css/tokens.css, enlazado arriba. Este bloque solo tiene el layout y
+   los componentes propios de esta pantalla.
+
+   Lo unico local es la foto de fondo, que es especifica del login.
    ===================================================================== */
 
 :root {
-    /* --- Fondo fotografico -------------------------------------------
-       Unico punto a tocar si se cambia la imagen. Alternativas:
-       url('../../assets/login-bg.png')  -> archivo local del repo
-       url('https://...')                -> cualquier URL remota          */
-    --login-bg-image: url('../../assets/login-bg.png');
-
-    /* --- Paleta del diseno oscuro ----------------------------------- */
-    --lienzo:            #0a0e1a;
-    --azul-primario:     #4f9cf9;
-    --azul-claro:        #60c4f9;
-    --texto-titulo:      #f0f4ff;
-    --texto-cuerpo:      #a0b4d6;
-    --texto-tenue:       #6b7fa3;
-
-    --vidrio-borde:      rgba(255, 255, 255, .13);
-    --vidrio-brillo:     rgba(255, 255, 255, .07);
-    --campo-fondo:       rgba(255, 255, 255, .05);
-    --campo-borde:       rgba(255, 255, 255, .11);
-    --linea:             rgba(255, 255, 255, .08);
-
-    --radio-campo:       12px;
-    --radio-tarjeta:     28px;
-
-    --sans:  'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    --marca: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+    /* Unico punto a tocar para cambiar la imagen de fondo. */
+    --login-bg-image: url('/assets/login-bg.png');
 }
 
 * { box-sizing: border-box; }
@@ -52,12 +37,12 @@ body {
     margin: 0;
     font-family: var(--sans);
     background: var(--lienzo);
-    color: var(--texto-cuerpo);
+    color: var(--texto-secundario);
     -webkit-font-smoothing: antialiased;
 }
 
 /* ===================================================================
-   1. Escenario: foto + velo degradado + dos halos de color
+   1. Escenario: la misma foto, pero lavada en vez de oscurecida
    =================================================================== */
 
 .pantalla {
@@ -69,7 +54,6 @@ body {
     background: var(--lienzo);
 }
 
-/* La foto se desborda un 19% para que el encuadre coincida con Figma. */
 .pantalla__foto {
     position: absolute;
     top: 0;
@@ -79,16 +63,19 @@ body {
     background-image: var(--login-bg-image);
     background-size: cover;
     background-position: center;
+    /* La cordillera es textura, pero con mas cuerpo que antes. */
+    filter: var(--foto-filtro);
     pointer-events: none;
 }
 
+/* Velo con temperatura: arranca frio sobre la cordillera (hielo) y
+   deriva a un blanco calido hacia la derecha (fuego), donde se apoya
+   la tarjeta. La opacidad baja en el tramo medio le devuelve
+   profundidad al paisaje. */
 .pantalla__velo {
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg,
-        rgba(5, 10, 22, .78)  0%,
-        rgba(8, 16, 35, .65) 50%,
-        rgba(5, 10, 22, .82) 100%);
+    background: var(--velo);
     pointer-events: none;
 }
 
@@ -103,19 +90,39 @@ body {
     left: -100px;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle,
-        rgba(79, 156, 249, .12) 0%,
-        rgba(79, 156, 249, 0)  70%);
+    background: var(--halo-1);
 }
 
+/* Cae justo detras de la tarjeta: da una base verde tenue que hace
+   resaltar el boton sin competirle. */
 .halo--inf-der {
     right: -60px;
     bottom: -80px;
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle,
-        rgba(96, 196, 249, .09) 0%,
-        rgba(96, 196, 249, 0)  70%);
+    background: var(--halo-2);
+}
+
+/* El fondo sigue siendo full-bleed; lo que se topa es solo el contenido.
+   Sin este tope, en un monitor de 1920px el texto queda pegado al borde
+   izquierdo y la tarjeta al derecho, con un vacio de 812px en el medio. */
+/* Velo del hero. Le devuelve legibilidad al texto sin aplanar el resto
+   del paisaje.
+
+   Va a sangre: sus bordes izquierdo, derecho y superior coinciden con
+   los de la pantalla, asi que ninguno de los tres llega a verse. El
+   unico limite propio es el inferior, que muere en degradado hacia
+   abajo. Antes era un radial anclado al bloque de texto y su elipse
+   quedaba cortada por el borde izquierdo de la caja: ahi aparecia el
+   canto duro. */
+.velo-hero {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 78%;
+    background: var(--velo-hero);
+    pointer-events: none;
 }
 
 .pantalla__contenido {
@@ -123,10 +130,12 @@ body {
     z-index: 1;
     display: flex;
     width: 100%;
+    max-width: var(--ancho-contenido);
+    margin: 0 auto;
 }
 
 /* ===================================================================
-   2. Columna izquierda: propuesta de valor
+   2. Columna izquierda
    =================================================================== */
 
 .presentacion {
@@ -135,10 +144,9 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 64px 80px;
+    padding: clamp(40px, 5vw, 80px) clamp(40px, 7vw, 80px);
 }
 
-/* Hueco reservado en Figma para la marca; se deja vacio a proposito. */
 .presentacion__marca { width: 105px; height: 50px; }
 
 .presentacion__cuerpo { width: 512px; max-width: 100%; }
@@ -153,10 +161,10 @@ body {
 
 .ciudad {
     padding: 5px 13px;
-    border: 1px solid rgba(79, 156, 249, .3);
+    border: 1px solid var(--acento-borde);
     border-radius: 28px;
-    background: rgba(79, 156, 249, .15);
-    color: var(--azul-claro);
+    background: var(--acento-tinte);
+    color: var(--acento-fuerte);
     font-size: 12px;
     font-weight: 500;
     line-height: 16px;
@@ -165,64 +173,58 @@ body {
 
 .presentacion__titulo {
     margin: 0 0 23px;
-    color: var(--texto-titulo);
-    font-size: 48px;
+    color: var(--texto);
+    font-size: clamp(32px, 5vw, 48px);
     font-weight: 700;
-    line-height: 52.8px;
+    line-height: 1.1;
     letter-spacing: -1.44px;
 }
 
+/* El remate repite el verde del boton: la mirada baja del titular al
+   CTA por el mismo color. */
 .presentacion__titulo em {
     display: block;
-    color: var(--azul-primario);
+    color: var(--acento-fuerte);
     font-style: normal;
 }
 
 .presentacion__bajada {
     margin: 0;
     max-width: 400px;
-    color: var(--texto-cuerpo);
-    font-size: 16px;
-    line-height: 26.4px;
+    color: var(--texto-sobre-foto);
+    font-size: clamp(14px, 2.2vw, 16px);
+    line-height: 1.65;
 }
 
 .presentacion__pie {
-    color: var(--texto-tenue);
+    color: var(--texto-sobre-foto);
     font-size: 12px;
     line-height: 18px;
 }
 
 /* ===================================================================
-   3. Columna derecha: tarjeta de vidrio
+   3. Columna derecha: tarjeta solida sobre lienzo claro
    =================================================================== */
 
 .panel {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 520px;
-    flex: 0 0 520px;
-    padding: 40px 64px 40px 0;
+    width: clamp(380px, 45vw, 520px);
+    flex: 0 0 auto;
+    padding: clamp(20px, 3vw, 40px) clamp(20px, 4vw, 64px) clamp(20px, 3vw, 40px) 0;
 }
 
 .tarjeta {
     position: relative;
-    width: 448px;
-    max-width: 100%;
-    padding: 49px 41px;
-    border: 1px solid var(--vidrio-borde);
+    width: 100%;
+    max-width: clamp(340px, 95vw, 448px);
+    padding: clamp(32px, 6vw, 49px) clamp(24px, 5vw, 41px);
+    border: 1px solid var(--borde);
     border-radius: var(--radio-tarjeta);
-    background: linear-gradient(136.5deg,
-        rgba(13, 22, 38, .82) 0%,
-        rgba(10, 18, 34, .92) 100%);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    box-shadow:
-        0 8px 64px rgba(0, 0, 0, .55),
-        inset 0 1.5px 0 var(--vidrio-brillo);
+    background: var(--superficie);
+    box-shadow: var(--sombra-tarjeta);
 }
-
-/* --- Cabecera de la tarjeta ---------------------------------------- */
 
 .tarjeta__cabecera {
     display: flex;
@@ -232,7 +234,6 @@ body {
     margin-bottom: 40px;
 }
 
-/* La altura fija de 50px reproduce la caja del logotipo en Figma. */
 .logo {
     display: flex;
     align-items: center;
@@ -245,7 +246,7 @@ body {
 .logo__marca { display: block; width: 20px; height: 20px; }
 
 .logo__texto {
-    color: #ffffff;
+    color: var(--texto);
     font-family: var(--marca);
     font-size: 28px;
     font-weight: 700;
@@ -255,7 +256,7 @@ body {
 .tarjeta__lema {
     max-width: 280px;
     margin: 0;
-    color: var(--texto-tenue);
+    color: var(--texto-secundario);
     font-size: 14px;
     line-height: 20px;
     text-align: center;
@@ -263,24 +264,36 @@ body {
 
 .tarjeta__titulo {
     margin: 0 0 4px;
-    color: var(--texto-titulo);
-    font-size: 24px;
+    color: var(--texto);
+    font-size: clamp(20px, 3.5vw, 24px);
     font-weight: 700;
-    line-height: 32px;
+    line-height: 1.33;
     letter-spacing: -.36px;
 }
 
 .tarjeta__sub {
     margin: 0 0 32px;
-    color: var(--texto-tenue);
+    color: var(--texto-secundario);
     font-size: 14px;
     line-height: 20px;
+}
+
+.tarjeta__error {
+    margin: 0 0 24px;
+    padding: 12px 14px;
+    border-radius: var(--radio-campo);
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid #dc2626;
+    color: #dc2626;
+    font-size: 13px;
+    line-height: 18px;
+    text-align: center;
+    font-weight: 500;
 }
 
 /* --- Campos --------------------------------------------------------- */
 
 .campo { margin-bottom: 16px; }
-
 .campo--password { margin-bottom: 8px; }
 
 .campo__fila {
@@ -294,7 +307,7 @@ body {
 .campo__etiqueta {
     display: block;
     margin-bottom: 6px;
-    color: var(--texto-cuerpo);
+    color: var(--texto);
     font-size: 12px;
     font-weight: 500;
     line-height: 16px;
@@ -304,7 +317,7 @@ body {
 .campo__fila .campo__etiqueta { margin-bottom: 0; }
 
 .campo__enlace {
-    color: var(--azul-primario);
+    color: var(--acento);
     font-size: 12px;
     font-weight: 500;
     line-height: 16px;
@@ -314,27 +327,31 @@ body {
 
 .campo__enlace:hover { text-decoration: underline; }
 
-/* Caja que envuelve icono + input + accion, para simular el foco nativo. */
 .entrada {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 13px 17px;
-    border: 1px solid var(--campo-borde);
+    border: 1px solid var(--borde-campo);
     border-radius: var(--radio-campo);
-    background: var(--campo-fondo);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+    background: var(--superficie);
     transition: border-color .15s ease, box-shadow .15s ease;
 }
 
 .entrada:focus-within {
-    border-color: rgba(79, 156, 249, .55);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .04),
-        0 0 0 3px rgba(79, 156, 249, .18);
+    border-color: var(--acento);
+    box-shadow: var(--foco-accion);
 }
 
-.entrada__icono { flex: 0 0 16px; width: 16px; height: 16px; display: block; }
+/* Los SVG usan stroke="currentColor", asi que el color del icono sale
+   del token y no esta escrito dentro del marcado. */
+.entrada__icono {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    display: block;
+    color: var(--acento);
+}
 
 .entrada input {
     flex: 1 1 0;
@@ -342,14 +359,14 @@ body {
     padding: 0;
     border: 0;
     background: transparent;
-    color: var(--texto-titulo);
+    color: var(--texto);
     font-family: inherit;
     font-size: 14px;
     line-height: 20px;
     outline: none;
 }
 
-.entrada input::placeholder { color: var(--texto-tenue); }
+.entrada input::placeholder { color: var(--texto-secundario); }
 
 .entrada__accion {
     flex: 0 0 16px;
@@ -360,12 +377,16 @@ body {
     background: none;
     cursor: pointer;
     line-height: 0;
+    color: var(--acento);
 }
 
 .entrada__accion svg { display: block; width: 16px; height: 16px; }
 
 /* --- Acciones ------------------------------------------------------- */
 
+/* Esmeralda solido: blanco encima da 5.48:1, contra el 2.82:1 que
+   daba el celeste de la version oscura. Es el unico relleno de color
+   de la tarjeta, asi que domina sin competencia. */
 .boton {
     display: flex;
     align-items: center;
@@ -376,8 +397,8 @@ body {
     padding: 14px 0;
     border: 0;
     border-radius: var(--radio-campo);
-    background: linear-gradient(90deg, var(--azul-primario) 0%, var(--azul-claro) 100%);
-    color: #ffffff;
+    background: var(--accion);
+    color: var(--sobre-accion);
     font-family: inherit;
     font-size: 16px;
     font-weight: 500;
@@ -385,13 +406,13 @@ body {
     letter-spacing: .16px;
     text-decoration: none;
     cursor: pointer;
-    box-shadow:
-        0 0 32px rgba(79, 156, 249, .35),
-        0 2px 8px rgba(0, 0, 0, .3);
-    transition: filter .15s ease, transform .15s ease;
+    box-shadow: var(--sombra-accion);
+    transition: background .15s ease, transform .15s ease;
 }
 
-.boton:hover { filter: brightness(1.06); }
+/* El hover oscurece, nunca aclara: un verde mas claro romperia el
+   contraste con el texto blanco. */
+.boton:hover { background: var(--accion-hover); }
 .boton:active { transform: translateY(1px); }
 
 .boton svg { display: block; width: 16px; height: 16px; }
@@ -401,7 +422,7 @@ body {
     align-items: center;
     gap: 12px;
     margin: 28px 0 6px;
-    color: var(--texto-tenue);
+    color: var(--texto-secundario);
     font-size: 12px;
     line-height: 16px;
 }
@@ -411,7 +432,7 @@ body {
     content: "";
     flex: 1 1 0;
     height: 1px;
-    background: var(--linea);
+    background: var(--borde);
 }
 
 .boton--secundario {
@@ -421,10 +442,12 @@ body {
     gap: 8px;
     width: 100%;
     padding: 15px 1px;
-    border: 1px solid rgba(255, 255, 255, .1);
+    /* Contorno e icono en verde; la etiqueta se queda en el neutro
+       oscuro para no competirle al relleno solido del CTA. */
+    border: 1px solid var(--acento);
     border-radius: var(--radio-campo);
-    background: rgba(255, 255, 255, .04);
-    color: var(--texto-cuerpo);
+    background: var(--superficie);
+    color: var(--texto);
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
@@ -434,33 +457,62 @@ body {
 }
 
 .boton--secundario:hover {
-    background: rgba(255, 255, 255, .07);
-    border-color: rgba(255, 255, 255, .16);
+    background: var(--acento-tinte);
+    border-color: var(--acento-fuerte);
 }
 
-.boton--secundario svg { display: block; width: 16px; height: 16px; }
+/* El icono va en verde aunque la etiqueta sea neutra. */
+.boton--secundario svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    color: var(--acento);
+}
 
 .tarjeta__nota {
     margin: 32px 0 0;
-    color: var(--texto-tenue);
+    color: var(--texto-secundario);
     font-size: 11px;
     line-height: 16.5px;
     text-align: center;
 }
 
-.tarjeta__nota span { color: var(--azul-primario); }
+.tarjeta__nota span { color: var(--acento-fuerte); }
 
 /* ===================================================================
    4. Adaptacion a pantallas menores
    =================================================================== */
 
-@media (max-width: 1100px) {
+/* Mantiene dos columnas hasta 1024px si hay espacio suficiente.
+   En pantallas menores se apila para mejor legibilidad. */
+@media (max-width: 1024px) {
     .pantalla { height: auto; min-height: 100vh; }
     .pantalla__contenido { flex-direction: column; align-items: center; }
-    .presentacion { width: 100%; padding: 48px 40px 0; }
-    .presentacion__cuerpo { width: 100%; }
-    .presentacion__pie { margin-top: 40px; }
-    .panel { width: 100%; flex: 0 0 auto; padding: 40px; }
+
+    .presentacion {
+        width: 100%;
+        padding: clamp(32px, 4vw, 48px) clamp(24px, 5vw, 40px) 0;
+        align-items: center;
+        text-align: center;
+    }
+
+    .presentacion__cuerpo {
+        width: 100%;
+        max-width: 560px;
+    }
+
+    .ciudades { justify-content: center; }
+
+    .presentacion__bajada {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .presentacion__pie { margin-top: clamp(24px, 4vw, 40px); }
+
+    .velo-hero { height: 46%; }
+
+    .panel { width: 100%; flex: 0 0 auto; padding: clamp(20px, 4vw, 40px); }
 }
 
 @media (max-width: 560px) {
@@ -476,11 +528,11 @@ body {
 
 <div class="pantalla">
 
-    <!-- ============================ Escenario ============================ -->
     <div class="pantalla__foto" role="presentation"></div>
     <div class="pantalla__velo" role="presentation"></div>
     <div class="halo halo--sup-izq" role="presentation"></div>
     <div class="halo halo--inf-der" role="presentation"></div>
+    <div class="velo-hero" role="presentation"></div>
 
     <div class="pantalla__contenido">
 
@@ -517,8 +569,7 @@ body {
             <div class="tarjeta">
 
                 <div class="tarjeta__cabecera">
-                    <a class="logo" href="../../index.html">
-                        <!-- Isotipo Enexia (mosaico de color con la "E" recortada) -->
+                    <a class="logo" href="../../frontend/index.html">
                         <svg class="logo__marca" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
                             <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
@@ -532,9 +583,9 @@ body {
                             <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
                             <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
                             <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
-                            <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#101929"/>
-                            <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#121A2A"/>
-                            <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#121A2A"/>
+                            <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#ffffff"/>
+                            <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#ffffff"/>
+                            <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#ffffff"/>
                         </svg>
                         <span class="logo__texto">NEXIA</span>
                     </a>
@@ -545,14 +596,15 @@ body {
                 <h2 class="tarjeta__titulo">Bienvenido de nuevo</h2>
                 <p class="tarjeta__sub">Inici&aacute; sesi&oacute;n para continuar</p>
 
+                <div id="mensajeError" class="tarjeta__error" hidden></div>
+
                 <form id="formLogin" novalidate>
 
-                    <!-- ------------------------------ Usuario / email -->
                     <div class="campo">
                         <label class="campo__etiqueta" for="email">Usuario o correo electr&oacute;nico</label>
                         <div class="entrada">
                             <svg class="entrada__icono" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <g stroke="#6B7FA3" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12.6667 14V12.6667C12.6667 11.1949 11.4718 10 10 10H6C4.52822 10 3.33333 11.1949 3.33333 12.6667V14"/>
                                     <path d="M5.33333 4.66667C5.33333 6.13844 6.52822 7.33333 8 7.33333C9.47178 7.33333 10.6667 6.13844 10.6667 4.66667C10.6667 3.19489 9.47178 2 8 2C6.52822 2 5.33333 3.19489 5.33333 4.66667Z"/>
                                 </g>
@@ -561,7 +613,6 @@ body {
                         </div>
                     </div>
 
-                    <!-- --------------------------------- Contrasena -->
                     <div class="campo campo--password">
                         <div class="campo__fila">
                             <label class="campo__etiqueta" for="password">Contrase&ntilde;a</label>
@@ -569,7 +620,7 @@ body {
                         </div>
                         <div class="entrada">
                             <svg class="entrada__icono" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <g stroke="#6B7FA3" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3.33333 7.33333H12.6667C13.4025 7.33333 14 7.93078 14 8.66667V13.3333C14 14.0692 13.4025 14.6667 12.6667 14.6667H3.33333C2.59745 14.6667 2 14.0692 2 13.3333V8.66667C2 7.93078 2.59745 7.33333 3.33333 7.33333Z"/>
                                     <path d="M4.66667 7.33333V4.66667C4.66667 2.82695 6.16028 1.33333 8 1.33333C9.83972 1.33333 11.3333 2.82695 11.3333 4.66667V7.33333"/>
                                 </g>
@@ -577,7 +628,7 @@ body {
                             <input type="password" id="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
                             <button type="button" class="entrada__accion" id="verClave" aria-label="Mostrar contrase&ntilde;a">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <g stroke="#6B7FA3" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M7.15567 3.384C10.3471 3.00368 13.4012 4.79575 14.6257 7.76733C14.6812 7.91701 14.6812 8.08166 14.6257 8.23133C14.3803 8.82513 14.0566 9.38343 13.6629 9.89133M9.38967 9.43867C8.60492 10.1966 7.3575 10.1858 6.58603 9.4143C5.81457 8.64284 5.80373 7.39542 6.56167 6.61067"/>
                                         <path d="M11.653 11.666C9.86361 12.726 7.70201 12.9564 5.72942 12.2973C3.75684 11.6382 2.16785 10.1547 1.375 8.232C1.31944 8.08233 1.31944 7.91767 1.375 7.768C1.9661 6.33457 3.00611 5.1315 4.33901 4.33933M1.33367 1.33333L14.667 14.6667"/>
                                     </g>
@@ -589,7 +640,7 @@ body {
                     <button type="submit" class="boton" id="btnEnviar">
                         Iniciar sesi&oacute;n
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </button>
                 </form>
@@ -598,7 +649,7 @@ body {
 
                 <a class="boton--secundario" href="register.html">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <g stroke="#A0B4D6" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                        <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M10.6667 14V12.6667C10.6667 11.1949 9.47178 10 8 10H4C2.52822 10 1.33333 11.1949 1.33333 12.6667V14"/>
                             <path d="M3.33333 4.66667C3.33333 6.13844 4.52822 7.33333 6 7.33333C7.47178 7.33333 8.66667 6.13844 8.66667 4.66667C8.66667 3.19489 7.47178 2 6 2C4.52822 2 3.33333 3.19489 3.33333 4.66667Z"/>
                             <path d="M12.6667 5.33333V9.33333M14.6667 7.33333H10.6667"/>
@@ -617,8 +668,12 @@ body {
     </div>
 </div>
 
+<script src="../../js/api.js"></script>
+<script src="../../js/auth.js"></script>
+<script src="../../js/utils.js"></script>
+
 <script>
-/* Unico comportamiento de la maqueta: mostrar/ocultar la contrasena. */
+/* Toggle mostrar/ocultar contraseña */
 document.getElementById('verClave').addEventListener('click', () => {
     const campo = document.getElementById('password');
     const oculto = campo.type === 'password';
@@ -626,6 +681,62 @@ document.getElementById('verClave').addEventListener('click', () => {
     document.getElementById('verClave')
         .setAttribute('aria-label', oculto ? 'Ocultar contraseña' : 'Mostrar contraseña');
 });
+
+/* Manejo del login */
+document.getElementById('formLogin').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btnEnviar = document.getElementById('btnEnviar');
+    const mensajeError = document.getElementById('mensajeError');
+
+    // Limpiar error anterior
+    mensajeError.hidden = true;
+    mensajeError.textContent = '';
+
+    if (!email || !password) {
+        mostrarError('Completa todos los campos');
+        return;
+    }
+
+    btnEnviar.disabled = true;
+    btnEnviar.textContent = 'Iniciando sesión...';
+
+    try {
+        const respuesta = await API.login({ email, password });
+
+        if (respuesta.ok && respuesta.cuerpo) {
+            Auth.guardarSesion(respuesta.cuerpo);
+
+            const usuario = Auth.usuario();
+            const roles = usuario?.roles || [];
+
+            if (roles.includes('ORGANIZADOR')) {
+                window.location.href = '../organizer/dashboard.html';
+            } else if (roles.includes('ADMINISTRADOR')) {
+                window.location.href = '../admin/dashboard.html';
+            } else {
+                window.location.href = '../participant/dashboard.html';
+            }
+        } else {
+            mostrarError('Credenciales inválidas');
+            btnEnviar.disabled = false;
+            btnEnviar.textContent = 'Iniciar sesión →';
+        }
+    } catch (error) {
+        console.error('Error en login:', error);
+        mostrarError('No se pudo conectar al servidor');
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = 'Iniciar sesión →';
+    }
+});
+
+function mostrarError(mensaje) {
+    const mensajeError = document.getElementById('mensajeError');
+    mensajeError.textContent = mensaje;
+    mensajeError.hidden = false;
+}
 </script>
 
 </body>

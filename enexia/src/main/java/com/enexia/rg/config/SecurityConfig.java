@@ -83,6 +83,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
+                        // --- HTML
+                        .requestMatchers("/assets/**").permitAll()
+                        .requestMatchers("/css/**").permitAll()
+                        .requestMatchers("/pages/auth/**").permitAll()
+                        .requestMatchers("/js/**").permitAll()
+
                         // --- Endpoints por rol (RF-1.3)
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")
                         .requestMatchers("/api/organizador/**").hasRole("ORGANIZADOR")
