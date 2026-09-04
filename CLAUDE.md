@@ -344,9 +344,28 @@ backend/src/main/java/com/enexia/
 
 **Sprint 1 Goal**: Implement registration and login endpoints with core security measures.
 
+### Registration Flow: Persona Física vs Persona Jurídica
+
+**Persona Física (PF):**
+- User registers with: nickname, email, password, name, surname, DNI, birth date, address
+- Account **activated immediately** upon registration
+- Estado: `ACTIVO` (Usuario_Estado)
+- Can immediately browse events and register as "PARTICIPANTE"
+
+**Persona Jurídica (PJ):**
+- User registers with: nickname, email, password, razon_social, nombre_fantasia (optional), CUIT, phone, address
+- Account created but **enters review state**
+- These two state fields belong to `Persona_Juridica` itself (`Persona_Juridica_Estado_Sistema` / `Persona_Juridica_Estado`), **not** to the founder's own `Usuario_Estado` — the founder's login account stays `ACTIVO` throughout, only the organization is gated:
+  - `estado_persona_juridica_sistema`: `REVISION_PENDIENTE` (moderator/admin reviews CUIT + razon_social)
+  - `estado_persona_juridica`: Initially `INACTIVO` until approved
+  - Upon approval: `estado_persona_juridica_sistema` → `APROBADO`, `estado_persona_juridica` → `ACTIVO`
+- User is linked to PJ via `Miembros_Organizacion` table with `rol_en_empresa` = "ADMINISTRADOR"
+
 | Feature | Sprint 1 | Sprint 2+ |
 |---------|----------|----------|
 | User Registration (Persona Física) | ✅ | - |
+| User Registration (Persona Jurídica) | ✅ | - |
+| PJ Moderation (Manual review + status tracking) | ✅ | - |
 | JWT Authentication | ✅ | - |
 | Rate Limiting (IP-based) | ✅ | - |
 | Account Locking (3 failed attempts) | ✅ | - |
@@ -355,7 +374,6 @@ backend/src/main/java/com/enexia/
 | 2FA (Email verification) | ❌ | Sprint 2+ |
 | CAPTCHA | ❌ | Sprint 2+ |
 | Password Reset Flow | ❌ | Sprint 2+ |
-| Persona Jurídica Registration | ❌ | Sprint 2 |
 
 ### External Integrations (Sprint 1)
 

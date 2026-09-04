@@ -38,6 +38,9 @@ graph TD
     UES[Usuario Estado Sistema]
     UE[Usuario Estado]
     HEU[Historial Estado Usuario]
+    PJES[Persona Juridica Estado Sistema]
+    PJE[Persona Juridica Estado]
+    HEPJ[Historial Estado Persona Juridica]
     HEE[Historial Estado Evento]
     IE[Inscripción Estado]
     HEI[Historial Estado Inscripción]
@@ -96,6 +99,12 @@ graph TD
     R_U_HEU{registra H}
     R_UES_HEU{asienta sys}
     R_UE_HEU{asienta usr}
+
+    R_PJES_PJ{modera actual}
+    R_PJE_PJ{gestiona actual}
+    R_PJ_HEPJ{registra H}
+    R_PJES_HEPJ{asienta sys}
+    R_PJE_HEPJ{asienta usr}
     
     R_E_HEE{registra H}
     R_EEO_HEE{asienta org}
@@ -132,6 +141,13 @@ graph TD
     %% Miembros de Organización
     U ---|"1"| R_U_MO -->|"N"| MO
     PJ ---|"1"| R_PJ_MO -->|"N"| MO
+
+    %% Relaciones de Estado Actual e Historial de Persona Jurídica
+    PJES ---|"1"| R_PJES_PJ --->|"N"| PJ
+    PJE ---|"1"| R_PJE_PJ --->|"N"| PJ
+    PJ ---|"1"| R_PJ_HEPJ -->|"N"| HEPJ
+    PJES ---|"1"| R_PJES_HEPJ -->|"N"| HEPJ
+    PJE ---|"1"| R_PJE_HEPJ -->|"N"| HEPJ
 
     %% Gestión y Clasificación de Eventos
     U ---|"1"| R4 -->|"N"| E

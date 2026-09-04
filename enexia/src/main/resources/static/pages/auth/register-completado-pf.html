@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro Completado - Persona Fisica</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<!-- Sistema de diseno: unica fuente de color, forma y tipografia. -->
+<link rel="stylesheet" href="../css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Registro completado (participante) / paleta clara
+
+   Misma escenografia que login-desktop-claro.html: foto de la
+   cordillera + velos + halos, y el contenido apoyado en una tarjeta
+   solida. Color, forma y tipografia vienen de css/tokens.css.
+   ===================================================================== */
+
+:root {
+    /* Unico punto a tocar para cambiar la imagen de fondo. */
+    --login-bg-image: url('../assets/login-bg.png');
+
+    /* Bordes menos redondeados que el sistema: sobreescriben los radios
+       de tokens.css solo en esta pantalla. */
+    --radio-tarjeta: 6px;
+    --radio-campo: 4px;
+
+    /* Secundarios de marca, tomados del login: el violeta es el unico
+       secundario de interfaz (paso, chip, marca de exito) y el naranja
+       queda reservado al CTA via --accion. */
+    --violeta: var(--acento);
+    --violeta-fuerte: var(--acento-fuerte);
+    --violeta-tinte: var(--acento-tinte);
+    --violeta-borde: var(--acento-borde);
+
+    /* Verde de exito: solo para el estado "cuenta activa". */
+    --exito: #2CBC5B;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--lienzo);
+    color: var(--texto-secundario);
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--acento); }
+a:hover { color: var(--acento-fuerte); }
+
+/* ===================================================================
+   1. Escenario
+   =================================================================== */
+
+.pantalla {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    background: var(--lienzo);
+}
+
+.pantalla__foto {
+    position: absolute;
+    top: 0;
+    left: -9.55%;
+    width: 119.1%;
+    height: 100%;
+    background-image: var(--login-bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: var(--foto-filtro);
+    pointer-events: none;
+}
+
+.pantalla__velo {
+    position: absolute;
+    inset: 0;
+    background: var(--velo);
+    pointer-events: none;
+}
+
+.halo {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.halo--sup-izq {
+    top: -120px;
+    left: -100px;
+    width: 600px;
+    height: 600px;
+    background: var(--halo-1);
+}
+
+.halo--inf-der {
+    right: -60px;
+    bottom: -80px;
+    width: 500px;
+    height: 500px;
+    background: var(--halo-2);
+}
+
+.velo-hero {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 42%;
+    background: var(--velo-hero);
+    pointer-events: none;
+}
+
+/* ===================================================================
+   2. Contenido centrado
+   =================================================================== */
+
+.pantalla__contenido {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    max-width: clamp(320px, 92vw, 520px);
+    padding: clamp(32px, 6vw, 64px) 20px;
+    text-align: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+}
+
+.logo__marca { display: block; width: 24px; height: 24px; }
+
+.logo__texto {
+    color: var(--texto);
+    font-family: var(--marca);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 30px;
+    letter-spacing: -.4px;
+}
+
+.titulo {
+    margin: 0;
+    color: var(--texto);
+    font-size: clamp(28px, 6vw, 40px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1.1px;
+    text-wrap: balance;
+}
+
+/* --- Indicador de paso ---------------------------------------------
+   Un solo objeto: los tres puntos y la etiqueta viven en la misma
+   pastilla, asi el estado del punto y el texto "Paso 3 de 3" no pueden
+   contradecirse. Los dos primeros quedan tenues (etapas cumplidas), el
+   tercero es el actual. */
+
+.paso {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 14px 7px 12px;
+    border: 1px solid var(--violeta-borde);
+    border-radius: 5px;
+    background: var(--violeta-tinte);
+}
+
+.paso__puntos {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.paso__punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--violeta-borde);
+}
+
+.paso__punto--actual {
+    width: 9px;
+    height: 9px;
+    background: var(--exito);
+}
+
+.paso__etiqueta {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: .2px;
+    white-space: nowrap;
+    color: var(--violeta-fuerte);
+}
+
+/* ===================================================================
+   3. Tarjeta central
+   =================================================================== */
+
+.tarjeta {
+    position: relative;
+    width: 100%;
+    margin-top: 8px;
+    padding: clamp(32px, 6vw, 48px) clamp(24px, 5vw, 40px);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--superficie);
+    box-shadow: var(--sombra-tarjeta);
+}
+
+.marca-exito {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    border: 2px solid var(--violeta-borde);
+    border-radius: 8px;
+    background: var(--violeta-tinte);
+    color: var(--exito);
+}
+
+.marca-exito svg { display: block; width: 40px; height: 40px; }
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--violeta-borde);
+    border-radius: 5px;
+    background: var(--violeta-tinte);
+    color: var(--violeta-fuerte);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+}
+
+.chip svg { display: block; width: 13px; height: 13px; }
+
+.tarjeta__titulo {
+    margin: 20px 0 12px;
+    color: var(--exito);
+    font-size: clamp(20px, 4vw, 26px);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -.4px;
+}
+
+.tarjeta__texto {
+    margin: 0 auto;
+    max-width: 38ch;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    line-height: 1.65;
+    text-wrap: pretty;
+}
+
+.boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 32px;
+    padding: 15px 0;
+    border: 0;
+    border-radius: var(--radio-campo);
+    background: var(--accion);
+    color: var(--sobre-accion);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: .16px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: var(--sombra-accion);
+    transition: background .15s ease, transform .15s ease;
+}
+
+.boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
+.boton:active { transform: translateY(1px); }
+.boton svg { display: block; width: 16px; height: 16px; }
+
+.pie {
+    margin: 8px 0 0;
+    color: var(--texto-sobre-foto);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+@media (max-width: 560px) {
+    .velo-hero { height: 34%; }
+    .titulo { letter-spacing: -.6px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="pantalla">
+
+    <div class="pantalla__foto" role="presentation"></div>
+    <div class="pantalla__velo" role="presentation"></div>
+    <div class="halo halo--sup-izq" role="presentation"></div>
+    <div class="halo halo--inf-der" role="presentation"></div>
+    <div class="velo-hero" role="presentation"></div>
+
+    <main class="pantalla__contenido">
+
+        <a class="logo" href="../../index.html">
+            <svg class="logo__marca" width="24" height="24" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#D6DCE9"/>
+                <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#D5DBE8"/>
+                <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#D5DBE8"/>
+            </svg>
+            <span class="logo__texto">NEXIA</span>
+        </a>
+
+        <h1 class="titulo">&iexcl;Registro Completado!</h1>
+
+        <div class="paso" role="status" aria-label="Paso 3 de 3">
+            <span class="paso__puntos" aria-hidden="true">
+                <span class="paso__punto"></span>
+                <span class="paso__punto"></span>
+                <span class="paso__punto paso__punto--actual"></span>
+            </span>
+            <span class="paso__etiqueta">Paso 3 de 3</span>
+        </div>
+
+        <section class="tarjeta">
+
+            <div class="marca-exito" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <span class="chip">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12.6667 14V12.6667C12.6667 11.1949 11.4718 10 10 10H6C4.52822 10 3.33333 11.1949 3.33333 12.6667V14"/>
+                        <path d="M5.33333 4.66667C5.33333 6.13844 6.52822 7.33333 8 7.33333C9.47178 7.33333 10.6667 6.13844 10.6667 4.66667C10.6667 3.19489 9.47178 2 8 2C6.52822 2 5.33333 3.19489 5.33333 4.66667Z"/>
+                    </g>
+                </svg>
+                Participante
+            </span>
+
+            <h2 class="tarjeta__titulo">&iexcl;Cuenta Activa!</h2>
+
+            <p class="tarjeta__texto">
+                Tu cuenta ha sido creada con &eacute;xito. Ya pod&eacute;s explorar el
+                cat&aacute;logo completo de actividades culturales, deportivas,
+                sociales y de gaming en R&iacute;o Grande, Tolhuin y Ushuaia, e
+                inscribirte a tus eventos favoritos.
+            </p>
+
+            <a class="boton" href="../participant/dashboard.html">
+                Comenzar a Explorar
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+
+        </section>
+
+        <p class="pie">Enexia &middot; Tierra del Fuego &middot; R&iacute;o Grande &middot; Tolhuin &middot; Ushuaia</p>
+
+    </main>
+</div>
+
+</body>
+</html>

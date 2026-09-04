@@ -84,8 +84,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
                         // --- Recursos estaticos (siempre publicos)
-                        .requestMatchers("/assets/**").permitAll()
-                        .requestMatchers("/css/**").permitAll()
+                        // Los HTML viven bajo /pages/**, y CSS/assets quedaron
+                        // anidados dentro de esa carpeta (pages/css, pages/assets)
+                        // en vez de en la raiz de static/.
+                        .requestMatchers("/pages/css/**").permitAll()
+                        .requestMatchers("/pages/assets/**").permitAll()
                         .requestMatchers("/js/**").permitAll()
                         .requestMatchers("/index.html").permitAll()
                         .requestMatchers("/").permitAll()

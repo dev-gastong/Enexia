@@ -53,6 +53,20 @@ Este archivo proporciona una guía en español sobre el proyecto Enexia. La vers
        (BD)     (Imágenes)    (Notificaciones)
 ```
 
+### Estrategia de Asignación de Roles y Modelo de Participación
+
+**Sprint 1: Solo Personas Físicas**
+- **PARTICIPANTE** (Persona Física): Recibe **solo el rol PARTICIPANTE** — puede explorar, registrarse y participar en eventos.
+- **ORGANIZADOR** (Persona Física): Recibe **los roles ORGANIZADOR + PARTICIPANTE** — puede crear/gestionar eventos Y participar en eventos de otros.
+  - **Justificación:** Evita forzar a los organizadores a crear cuentas separadas para participar. Mantiene el sistema liviano para el MVP.
+
+**Sprint 2: Personas Jurídicas como Contenedores Administrativos**
+- **Persona Jurídica** (Organización/Empresa): Creada por una Persona Física ORGANIZADOR; no es una entidad de login.
+  - **Principio clave:** Las empresas no participan en eventos. La participación siempre es de Personas Físicas (personas).
+  - Miembros: Se registran vía la tabla `Miembros_Organizacion`, vinculando Personas Físicas como miembros/administradores de la organización.
+  - Autoría de eventos: Los eventos creados "bajo" una organización se atribuyen al nombre de la empresa, pero son organizados/gestionados por miembros Persona Física.
+  - **Justificación:** Garantiza coherencia conceptual — todos los participantes reales de un evento son personas individuales (Personas Físicas), nunca entidades abstractas. Esto modela el comportamiento del mundo real: una empresa no asiste a un concierto, sus empleados sí.
+
 ---
 
 ## Stack Tecnológico
@@ -75,7 +89,7 @@ Este archivo proporciona una guía en español sobre el proyecto Enexia. La vers
 El sistema se centra en estas entidades clave (ver `docs/diseño_bd/MER.md` para el ERD completo):
 
 - **Persona**: Entidad base (Física = Individual, Jurídica = Organización)
-- **Usuario**: Cuenta de usuario con roles (Participante, Organizador, Administrador)
+- **Usuario**: Cuenta de usuario con roles (Participante, Organizador, Administrador). **Nota de diseño:** los Organizadores reciben ambos roles ORGANIZADOR + PARTICIPANTE para crear eventos Y participar en los de otros; solo las Personas Físicas pueden registrarse directamente. Las Personas Jurídicas gestionan participantes a través de Miembros_Organizacion (Sprint 2).
 - **Evento**: Evento creado por organizadores con seguimiento de estado
 - **Evento_Cronograma**: Múltiples fechas/horarios para un mismo evento
 - **Cronograma_Ticket**: Tipos de tickets, precios y gestión de cupos por fecha
@@ -328,9 +342,28 @@ backend/src/main/java/com/enexia/
 
 **Objetivo Sprint 1**: Implementar endpoints de registro y login con medidas de seguridad core.
 
+### Flujo de Registro: Persona Física vs Persona Jurídica
+
+**Persona Física (PF):**
+- El usuario se registra con: nickname, email, password, nombre, apellido, DNI, fecha de nacimiento, domicilio
+- La cuenta se **activa inmediatamente** al registrarse
+- Estado: `ACTIVO` (Usuario_Estado)
+- Puede explorar eventos y registrarse como "PARTICIPANTE" de inmediato
+
+**Persona Jurídica (PJ):**
+- El usuario se registra con: nickname, email, password, razon_social, nombre_fantasia (opcional), CUIT, teléfono, domicilio
+- La cuenta se crea pero **entra en estado de revisión**
+- Estos dos campos de estado pertenecen a la propia `Persona_Juridica` (`Persona_Juridica_Estado_Sistema` / `Persona_Juridica_Estado`), **no** al `Usuario_Estado` del fundador — la cuenta de login del fundador se mantiene `ACTIVO` en todo momento, solo la organización queda condicionada:
+  - `estado_persona_juridica_sistema`: `REVISION_PENDIENTE` (moderador/admin revisa CUIT + razón social)
+  - `estado_persona_juridica`: Inicialmente `INACTIVO` hasta la aprobación
+  - Tras la aprobación: `estado_persona_juridica_sistema` → `APROBADO`, `estado_persona_juridica` → `ACTIVO`
+- El usuario queda vinculado a la PJ vía la tabla `Miembros_Organizacion` con `rol_en_empresa` = "ADMINISTRADOR"
+
 | Característica | Sprint 1 | Sprint 2+ |
 |---|---|---|
 | Registro de Usuarios (Persona Física) | ✅ | - |
+| Registro de Usuarios (Persona Jurídica) | ✅ | - |
+| Moderación de PJ (Revisión manual + seguimiento de estado) | ✅ | - |
 | Autenticación con JWT | ✅ | - |
 | Rate Limiting (por IP) | ✅ | - |
 | Bloqueo en 3 intentos fallidos | ✅ | - |
@@ -339,7 +372,6 @@ backend/src/main/java/com/enexia/
 | 2FA (Verificación por email) | ❌ | Sprint 2+ |
 | CAPTCHA | ❌ | Sprint 2+ |
 | Recuperación de Contraseña | ❌ | Sprint 2+ |
-| Registro de Persona Jurídica | ❌ | Sprint 2 |
 
 ### Integraciones Externas (Sprint 1)
 

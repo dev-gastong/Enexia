@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 
 <!-- Sistema de diseno: unica fuente de color, forma y tipografia. -->
-<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="../css/tokens.css">
 
 <style>
 /* =====================================================================
@@ -26,7 +26,12 @@
 
 :root {
     /* Unico punto a tocar para cambiar la imagen de fondo. */
-    --login-bg-image: url('/assets/login-bg.png');
+    --login-bg-image: url('../assets/login-bg.png');
+
+    /* Bordes menos redondeados que el sistema: sobreescriben los radios
+       de tokens.css solo en esta pantalla. */
+    --radio-tarjeta: 6px;
+    --radio-campo: 4px;
 }
 
 * { box-sizing: border-box; }
@@ -162,7 +167,7 @@ body {
 .ciudad {
     padding: 5px 13px;
     border: 1px solid var(--acento-borde);
-    border-radius: 28px;
+    border-radius: 5px;
     background: var(--acento-tinte);
     color: var(--acento-fuerte);
     font-size: 12px;

@@ -48,6 +48,24 @@ erDiagram
         varchar estado_usuario
     }
 
+    Persona_Juridica_Estado_Sistema{
+        int id_estado_persona_juridica_sistema PK
+        varchar estado_persona_juridica_sistema
+    }
+
+    Persona_Juridica_Estado{
+        int id_estado_persona_juridica PK
+        varchar estado_persona_juridica
+    }
+
+    Historial_Estado_Persona_Juridica{
+        int id_historial PK
+        int id_persona_juridica FK
+        int id_estado_persona_juridica_sistema FK
+        int id_estado_persona_juridica FK
+        timestamp fecha_cambio
+    }
+
     Historial_Estado_Usuario{
         int id_historial PK
         int id_usuario FK
@@ -61,13 +79,23 @@ erDiagram
     Usuario_Estado_Sistema ||--o{ Usuario : "modera"
     Usuario_Estado ||--o{ Usuario : "gestiona"
 
+    Persona_Juridica_Estado_Sistema ||--o{ Persona_Juridica : "modera"
+    Persona_Juridica_Estado ||--o{ Persona_Juridica : "gestiona"
+    Persona_Juridica ||--o{ Historial_Estado_Persona_Juridica : "registra historial de"
+    Persona_Juridica_Estado_Sistema ||--o{ Historial_Estado_Persona_Juridica : "asienta en"
+    Persona_Juridica_Estado ||--o{ Historial_Estado_Persona_Juridica : "asienta en"
+
     Persona_Juridica {
         int id_persona_juridica PK
         varchar razon_social
+        varchar nombre_fantasia
         varchar cuit
         int id_ubicacion FK
         varchar emailCorporativo
         varchar telefonoContacto
+        int id_estado_persona_juridica_sistema FK
+        int id_estado_persona_juridica FK
+        timestamp fecha_registro
     }
     Miembros_Organizacion {
         int id_usuario PK, FK

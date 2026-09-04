@@ -1,5 +1,7 @@
 package com.enexia.rg.model;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,6 +30,9 @@ public class PersonaJuridica {
     @Column(name = "razon_social")
     private String razonSocial;
 
+    @Column(name = "nombre_fantasia")
+    private String nombreFantasia;
+
     @Column(name = "cuit")
     private String cuit;
 
@@ -40,4 +45,15 @@ public class PersonaJuridica {
 
     @Column(name = "telefonoContacto")
     private String telefonoContacto;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_estado_persona_juridica_sistema")
+    private PersonaJuridicaEstadoSistema estadoPersonaJuridicaSistema;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_estado_persona_juridica")
+    private PersonaJuridicaEstado estadoPersonaJuridica;
+
+    @Column(name = "fecha_registro")
+    private LocalDateTime fechaRegistro;
 }

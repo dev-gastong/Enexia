@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro - Paso 2 - Datos del Perfil</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<!-- Sistema de diseno: unica fuente de color, forma y tipografia. -->
+<link rel="stylesheet" href="../css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Registro paso 2 / paleta clara
+
+   Une las dos pantallas que antes eran register-paso2-pf.html y
+   register-paso2-pj.html. El tipo de cuenta dejo de ser una diferencia
+   entre archivos y paso a ser un toggle dentro del mismo formulario:
+   las credenciales y el domicilio son comunes, y solo el bloque de
+   identidad cambia. Misma escenografia y mismos radios que el login.
+   ===================================================================== */
+
+:root {
+    --login-bg-image: url('../assets/login-bg.png');
+
+    /* Bordes menos redondeados que el sistema. */
+    --radio-tarjeta: 6px;
+    --radio-campo: 4px;
+
+    /* Secundario de interfaz, tomado del login. */
+    --violeta: var(--acento);
+    --violeta-fuerte: var(--acento-fuerte);
+    --violeta-tinte: var(--acento-tinte);
+    --violeta-borde: var(--acento-borde);
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--lienzo);
+    color: var(--texto-secundario);
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--acento); }
+a:hover { color: var(--acento-fuerte); }
+
+/* ===================================================================
+   1. Escenario
+   =================================================================== */
+
+.pantalla {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+    background: var(--lienzo);
+}
+
+.pantalla__foto {
+    position: fixed;
+    top: 0;
+    left: -9.55%;
+    width: 119.1%;
+    height: 100%;
+    background-image: var(--login-bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: var(--foto-filtro);
+    pointer-events: none;
+}
+
+.pantalla__velo {
+    position: fixed;
+    inset: 0;
+    background: var(--velo);
+    pointer-events: none;
+}
+
+.halo {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.halo--sup-izq {
+    top: -120px;
+    left: -100px;
+    width: 600px;
+    height: 600px;
+    background: var(--halo-1);
+}
+
+.halo--inf-der {
+    right: -60px;
+    bottom: -80px;
+    width: 500px;
+    height: 500px;
+    background: var(--halo-2);
+}
+
+.velo-hero {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 42%;
+    background: var(--velo-hero);
+    pointer-events: none;
+}
+
+/* ===================================================================
+   2. Estructura
+   =================================================================== */
+
+.barra {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: clamp(20px, 4vw, 32px) clamp(20px, 5vw, 44px);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+}
+
+.logo__marca { display: block; width: 24px; height: 24px; }
+
+.logo__texto {
+    color: var(--texto);
+    font-family: var(--marca);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 26px;
+    letter-spacing: -.4px;
+}
+
+.volver {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--texto-sobre-foto);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.volver:hover { color: var(--acento-fuerte); }
+.volver svg { display: block; width: 14px; height: 14px; }
+
+.contenido {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: clamp(340px, 94vw, 760px);
+    margin: 0 auto;
+    padding: 0 20px clamp(40px, 8vw, 72px);
+    text-align: center;
+}
+
+/* --- Indicador de paso: puntos y etiqueta en un solo objeto. -------- */
+
+.paso {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 14px 7px 12px;
+    border: 1px solid var(--violeta-borde);
+    border-radius: 5px;
+    background: var(--violeta-tinte);
+}
+
+.paso__puntos {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.paso__punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--violeta-borde);
+}
+
+.paso__punto--actual {
+    width: 9px;
+    height: 9px;
+    background: var(--violeta);
+}
+
+.paso__etiqueta {
+    color: var(--violeta-fuerte);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: .2px;
+    white-space: nowrap;
+}
+
+.titulo {
+    margin: 0;
+    color: var(--texto);
+    font-size: clamp(26px, 5vw, 36px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+}
+
+.subtitulo {
+    margin: -8px 0 0;
+    color: var(--texto-sobre-foto);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+/* ===================================================================
+   3. Tarjeta
+   =================================================================== */
+
+.tarjeta {
+    width: 100%;
+    margin-top: 4px;
+    padding: clamp(24px, 5vw, 44px);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--superficie);
+    box-shadow: var(--sombra-tarjeta);
+    text-align: left;
+}
+
+/* --- Toggle de tipo de cuenta --------------------------------------
+   Reemplaza a las dos pantallas separadas. Son dos radios reales
+   dentro de un fieldset: el estado vive en el input, asi el teclado y
+   los lectores de pantalla lo entienden sin ayuda de JS. */
+
+.tipo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin: 0 0 32px;
+    padding: 4px;
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    background: var(--lienzo);
+}
+
+.tipo__opcion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 4px;
+    color: var(--texto-secundario);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 17px;
+    text-align: center;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.tipo__opcion:hover { color: var(--texto); }
+
+.tipo__opcion svg {
+    display: block;
+    flex: none;
+    width: 15px;
+    height: 15px;
+}
+
+.tipo input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.tipo input:checked + .tipo__opcion {
+    background: var(--accion);
+    color: var(--sobre-accion);
+    box-shadow: var(--sombra-accion);
+}
+
+.tipo input:focus-visible + .tipo__opcion {
+    outline: 2px solid var(--acento);
+    outline-offset: 2px;
+}
+
+/* --- Secciones y campos -------------------------------------------- */
+
+.seccion {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.seccion__titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--acento-fuerte);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+.seccion__titulo svg { display: block; width: 14px; height: 14px; color: var(--acento); }
+
+.seccion__titulo::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--borde);
+    order: 1;
+}
+
+/* La insignia va despues de la regla, contra el borde derecho. */
+.seccion__titulo > .candado { order: 2; }
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.campo--ancho { grid-column: 1 / -1; }
+
+.campo__etiqueta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: .3px;
+}
+
+.campo__opcional {
+    color: var(--texto-secundario);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.entrada {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 15px;
+    border: 1px solid var(--borde-campo);
+    border-radius: var(--radio-campo);
+    background: var(--superficie);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.entrada:focus-within {
+    border-color: var(--acento);
+    box-shadow: var(--foco-accion);
+}
+
+.entrada__icono {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    color: var(--acento);
+}
+
+.entrada:has(select) { position: relative; }
+
+/* La flecha propia del navegador se quita para igualar el alto de los
+   campos, asi que hay que reponer la senal de "esto se despliega". */
+.entrada:has(select)::after {
+    content: "";
+    flex: none;
+    width: 9px;
+    height: 9px;
+    margin-left: -4px;
+    border-right: 1.6px solid var(--acento);
+    border-bottom: 1.6px solid var(--acento);
+    transform: translateY(-2px) rotate(45deg);
+}
+
+.entrada input,
+.entrada select {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    outline: none;
+    appearance: none;
+    cursor: inherit;
+}
+
+.entrada select { cursor: pointer; }
+
+.entrada input::placeholder { color: var(--texto-secundario); }
+
+.nota {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 4px 0 0;
+    padding: 13px 15px;
+    border: 1px solid var(--violeta-borde);
+    border-radius: var(--radio-campo);
+    background: var(--violeta-tinte);
+    color: var(--texto);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.nota svg {
+    display: block;
+    flex: none;
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    color: var(--acento);
+}
+
+/* --- Acciones ------------------------------------------------------ */
+
+.acciones {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.boton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 0;
+    border: 0;
+    border-radius: var(--radio-campo);
+    background: var(--accion);
+    color: var(--sobre-accion);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: var(--sombra-accion);
+    transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
+.boton:active { transform: translateY(1px); }
+.boton svg { display: block; width: 15px; height: 15px; }
+
+.boton--secundario {
+    flex: 0 1 200px;
+    border: 1px solid var(--acento);
+    background: var(--superficie);
+    color: var(--acento-fuerte);
+    box-shadow: none;
+}
+
+.boton--secundario:hover {
+    background: var(--acento-tinte);
+    border-color: var(--acento-fuerte);
+    color: var(--acento-fuerte);
+}
+
+.pie {
+    margin: 0;
+    color: var(--texto-sobre-foto);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+/* --- Bloque de organizacion ----------------------------------------
+   Los datos personales se piden siempre: quien registra una
+   organizacion tambien es una persona. Por eso el bloque juridico no
+   se oculta, se atenua y se deshabilita hasta que el toggle lo pide.
+   Mostrarlo apagado explica que existe y de que depende; ocultarlo
+   dejaria al usuario sin saber que hay un paso extra. */
+
+.solo-pj {
+    position: relative;
+    opacity: .45;
+    filter: grayscale(1);
+    transition: opacity .18s ease, filter .18s ease;
+}
+
+body[data-tipo="pj"] .solo-pj {
+    opacity: 1;
+    filter: none;
+}
+
+/* --- Selector de perfil ---------------------------------------------
+   Solo aplica a Persona Fisica: una organizacion no "participa" de
+   eventos (lo hacen sus miembros), asi que una Persona Juridica es
+   siempre Organizador de forma implicita y no hay nada que elegir aca.
+   Por eso, a diferencia de .solo-pj, esta seccion se oculta del todo en
+   vez de atenuarse: no hay una opcion "bloqueada" que mostrar. */
+
+.solo-pf { display: none; }
+
+body[data-tipo="pf"] .solo-pf { display: block; }
+
+.candado {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border: 1px solid var(--borde);
+    border-radius: 4px;
+    background: var(--lienzo);
+    color: var(--texto-secundario);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    text-transform: none;
+}
+
+.candado svg { display: block; width: 11px; height: 11px; color: var(--texto-secundario); }
+
+body[data-tipo="pj"] .candado { display: none; }
+
+.nota.solo-pj { display: none; }
+body[data-tipo="pj"] .nota.solo-pj { display: flex; }
+
+@media (max-width: 560px) {
+    .velo-hero { height: 34%; }
+    .tipo { grid-template-columns: 1fr; }
+    .acciones { flex-direction: column-reverse; }
+    .boton--secundario { flex: 1; }
+    .volver span { display: none; }
+}
+</style>
+</head>
+
+<body data-tipo="pf">
+
+<div class="pantalla">
+
+    <div class="pantalla__foto" role="presentation"></div>
+    <div class="pantalla__velo" role="presentation"></div>
+    <div class="halo halo--sup-izq" role="presentation"></div>
+    <div class="halo halo--inf-der" role="presentation"></div>
+    <div class="velo-hero" role="presentation"></div>
+
+    <header class="barra">
+        <a class="logo" href="../../index.html">
+            <svg class="logo__marca" width="24" height="24" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#D6DCE9"/>
+                <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#D5DBE8"/>
+                <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#D5DBE8"/>
+            </svg>
+            <span class="logo__texto">NEXIA</span>
+        </a>
+
+        <a class="volver" href="login-desktop-claro.html">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12.6667 8H3.33333M8 3.33333L3.33333 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Volver al inicio de sesi&oacute;n</span>
+        </a>
+    </header>
+
+    <main class="contenido">
+
+        <div class="paso" role="status" aria-label="Paso 2 de 3">
+            <span class="paso__puntos" aria-hidden="true">
+                <span class="paso__punto"></span>
+                <span class="paso__punto paso__punto--actual"></span>
+                <span class="paso__punto"></span>
+            </span>
+            <span class="paso__etiqueta">Paso 2 de 3</span>
+        </div>
+
+        <h1 class="titulo">Datos del Perfil</h1>
+        <p class="subtitulo">Complet&aacute; la informaci&oacute;n para finalizar el registro.</p>
+
+        <section class="tarjeta">
+
+            <fieldset class="tipo">
+                <legend class="campo__etiqueta" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Tipo de cuenta</legend>
+
+                <input type="radio" id="tipo-pf" name="tipo_cuenta" value="pf" checked>
+                <label class="tipo__opcion" for="tipo-pf">
+                    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12.6667 14V12.6667C12.6667 11.1949 11.4718 10 10 10H6C4.52822 10 3.33333 11.1949 3.33333 12.6667V14"/>
+                            <path d="M5.33333 4.66667C5.33333 6.13844 6.52822 7.33333 8 7.33333C9.47178 7.33333 10.6667 6.13844 10.6667 4.66667C10.6667 3.19489 9.47178 2 8 2C6.52822 2 5.33333 3.19489 5.33333 4.66667Z"/>
+                        </g>
+                    </svg>
+                    Persona F&iacute;sica / Participante
+                </label>
+
+                <input type="radio" id="tipo-pj" name="tipo_cuenta" value="pj">
+                <label class="tipo__opcion" for="tipo-pj">
+                    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 14H14"/>
+                            <path d="M3.33333 14V3.33333C3.33333 2.59695 3.93029 2 4.66667 2H9.33333C10.0697 2 10.6667 2.59695 10.6667 3.33333V14"/>
+                            <path d="M10.6667 7.33333H12.6667C13.0349 7.33333 13.3333 7.63181 13.3333 8V14"/>
+                            <path d="M6 4.66667H8M6 7.33333H8M6 10H8"/>
+                        </g>
+                    </svg>
+                    Organizaci&oacute;n / Empresa
+                </label>
+            </fieldset>
+
+            <form id="formRegistro">
+
+                <!-- Perfil: solo aplica a Persona Fisica (ver .solo-pf en el
+                     CSS). Una Persona Juridica no elige: siempre es
+                     Organizador, y ese valor se envia via el input oculto
+                     de abajo sin mostrarselo al usuario. -->
+                <div class="campo campo--ancho solo-pf" style="margin-bottom: 28px;">
+                    <label class="campo__etiqueta">&iquest;C&oacute;mo quer&eacute;s usar Enexia?</label>
+                    <fieldset class="tipo" style="border: 0; padding: 4px; margin: 6px 0 0;">
+                        <legend class="campo__etiqueta" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Perfil</legend>
+
+                        <input type="radio" id="perfil-participante" name="perfil" value="PARTICIPANTE" checked>
+                        <label class="tipo__opcion" for="perfil-participante">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M8 8.66667C10.2091 8.66667 12 6.87581 12 4.66667C12 2.45753 10.2091 0.666667 8 0.666667C5.79086 0.666667 4 2.45753 4 4.66667C4 6.87581 5.79086 8.66667 8 8.66667Z"/>
+                                    <path d="M2 15.3333C2 12.388 4.68629 10 8 10C11.3137 10 14 12.388 14 15.3333"/>
+                                </g>
+                            </svg>
+                            Participante
+                        </label>
+
+                        <input type="radio" id="perfil-organizador" name="perfil" value="ORGANIZADOR">
+                        <label class="tipo__opcion" for="perfil-organizador">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M8 1.33333L14.6667 4.66667L8 8L1.33333 4.66667L8 1.33333Z"/>
+                                    <path d="M1.33333 8L8 11.3333L14.6667 8"/>
+                                    <path d="M1.33333 11.3333L8 14.6667L14.6667 11.3333"/>
+                                </g>
+                            </svg>
+                            Organizador
+                        </label>
+                    </fieldset>
+                </div>
+
+                <!-- Persona Juridica no elige perfil: el fundador siempre
+                     queda como Organizador (ademas recibe PARTICIPANTE via
+                     AuthService). Este input viaja disabled y se habilita
+                     por JS solo cuando el tipo de cuenta es "pj". -->
+                <input type="hidden" name="perfil" value="ORGANIZADOR" id="perfil-pj-forzado" disabled>
+
+                <!-- Comun a los dos tipos de cuenta. -->
+                <div class="seccion">
+                    <h2 class="seccion__titulo">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10 2C11.933 2 13.5 3.567 13.5 5.5C13.5 7.433 11.933 9 10 9C9.66 9 9.33 8.95 9.02 8.86L7.5 10.5H6V12H4.5V13.5H2V11L6.64 6.6C6.55 6.25 6.5 5.88 6.5 5.5C6.5 3.567 8.067 2 10 2Z"/>
+                                <path d="M10.75 5.25H10.755"/>
+                            </g>
+                        </svg>
+                        Credenciales de acceso
+                    </h2>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="nickname">Nickname / Usuario</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="8" cy="8" r="2.5"/>
+                                    <path d="M10.5 5.5V8.75C10.5 9.72 11.28 10.5 12.25 10.5C13.22 10.5 14 9.72 14 8.75V8C14 4.686 11.314 2 8 2C4.686 2 2 4.686 2 8C2 11.314 4.686 14 8 14C9.1 14 10.13 13.7 11.02 13.19"/>
+                                </g>
+                            </svg>
+                            <input type="text" id="nickname" name="nickname" placeholder="@usuario" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="email">Correo Electr&oacute;nico</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 4.66667C2 3.93029 2.59695 3.33333 3.33333 3.33333H12.6667C13.4031 3.33333 14 3.93029 14 4.66667V11.3333C14 12.0697 13.4031 12.6667 12.6667 12.6667H3.33333C2.59695 12.6667 2 12.0697 2 11.3333V4.66667Z"/>
+                                    <path d="M2.33333 4L8 8.33333L13.6667 4"/>
+                                </g>
+                            </svg>
+                            <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required>
+                        </div>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="password">Contrase&ntilde;a</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3.33333 7.33333H12.6667C13.4025 7.33333 14 7.93078 14 8.66667V13.3333C14 14.0692 13.4025 14.6667 12.6667 14.6667H3.33333C2.59745 14.6667 2 14.0692 2 13.3333V8.66667C2 7.93078 2.59745 7.33333 3.33333 7.33333Z"/>
+                                    <path d="M4.66667 7.33333V4.66667C4.66667 2.82695 6.16028 1.33333 8 1.33333C9.83972 1.33333 11.3333 2.82695 11.3333 4.66667V7.33333"/>
+                                </g>
+                            </svg>
+                            <input type="password" id="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required>
+                        </div>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="passwordConfirmacion">Confirmar contrase&ntilde;a</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3.33333 7.33333H12.6667C13.4025 7.33333 14 7.93078 14 8.66667V13.3333C14 14.0692 13.4025 14.6667 12.6667 14.6667H3.33333C2.59745 14.6667 2 14.0692 2 13.3333V8.66667C2 7.93078 2.59745 7.33333 3.33333 7.33333Z"/>
+                                    <path d="M4.66667 7.33333V4.66667C4.66667 2.82695 6.16028 1.33333 8 1.33333C9.83972 1.33333 11.3333 2.82695 11.3333 4.66667V7.33333"/>
+                                </g>
+                            </svg>
+                            <input type="password" id="passwordConfirmacion" name="passwordConfirmacion" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Identidad: el unico bloque que depende del tipo de cuenta. -->
+                <div class="seccion">
+                    <h2 class="seccion__titulo">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12.6667 14V12.6667C12.6667 11.1949 11.4718 10 10 10H6C4.52822 10 3.33333 11.1949 3.33333 12.6667V14"/>
+                                <path d="M5.33333 4.66667C5.33333 6.13844 6.52822 7.33333 8 7.33333C9.47178 7.33333 10.6667 6.13844 10.6667 4.66667C10.6667 3.19489 9.47178 2 8 2C6.52822 2 5.33333 3.19489 5.33333 4.66667Z"/>
+                            </g>
+                        </svg>
+                        Datos de identidad &mdash; Persona f&iacute;sica
+                    </h2>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="nombre">Nombre</label>
+                        <div class="entrada">
+                            <input type="text" id="nombre" name="nombre" placeholder="Ej: Mar&iacute;a" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="apellido">Apellido</label>
+                        <div class="entrada">
+                            <input type="text" id="apellido" name="apellido" placeholder="Ej: Gonz&aacute;lez" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="dni">DNI</label>
+                        <div class="entrada">
+                            <input type="text" id="dni" name="dni" placeholder="N&uacute;mero de documento" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="nacimiento">Fecha de Nacimiento</label>
+                        <div class="entrada">
+                            <input type="date" id="nacimiento" name="nacimiento" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="seccion solo-pj">
+                    <h2 class="seccion__titulo">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 14H14"/>
+                                <path d="M3.33333 14V3.33333C3.33333 2.59695 3.93029 2 4.66667 2H9.33333C10.0697 2 10.6667 2.59695 10.6667 3.33333V14"/>
+                                <path d="M10.6667 7.33333H12.6667C13.0349 7.33333 13.3333 7.63181 13.3333 8V14"/>
+                                <path d="M6 4.66667H8M6 7.33333H8M6 10H8"/>
+                            </g>
+                        </svg>
+                        Datos de identidad &mdash; Persona jur&iacute;dica
+                        <span class="candado">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2.5" y="7" width="11" height="7" rx="1.3"/>
+                                    <path d="M5 7V4.75C5 3.23 6.34 2 8 2C9.66 2 11 3.23 11 4.75V7"/>
+                                </g>
+                            </svg>
+                            Solo para organizaciones
+                        </span>
+                    </h2>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="razon_social">Raz&oacute;n Social</label>
+                        <div class="entrada">
+                            <input type="text" id="razon_social" name="razon_social" placeholder="Nombre legal registrado" required>
+                        </div>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="nombre_fantasia">
+                            Nombre de Fantas&iacute;a
+                            <span class="campo__opcional">Opcional</span>
+                        </label>
+                        <div class="entrada">
+                            <input type="text" id="nombre_fantasia" name="nombre_fantasia" placeholder="Nombre comercial">
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="cuit">CUIT</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M2.66667 6H13.3333M2.66667 10H13.3333M6.66667 2.66667L5.33333 13.3333M10.6667 2.66667L9.33333 13.3333" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round"/>
+                            </svg>
+                            <input type="text" id="cuit" name="cuit" placeholder="XX-XXXXXXXX-X" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="telefono">Tel&eacute;fono de Contacto</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M14 11.28V13.28C14 13.84 13.53 14.29 12.97 14.25C10.9 14.09 8.94 13.31 7.31 12.02C5.79 10.83 4.5 9.21 3.7 7.31C2.98 5.62 2.55 3.83 2.42 2.03C2.38 1.47 2.83 1 3.39 1H5.39C5.9 1 6.33 1.37 6.41 1.87C6.5 2.5 6.66 3.11 6.89 3.7C7.02 4.03 6.94 4.4 6.69 4.65L5.85 5.49C6.59 6.95 7.72 8.08 9.18 8.82L10.02 7.98C10.27 7.73 10.64 7.65 10.97 7.78C11.56 8.01 12.17 8.17 12.8 8.26C13.31 8.34 13.68 8.78 13.67 9.29L14 11.28Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="tel" id="telefono" name="telefono" placeholder="+54 9 2901 ..." required>
+                        </div>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="email_corporativo">Email Corporativo</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 4.66667C2 3.93029 2.59695 3.33333 3.33333 3.33333H12.6667C13.4031 3.33333 14 3.93029 14 4.66667V11.3333C14 12.0697 13.4031 12.6667 12.6667 12.6667H3.33333C2.59695 12.6667 2 12.0697 2 11.3333V4.66667Z"/>
+                                    <path d="M2.33333 4L8 8.33333L13.6667 4"/>
+                                </g>
+                            </svg>
+                            <input type="email" id="email_corporativo" name="email_corporativo" placeholder="contacto@organizacion.com" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comun a los dos tipos de cuenta. -->
+                <div class="seccion">
+                    <h2 class="seccion__titulo">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 6.66667L8 2L14 6.66667V13.3333C14 13.7015 13.7015 14 13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V6.66667Z"/>
+                                <path d="M6 14V8.66667H10V14"/>
+                            </g>
+                        </svg>
+                        Domicilio personal
+                    </h2>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="provincia">Provincia</label>
+                        <div class="entrada">
+                            <select id="provincia" name="provincia" required>
+                                <option value="tdf">Tierra del Fuego</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="ciudad">Ciudad</label>
+                        <div class="entrada">
+                            <select id="ciudad" name="ciudad" required>
+                                <option value="">Seleccion&aacute; una ciudad</option>
+                                <option value="rg">R&iacute;o Grande</option>
+                                <option value="ushuaia">Ushuaia</option>
+                                <option value="tolhuin">Tolhuin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="calle">Calle</label>
+                        <div class="entrada">
+                            <input type="text" id="calle" name="calle" placeholder="Nombre de la calle" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="numero">N&uacute;mero Exterior</label>
+                        <div class="entrada">
+                            <input type="text" id="numero" name="numero" placeholder="N&uacute;mero" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="interior">
+                            N&uacute;mero Interior
+                            <span class="campo__opcional">Opcional</span>
+                        </label>
+                        <div class="entrada">
+                            <input type="text" id="interior" name="interior" placeholder="Ej: Dpto. 5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domicilio de la entidad: independiente del personal. -->
+                <div class="seccion solo-pj">
+                    <h2 class="seccion__titulo">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 14H14"/>
+                                <path d="M3.33333 14V3.33333C3.33333 2.59695 3.93029 2 4.66667 2H9.33333C10.0697 2 10.6667 2.59695 10.6667 3.33333V14"/>
+                                <path d="M10.6667 7.33333H12.6667C13.0349 7.33333 13.3333 7.63181 13.3333 8V14"/>
+                                <path d="M6 4.66667H8M6 7.33333H8M6 10H8"/>
+                            </g>
+                        </svg>
+                        Domicilio fiscal legal
+                        <span class="candado">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2.5" y="7" width="11" height="7" rx="1.3"/>
+                                    <path d="M5 7V4.75C5 3.23 6.34 2 8 2C9.66 2 11 3.23 11 4.75V7"/>
+                                </g>
+                            </svg>
+                            Solo para organizaciones
+                        </span>
+                    </h2>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="provincia_legal">Provincia</label>
+                        <div class="entrada">
+                            <select id="provincia_legal" name="provincia_legal" required>
+                                <option value="tdf">Tierra del Fuego</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="ciudad_legal">Ciudad</label>
+                        <div class="entrada">
+                            <select id="ciudad_legal" name="ciudad_legal" required>
+                                <option value="">Seleccion&aacute; una ciudad</option>
+                                <option value="rg">R&iacute;o Grande</option>
+                                <option value="ushuaia">Ushuaia</option>
+                                <option value="tolhuin">Tolhuin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="calle_legal">Calle</label>
+                        <div class="entrada">
+                            <input type="text" id="calle_legal" name="calle_legal" placeholder="Nombre de la calle" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="numero_legal">N&uacute;mero Exterior</label>
+                        <div class="entrada">
+                            <input type="text" id="numero_legal" name="numero_legal" placeholder="N&uacute;mero" required>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="interior_legal">
+                            N&uacute;mero Interior
+                            <span class="campo__opcional">Opcional</span>
+                        </label>
+                        <div class="entrada">
+                            <input type="text" id="interior_legal" name="interior_legal" placeholder="Ej: Piso 2, Of. B">
+                        </div>
+                    </div>
+                </div>
+
+                <p class="nota solo-pj">
+                    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="8" cy="8" r="6"/>
+                            <path d="M8 11V7.5M8 5.25H8.005"/>
+                        </g>
+                    </svg>
+                    Los datos de tu organizaci&oacute;n ser&aacute;n verificados por el equipo de
+                    Enexia antes de habilitar los permisos de publicaci&oacute;n.
+                </p>
+
+                <div class="acciones">
+                    <button type="button" class="boton boton--secundario">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M12.6667 8H3.33333M8 3.33333L3.33333 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Volver atr&aacute;s
+                    </button>
+                    <button type="submit" class="boton">
+                        Finalizar Registro
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+        <p class="pie">Enexia &middot; Tierra del Fuego &middot; R&iacute;o Grande &middot; Tolhuin &middot; Ushuaia</p>
+
+    </main>
+</div>
+
+<script>
+/* El toggle solo escribe el tipo en el body; el resto lo resuelve el CSS.
+   Tambien decide a que pantalla de "registro completado" se llega. */
+(function () {
+    var radios = document.querySelectorAll('input[name="tipo_cuenta"]');
+    var form = document.getElementById('formRegistro');
+    var perfilPjForzado = document.getElementById('perfil-pj-forzado');
+
+    function aplicar() {
+        var elegido = document.querySelector('input[name="tipo_cuenta"]:checked');
+        var tipo = elegido ? elegido.value : 'pf';
+        document.body.dataset.tipo = tipo;
+
+        // Los datos personales siguen activos siempre; solo el bloque
+        // juridico se apaga, para que su "required" no bloquee el envio
+        // de una persona fisica.
+        document.querySelectorAll('.solo-pj input, .solo-pj select').forEach(function (campo) {
+            campo.disabled = tipo !== 'pj';
+        });
+
+        // El selector de perfil (Participante/Organizador) solo tiene
+        // sentido para Persona Fisica. Para Persona Juridica se deshabilita
+        // (no viaja en el submit) y en su lugar se habilita el input oculto
+        // que fuerza perfil=ORGANIZADOR: el fundador de una organizacion
+        // siempre es Organizador, nunca hay eleccion que mostrarle.
+        document.querySelectorAll('.solo-pf input[name="perfil"]').forEach(function (campo) {
+            campo.disabled = tipo !== 'pf';
+        });
+        perfilPjForzado.disabled = tipo !== 'pj';
+    }
+
+    radios.forEach(function (r) { r.addEventListener('change', aplicar); });
+    aplicar();
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var tipo = document.body.dataset.tipo;
+        window.location.href = tipo === 'pj'
+            ? 'register-completado-pj.html'
+            : 'register-completado-pf.html';
+    });
+})();
+</script>
+
+</body>
+</html>
