@@ -1,7 +1,10 @@
 package com.enexia.rg.controller;
 
+import java.security.Principal;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -71,5 +74,17 @@ public class AuthController {
             HttpServletRequest request) {
 
         return ResponseEntity.ok(authService.login(peticion, request));
+    }
+
+    /**
+     * Endpoint autenticado que devuelve los datos del usuario del token.
+     *
+     * Spring inyecta {@code Principal} automaticamente; contiene el usuario
+     * autenticado por el filtro JWT. Si no hay sesion valida, el filtro rechaza
+     * antes de que entre aqui.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioLoginResponse> obtenerDatosActual(Principal principal) {
+        return ResponseEntity.ok(authService.obtenerDatosActual(principal.getName()));
     }
 }

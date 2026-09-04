@@ -52,6 +52,12 @@ const API = {
                 }
             }
 
+            // Si el backend devuelve 401, redirige al login
+            if (respuesta.status === 401) {
+                Auth.cerrarSesion();
+                window.location.href = '/pages/auth/login-desktop-claro.html';
+            }
+
             return {
                 ok: respuesta.ok,
                 status: respuesta.status,
@@ -101,5 +107,27 @@ const API = {
     async ping() {
         const r = await this.peticion('POST', '/api/auth/login', {});
         return !r.errorRed;
+    },
+
+    /* ===== Metodos convenientes para requests autenticadas ===== */
+
+    /** GET autenticado */
+    get(ruta) {
+        return this.peticion('GET', ruta, null, true);
+    },
+
+    /** POST autenticado */
+    post(ruta, datos) {
+        return this.peticion('POST', ruta, datos, true);
+    },
+
+    /** PUT autenticado */
+    put(ruta, datos) {
+        return this.peticion('PUT', ruta, datos, true);
+    },
+
+    /** DELETE autenticado */
+    delete(ruta) {
+        return this.peticion('DELETE', ruta, null, true);
     }
 };

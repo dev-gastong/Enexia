@@ -357,4 +357,26 @@ public class AuthService {
             throw ex;
         }
     }
+
+    // =====================================================================
+    // GET ME  (Endpoint autenticado para pruebas)
+    // =====================================================================
+
+    /**
+     * Recupera los datos del usuario autenticado segun el token.
+     * Usado por la pagina de prueba (prueba-token.html) para verificar que el
+     * token se inyecta correctamente en los headers de las requests posteriores.
+     */
+    public UsuarioLoginResponse obtenerDatosActual(String email) {
+        Usuario usuario = usuarioRepository
+                .buscarActivoPorEmailConRoles(email)
+                .orElseThrow(CredencialesInvalidasException::new);
+
+        return new UsuarioLoginResponse(
+                usuario.getIdUsuario(),
+                usuario.getEmail(),
+                null,  // No devolvemos el token en esta respuesta
+                "Bearer",
+                usuario.getRoles());
+    }
 }

@@ -124,7 +124,7 @@ const Auth = {
     },
 
     /** Redirige al login si no hay sesion valida. Se llama al abrir una pagina privada. */
-    exigirSesion(rutaLogin = 'auth/login.html') {
+    exigirSesion(rutaLogin = '/pages/auth/login-desktop-claro.html') {
         if (!this.autenticado()) {
             window.location.href = rutaLogin;
             return false;

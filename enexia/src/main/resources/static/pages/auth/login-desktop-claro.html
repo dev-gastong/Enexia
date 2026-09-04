@@ -709,16 +709,14 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
         if (respuesta.ok && respuesta.cuerpo) {
             Auth.guardarSesion(respuesta.cuerpo);
 
-            const usuario = Auth.usuario();
-            const roles = usuario?.roles || [];
+            // Debug: verificar que se guardó
+            console.log('✓ Token guardado:', Auth.token() ? 'SÍ' : 'NO');
+            console.log('✓ Autenticado?', Auth.autenticado());
 
-            if (roles.includes('ORGANIZADOR')) {
-                window.location.href = '../organizer/dashboard.html';
-            } else if (roles.includes('ADMINISTRADOR')) {
-                window.location.href = '../admin/dashboard.html';
-            } else {
-                window.location.href = '../participant/dashboard.html';
-            }
+            // Pequeño delay para asegurar que sessionStorage se sincronicó
+            setTimeout(() => {
+                window.location.href = '../dashboard.html';
+            }, 100);
         } else {
             mostrarError('Credenciales inválidas');
             btnEnviar.disabled = false;

@@ -6,6 +6,14 @@
     <title>Panel - Enexia</title>
     <link rel="stylesheet" href="../css/tokens.css">
     <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        /* Ocultar todo mientras valida autenticación */
+        body.validando { visibility: hidden; }
+    </style>
+    <script>
+        // Ocultamos el body ANTES de que cargue el contenido
+        document.body.classList.add('validando');
+    </script>
 </head>
 <body>
 
@@ -160,7 +168,7 @@
 <script src="../js/utils.js"></script>
 <script>
 /* Puerta de entrada: sin sesion valida no se muestra nada. */
-if (!Auth.exigirSesion('auth/login.html')) {
+if (!Auth.exigirSesion('/pages/auth/login-desktop-claro.html')) {
     throw new Error('Sin sesion');
 }
 
@@ -239,8 +247,11 @@ setInterval(refrescarCuenta, 1000);
 
 document.getElementById('btnSalir').addEventListener('click', () => {
     Auth.cerrarSesion();
-    window.location.href = 'auth/login.html';
+    window.location.href = '/pages/auth/login-desktop-claro.html';
 });
+
+/* ✓ Autenticación validada, mostrar página */
+document.body.classList.remove('validando');
 </script>
 
 </body>

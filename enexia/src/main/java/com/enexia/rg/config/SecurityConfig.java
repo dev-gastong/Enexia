@@ -78,16 +78,24 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        // --- Endpoints publicos: son la puerta de entrada, no
+                        // --- Endpoints API publicos: son la puerta de entrada, no
                         // pueden exigir el token que todavia no existe.
                         .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
-                        // --- HTML
+                        // --- Recursos estaticos (siempre publicos)
                         .requestMatchers("/assets/**").permitAll()
                         .requestMatchers("/css/**").permitAll()
-                        .requestMatchers("/pages/auth/**").permitAll()
                         .requestMatchers("/js/**").permitAll()
+                        .requestMatchers("/index.html").permitAll()
+                        .requestMatchers("/").permitAll()
+
+                        // --- Paginas de autenticacion (publicas)
+                        .requestMatchers("/pages/auth/**").permitAll()
+
+                        // --- Paginas privadas (requieren autenticacion)
+                        .requestMatchers("/pages/dashboard.html").authenticated()
+                        .requestMatchers("/pages/prueba-token.html").authenticated()
 
                         // --- Endpoints por rol (RF-1.3)
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")

@@ -44,6 +44,14 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
+        // Si intenta acceder a una página HTML sin token, redirige al login
+        String uri = request.getRequestURI();
+        if (uri.endsWith(".html")) {
+            response.sendRedirect("/pages/auth/login-desktop-claro.html");
+            return;
+        }
+
+        // Para endpoints API, devuelve JSON con el error
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
