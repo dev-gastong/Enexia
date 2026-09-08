@@ -235,6 +235,7 @@ public class AuthService {
 
         String email = peticion.getEmail().trim().toLowerCase();
         String nickname = peticion.getNickname().trim();
+        String dni = peticion.getDni().trim();
 
         // --- Paso 1.1.1: unicidad de credenciales.
         if (usuarioRepository.existsByEmailIgnoreCase(email)) {
@@ -242,6 +243,15 @@ public class AuthService {
         }
         if (usuarioRepository.existsByNicknameIgnoreCase(nickname)) {
             throw new RecursoDuplicadoException("Ese nickname ya esta en uso");
+        }
+
+        // --- Paso 7.1.2: unicidad del documento.
+        // Email y nickname identifican a la CUENTA; el DNI identifica a la
+        // PERSONA. Sin este control, alguien podria abrir cuentas ilimitadas
+        // cambiando solo el email, y una suspension no serviria de nada porque
+        // el mismo individuo volveria a entrar con otra cuenta.
+        if (personaFisicaRepository.existsByDni(dni)) {
+            throw new RecursoDuplicadoException("Ya existe una cuenta registrada con ese DNI");
         }
 
         // --- Paso 1.1.1A: moderacion de texto ANTES de persistir nada.
@@ -269,7 +279,7 @@ public class AuthService {
         personaFisica.setPersona(persona);
         personaFisica.setNombre(peticion.getNombre().trim());
         personaFisica.setApellido(peticion.getApellido().trim());
-        personaFisica.setDni(peticion.getDni().trim());
+        personaFisica.setDni(dni);
         personaFisica.setFechaNacimiento(peticion.getFechaNacimiento());
         personaFisica = personaFisicaRepository.save(personaFisica);
 

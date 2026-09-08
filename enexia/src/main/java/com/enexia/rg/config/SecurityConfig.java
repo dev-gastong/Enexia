@@ -96,9 +96,23 @@ public class SecurityConfig {
                         // --- Paginas de autenticacion (publicas)
                         .requestMatchers("/pages/auth/**").permitAll()
 
-                        // --- Paginas privadas (requieren autenticacion)
-                        .requestMatchers("/pages/dashboard.html").authenticated()
-                        .requestMatchers("/pages/prueba-token.html").authenticated()
+                        // --- Paginas "privadas": el HTML se sirve publico a
+                        // proposito. El JWT vive en sessionStorage y una
+                        // navegacion de browser (window.location.href, <a>)
+                        // nunca le adjunta el header Authorization -- solo lo
+                        // llevan los fetch() de API.get/post/etc. Si estas
+                        // rutas exigieran authenticated() aca, la carga de la
+                        // pagina SIEMPRE llegaria sin token y rebotaria al
+                        // login (via el redirect de JwtAuthenticationEntryPoint
+                        // para URIs .html), incluso con sesion valida.
+                        //
+                        // La proteccion real ya existe en dos capas mas
+                        // apropiadas: Auth.exigirSesion() del lado del cliente
+                        // (dashboard.html:171) redirige si no hay sesion, y los
+                        // datos de verdad viajan por /api/** protegido mas
+                        // abajo, que si exige el token en cada fetch.
+                        .requestMatchers("/pages/dashboard.html").permitAll()
+                        .requestMatchers("/pages/prueba-token.html").permitAll()
 
                         // --- Endpoints por rol (RF-1.3)
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")

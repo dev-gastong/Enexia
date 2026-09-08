@@ -19,8 +19,8 @@
    Une las dos pantallas que antes eran register-paso2-pf.html y
    register-paso2-pj.html. El tipo de cuenta dejo de ser una diferencia
    entre archivos y paso a ser un toggle dentro del mismo formulario:
-   las credenciales y el domicilio son comunes, y solo el bloque de
-   identidad cambia. Misma escenografia y mismos radios que el login.
+   las credenciales son comunes, y solo cambian los bloques de
+   identidad y el domicilio fiscal de la organizacion. Misma escenografia y mismos radios que el login.
    ===================================================================== */
 
 :root {
@@ -369,6 +369,43 @@ a:hover { color: var(--acento-fuerte); }
     font-weight: 400;
 }
 
+/* --- Errores por campo ---------------------------------------------
+   El span vive siempre en el DOM y arranca oculto; UI.pintarErrores()
+   solo escribe el texto y marca el contenedor. Reservar el lugar de
+   antemano evita que la pagina salte cuando aparece el mensaje. */
+
+.campo__error {
+    display: none;
+    color: var(--error);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.campo--invalido .campo__error { display: block; }
+
+.campo--invalido .entrada {
+    border-color: var(--error-borde);
+    background: var(--error-tinte);
+}
+
+/* --- Aviso general del formulario ----------------------------------- */
+
+.aviso {
+    display: none;
+    margin: 0 0 20px;
+    padding: 13px 15px;
+    border: 1px solid transparent;
+    border-radius: var(--radio-campo);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.aviso--visible { display: block; }
+.aviso--ok     { background: var(--ok-tinte);    border-color: var(--ok-borde);    color: var(--ok); }
+.aviso--error  { background: var(--error-tinte); border-color: var(--error-borde); color: var(--error); }
+.aviso--alerta { background: var(--alerta-tinte); border-color: var(--alerta-borde); color: var(--alerta); }
+.aviso code    { font-family: var(--mono, monospace); font-size: 12px; }
+
 .entrada {
     display: flex;
     align-items: center;
@@ -715,6 +752,7 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                             </svg>
                             <input type="text" id="nickname" name="nickname" placeholder="@usuario" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
 
                     <div class="campo">
@@ -728,6 +766,7 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                             </svg>
                             <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
 
                     <div class="campo campo--ancho">
@@ -741,6 +780,7 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                             </svg>
                             <input type="password" id="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
 
                     <div class="campo campo--ancho">
@@ -754,6 +794,7 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                             </svg>
                             <input type="password" id="passwordConfirmacion" name="passwordConfirmacion" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
                 </div>
 
@@ -774,6 +815,7 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                         <div class="entrada">
                             <input type="text" id="nombre" name="nombre" placeholder="Ej: Mar&iacute;a" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
 
                     <div class="campo">
@@ -781,6 +823,7 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                         <div class="entrada">
                             <input type="text" id="apellido" name="apellido" placeholder="Ej: Gonz&aacute;lez" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
 
                     <div class="campo">
@@ -788,13 +831,15 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                         <div class="entrada">
                             <input type="text" id="dni" name="dni" placeholder="N&uacute;mero de documento" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
 
                     <div class="campo">
-                        <label class="campo__etiqueta" for="nacimiento">Fecha de Nacimiento</label>
+                        <label class="campo__etiqueta" for="fechaNacimiento">Fecha de Nacimiento</label>
                         <div class="entrada">
-                            <input type="date" id="nacimiento" name="nacimiento" required>
+                            <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
                         </div>
+                        <span class="campo__error"></span>
                     </div>
                 </div>
 
@@ -871,65 +916,13 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                     </div>
                 </div>
 
-                <!-- Comun a los dos tipos de cuenta. -->
-                <div class="seccion">
-                    <h2 class="seccion__titulo">
-                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 6.66667L8 2L14 6.66667V13.3333C14 13.7015 13.7015 14 13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V6.66667Z"/>
-                                <path d="M6 14V8.66667H10V14"/>
-                            </g>
-                        </svg>
-                        Domicilio personal
-                    </h2>
+                <!-- El domicilio personal de la Persona Fisica se quito del
+                     formulario: el MER no modela una Ubicacion para
+                     Persona_Fisica (solo Persona_Juridica tiene id_ubicacion),
+                     asi que esos campos no tenian donde persistirse. Volveran
+                     cuando se decida agregar la relacion al modelo. -->
 
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="provincia">Provincia</label>
-                        <div class="entrada">
-                            <select id="provincia" name="provincia" required>
-                                <option value="tdf">Tierra del Fuego</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="ciudad">Ciudad</label>
-                        <div class="entrada">
-                            <select id="ciudad" name="ciudad" required>
-                                <option value="">Seleccion&aacute; una ciudad</option>
-                                <option value="rg">R&iacute;o Grande</option>
-                                <option value="ushuaia">Ushuaia</option>
-                                <option value="tolhuin">Tolhuin</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="campo campo--ancho">
-                        <label class="campo__etiqueta" for="calle">Calle</label>
-                        <div class="entrada">
-                            <input type="text" id="calle" name="calle" placeholder="Nombre de la calle" required>
-                        </div>
-                    </div>
-
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="numero">N&uacute;mero Exterior</label>
-                        <div class="entrada">
-                            <input type="text" id="numero" name="numero" placeholder="N&uacute;mero" required>
-                        </div>
-                    </div>
-
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="interior">
-                            N&uacute;mero Interior
-                            <span class="campo__opcional">Opcional</span>
-                        </label>
-                        <div class="entrada">
-                            <input type="text" id="interior" name="interior" placeholder="Ej: Dpto. 5">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Domicilio de la entidad: independiente del personal. -->
+                <!-- Domicilio fiscal de la organizacion (Persona_Juridica.id_ubicacion). -->
                 <div class="seccion solo-pj">
                     <h2 class="seccion__titulo">
                         <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1009,15 +1002,19 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
                     Enexia antes de habilitar los permisos de publicaci&oacute;n.
                 </p>
 
+                <!-- Aviso general: errores que no pertenecen a un campo
+                     concreto (backend caido, duplicados, moderacion). -->
+                <div id="avisoRegistro" class="aviso" role="alert" aria-live="polite"></div>
+
                 <div class="acciones">
-                    <button type="button" class="boton boton--secundario">
+                    <button type="button" class="boton boton--secundario" id="btnVolver">
                         <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M12.6667 8H3.33333M8 3.33333L3.33333 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         Volver atr&aacute;s
                     </button>
-                    <button type="submit" class="boton">
-                        Finalizar Registro
+                    <button type="submit" class="boton" id="btnEnviar">
+                        <span id="btnEnviarTexto">Finalizar Registro</span>
                         <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -1032,17 +1029,35 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
     </main>
 </div>
 
+<script src="../../js/api.js"></script>
+<script src="../../js/auth.js"></script>
+<script src="../../js/utils.js"></script>
+
 <script>
-/* El toggle solo escribe el tipo en el body; el resto lo resuelve el CSS.
-   Tambien decide a que pantalla de "registro completado" se llega. */
+/* =====================================================================
+   Registro paso 2 - conexion con POST /api/auth/registro
+
+   Dos responsabilidades separadas:
+     1. El toggle PF/PJ, que solo escribe el tipo en el body y deja que
+        el CSS muestre u oculte los bloques.
+     2. El envio del formulario, que arma el JSON con los nombres exactos
+        del DTO UsuarioRegistroRequest y traduce la respuesta HTTP a algo
+        que el usuario entienda.
+   ===================================================================== */
 (function () {
-    var radios = document.querySelectorAll('input[name="tipo_cuenta"]');
-    var form = document.getElementById('formRegistro');
-    var perfilPjForzado = document.getElementById('perfil-pj-forzado');
+
+    const radios          = document.querySelectorAll('input[name="tipo_cuenta"]');
+    const form            = document.getElementById('formRegistro');
+    const perfilPjForzado = document.getElementById('perfil-pj-forzado');
+    const btnEnviar       = document.getElementById('btnEnviar');
+    const btnTexto        = document.getElementById('btnEnviarTexto');
+    const btnVolver       = document.getElementById('btnVolver');
+
+    /* --------------------------------------------------- Toggle PF/PJ --- */
 
     function aplicar() {
-        var elegido = document.querySelector('input[name="tipo_cuenta"]:checked');
-        var tipo = elegido ? elegido.value : 'pf';
+        const elegido = document.querySelector('input[name="tipo_cuenta"]:checked');
+        const tipo = elegido ? elegido.value : 'pf';
         document.body.dataset.tipo = tipo;
 
         // Los datos personales siguen activos siempre; solo el bloque
@@ -1061,17 +1076,110 @@ body[data-tipo="pj"] .nota.solo-pj { display: flex; }
             campo.disabled = tipo !== 'pf';
         });
         perfilPjForzado.disabled = tipo !== 'pj';
+
+        // El backend de Sprint 1 solo da de alta Personas Fisicas. Antes de
+        // que exista la rama PJ conviene decirlo de frente y no dejar que el
+        // usuario complete un formulario largo para recibir un error al final.
+        if (tipo === 'pj') {
+            UI.aviso('avisoRegistro', 'alerta',
+                '<strong>Registro de organizaciones en preparacion.</strong> '
+              + 'Por ahora solo se puede crear una cuenta personal. '
+              + 'Elegi "Cuenta personal" para continuar.');
+        } else {
+            UI.ocultarAviso('avisoRegistro');
+        }
+        btnEnviar.disabled = tipo === 'pj';
     }
 
     radios.forEach(function (r) { r.addEventListener('change', aplicar); });
     aplicar();
 
-    form.addEventListener('submit', function (e) {
+    if (btnVolver) {
+        btnVolver.addEventListener('click', function () {
+            window.location.href = 'login-desktop-claro.html';
+        });
+    }
+
+    /* ------------------------------------------------ Envio al backend --- */
+
+    /**
+     * Arma el cuerpo con los nombres EXACTOS de UsuarioRegistroRequest.
+     * Si un nombre no coincide, Jackson deja el campo en null y la
+     * validacion lo rechaza con un mensaje que no explica nada.
+     */
+    function armarPeticion() {
+        const valor = function (id) { return document.getElementById(id).value.trim(); };
+        const perfilElegido = document.querySelector('input[name="perfil"]:not([disabled]):checked')
+                           || perfilPjForzado;
+
+        return {
+            email:                valor('email'),
+            nickname:             valor('nickname'),
+            password:             document.getElementById('password').value,
+            passwordConfirmacion: document.getElementById('passwordConfirmacion').value,
+            nombre:               valor('nombre'),
+            apellido:             valor('apellido'),
+            dni:                  valor('dni'),
+            fechaNacimiento:      valor('fechaNacimiento'),
+            perfil:               perfilElegido ? perfilElegido.value : 'PARTICIPANTE'
+        };
+    }
+
+    function bloquearBoton(bloquear) {
+        btnEnviar.disabled = bloquear;
+        btnTexto.textContent = bloquear ? 'Creando cuenta...' : 'Finalizar Registro';
+    }
+
+    form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        var tipo = document.body.dataset.tipo;
-        window.location.href = tipo === 'pj'
-            ? 'register-completado-pj.html'
-            : 'register-completado-pf.html';
+
+        if (document.body.dataset.tipo === 'pj') return;   // aun no soportado
+
+        UI.limpiarErrores();
+        UI.ocultarAviso('avisoRegistro');
+
+        // Chequeo local de coherencia: el backend lo repite, pero avisar aca
+        // ahorra un viaje de red por un error que se ve a simple vista.
+        const datos = armarPeticion();
+        if (datos.password !== datos.passwordConfirmacion) {
+            UI.aviso('avisoRegistro', 'error', 'Las contrasenas no coinciden.');
+            return;
+        }
+
+        bloquearBoton(true);
+        const respuesta = await API.registro(datos);
+        bloquearBoton(false);
+
+        if (respuesta.status === 201) {
+            // El 201 NO trae token: registrarse no autentica. Se deja el
+            // resumen en sessionStorage para que la pantalla de exito muestre
+            // el rol real que asigno el backend en lugar de uno fijo.
+            try {
+                sessionStorage.setItem('enexia_registro', JSON.stringify(respuesta.cuerpo));
+            } catch (err) { /* modo privado: la pantalla usa su texto por defecto */ }
+
+            window.location.href = 'register-completado-pf.html';
+            return;
+        }
+
+        // 400 de validacion: el handler global manda { campo: motivo } y
+        // pintarErrores lo vuelca sobre los inputs que coinciden por id.
+        if (respuesta.cuerpo && respuesta.cuerpo.errores) {
+            UI.pintarErrores(respuesta.cuerpo.errores);
+        }
+
+        UI.aviso('avisoRegistro', 'error', UI.mensajeDeError(respuesta));
+
+        // El primer campo con error se lleva el foco y la vista: en un
+        // formulario de esta altura, el error puede quedar fuera de pantalla.
+        const primerInvalido = document.querySelector('.campo--invalido input');
+        if (primerInvalido) {
+            primerInvalido.focus();
+            primerInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            document.getElementById('avisoRegistro')
+                    .scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     });
 })();
 </script>

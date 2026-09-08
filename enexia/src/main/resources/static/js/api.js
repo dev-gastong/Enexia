@@ -52,8 +52,13 @@ const API = {
                 }
             }
 
-            // Si el backend devuelve 401, redirige al login
-            if (respuesta.status === 401) {
+            // Si una peticion CON token vuelve 401, la sesion murio (token
+            // vencido o invalido): recien ahi corresponde cerrar sesion y
+            // mandar al login. Login/Registro nunca mandan token y devuelven
+            // 401 como respuesta normal ante credenciales invalidas; tratar
+            // ese caso igual redirigiria al login estando ya en el login,
+            // pisando el cartel de error apenas se pinta.
+            if (conToken && respuesta.status === 401) {
                 Auth.cerrarSesion();
                 window.location.href = '/pages/auth/login-desktop-claro.html';
             }

@@ -37,6 +37,20 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+	// Mockito: pruebas unitarias de la capa service sin levantar Spring ni la BD.
+	// La version la fija el BOM de Spring Boot, por eso no se declara.
+	testImplementation 'org.mockito:mockito-core'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
+
+	// Playwright Java
+	testImplementation 'com.microsoft.playwright:playwright:1.61.0'
+
+	testImplementation platform('org.junit:junit-bom:6.0.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+
+
+
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
@@ -44,6 +58,7 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	systemProperties = System.properties as Map<String, ?>
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -56,4 +71,10 @@ tasks.withType(JavaCompile).configureEach {
 // respuestas JSON y en los logs.
 tasks.withType(JavaExec).configureEach {
 	jvmArgs '-Dfile.encoding=UTF-8'
+}
+
+tasks.register('installPlaywright', JavaExec) {
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.microsoft.playwright.CLI'
+	args = ['install', '--with-deps']
 }

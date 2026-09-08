@@ -376,10 +376,12 @@ a:hover { color: var(--acento-fuerte); }
                         <path d="M5.33333 4.66667C5.33333 6.13844 6.52822 7.33333 8 7.33333C9.47178 7.33333 10.6667 6.13844 10.6667 4.66667C10.6667 3.19489 9.47178 2 8 2C6.52822 2 5.33333 3.19489 5.33333 4.66667Z"/>
                     </g>
                 </svg>
-                Participante
+                <span id="chipRol">Participante</span>
             </span>
 
             <h2 class="tarjeta__titulo">&iexcl;Cuenta Activa!</h2>
+
+            <p class="tarjeta__texto" id="saludo" hidden></p>
 
             <p class="tarjeta__texto">
                 Tu cuenta ha sido creada con &eacute;xito. Ya pod&eacute;s explorar el
@@ -388,8 +390,8 @@ a:hover { color: var(--acento-fuerte); }
                 inscribirte a tus eventos favoritos.
             </p>
 
-            <a class="boton" href="../participant/dashboard.html">
-                Comenzar a Explorar
+            <a class="boton" href="login-desktop-claro.html">
+                Iniciar sesi&oacute;n
                 <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -401,6 +403,36 @@ a:hover { color: var(--acento-fuerte); }
 
     </main>
 </div>
+
+<script>
+/* El 201 de /api/auth/registro no trae token: esta pantalla no puede pedirle
+   nada al backend. Lo unico que tiene es el resumen que el paso 2 dejo en
+   sessionStorage. Si no esta (recarga, entrada directa, modo privado), la
+   pagina se queda con su texto por defecto en vez de romperse. */
+(function () {
+    let datos = null;
+    try {
+        datos = JSON.parse(sessionStorage.getItem('enexia_registro'));
+    } catch (err) { return; }
+    if (!datos) return;
+
+    // ORGANIZADOR recibe tambien PARTICIPANTE; se muestra el rol principal.
+    const roles = datos.roles || [];
+    const principal = roles.indexOf('ORGANIZADOR') !== -1 ? 'Organizador' : 'Participante';
+    const chip = document.getElementById('chipRol');
+    if (chip) chip.textContent = principal;
+
+    const saludo = document.getElementById('saludo');
+    if (saludo && datos.nickname) {
+        saludo.textContent = 'Bienvenido/a, ' + datos.nickname + '. Inicia sesion para empezar.';
+        saludo.hidden = false;
+    }
+
+    // Un solo uso: si el usuario recarga, no debe seguir viendo el resumen
+    // de un alta que ya termino.
+    sessionStorage.removeItem('enexia_registro');
+})();
+</script>
 
 </body>
 </html>
