@@ -1,20 +1,22 @@
 package com.enexia.rg.exception;
 
 /**
- * Se lanza cuando el email no existe, el usuario no esta ACTIVO o la contrasena
- * no coincide (DFD Login, salidas Err_Gen1 y Err_Gen2).
+ * El email no existe o la contrasena no coincide (DFD Login, Err_Gen1/Err_Gen2).
  *
- * DECISION DE SEGURIDAD: los tres casos comparten una unica excepcion y un unico
- * mensaje. Distinguirlos permitiria enumeracion de cuentas: un atacante probaria
- * emails y sabria cuales estan registrados por la diferencia de respuesta.
- * Por eso el mensaje al cliente siempre es "Email o contrasena incorrectos",
- * y el motivo real solo queda en el log del servidor.
+ * Es el caso "base" de {@link AutenticacionFallidaException}: el resto de los
+ * rechazos existen para poder auditarlos por separado, pero se responden
+ * exactamente igual que este.
  */
-public class CredencialesInvalidasException extends RuntimeException {
+public class CredencialesInvalidasException extends AutenticacionFallidaException {
 
-    private static final String MENSAJE_GENERICO = "Email o contrasena incorrectos";
+    public static final String CODIGO_EMAIL_INEXISTENTE = "EMAIL_INEXISTENTE";
+    public static final String CODIGO_PASSWORD_INCORRECTA = "PASSWORD_INCORRECTA";
 
     public CredencialesInvalidasException() {
-        super(MENSAJE_GENERICO);
+        this(CODIGO_PASSWORD_INCORRECTA);
+    }
+
+    public CredencialesInvalidasException(String codigoInterno) {
+        super(codigoInterno);
     }
 }

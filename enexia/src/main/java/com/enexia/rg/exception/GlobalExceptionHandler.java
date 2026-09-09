@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -32,32 +33,34 @@ public class GlobalExceptionHandler {
 
     // ---------- Errores de autenticacion (DFD Login) ----------
 
-    /** 401. Mensaje deliberadamente ambiguo para no permitir enumerar cuentas. */
-    @ExceptionHandler(CredencialesInvalidasException.class)
-    public ResponseEntity<ErrorResponse> manejarCredencialesInvalidas(CredencialesInvalidasException ex) {
-        return construir("CREDENCIALES_INVALIDAS", ex.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+    /**
+     * RESPUESTA UNICA para todos los fallos de login (politica 2026-09-08).
+     *
+     * Cubre email inexistente, contrasena incorrecta, cuenta BLOQUEADA, cuenta
+     * en cooldown, SUSPENDIDA y DE_BAJA. Las cinco salen por aca con el MISMO
+     * status (401), el MISMO codigo, el MISMO texto y SIN cabeceras extra.
+     *
+     * Este metodo es el unico punto del sistema donde esa uniformidad se puede
+     * romper por descuido, y por eso es deliberadamente corto: cualquier
+     * ramificacion segun el tipo concreto de excepcion volveria a abrir el
+     * canal de enumeracion que se cerro. El motivo real se escribe en el log
+     * del servidor (nivel WARN, ver abajo) y en historial_interacciones.
+     *
+     * NOTA PARA QUIEN VENGA DESPUES: no agregar aca un @ExceptionHandler mas
+     * especifico para CuentaBloqueadaException ni para CuentaEnCooldownException.
+     * Spring elegiria el mas especifico y la respuesta volveria a delatar el
+     * estado de la cuenta.
+     */
+    @ExceptionHandler(AutenticacionFallidaException.class)
+    public ResponseEntity<ErrorResponse> manejarFalloDeAutenticacion(AutenticacionFallidaException ex) {
+        // El codigo interno queda del lado del servidor. Es lo que permite
+        // investigar un incidente sin publicar nada.
+        log.warn("Fallo de autenticacion. Motivo interno: {}", ex.getCodigoInterno());
 
-    /** 403. La cuenta existe y la clave puede ser correcta, pero esta bloqueada. */
-    @ExceptionHandler(CuentaBloqueadaException.class)
-    public ResponseEntity<ErrorResponse> manejarCuentaBloqueada(CuentaBloqueadaException ex) {
-        return construir("CUENTA_BLOQUEADA", ex.getMessage(), HttpStatus.FORBIDDEN);
-    }
-
-    /** 403 + cabecera con el momento en que se libera la penalizacion. */
-    @ExceptionHandler(CuentaEnCooldownException.class)
-    public ResponseEntity<ErrorResponse> manejarCooldown(CuentaEnCooldownException ex) {
-        ErrorResponse cuerpo = new ErrorResponse(
-                "CUENTA_EN_COOLDOWN", ex.getMessage(), HttpStatus.FORBIDDEN.value());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .header("X-Reintentar-Despues", String.valueOf(ex.getDisponibleDesde()))
-                .body(cuerpo);
-    }
-
-    /** 429 Too Many Requests: el codigo estandar para rate limiting. */
-    @ExceptionHandler(RateLimitExcedidoException.class)
-    public ResponseEntity<ErrorResponse> manejarRateLimit(RateLimitExcedidoException ex) {
-        return construir("RATE_LIMIT_EXCEDIDO", ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
+        return construir(
+                AutenticacionFallidaException.CODIGO_PUBLICO,
+                AutenticacionFallidaException.MENSAJE_PUBLICO,
+                HttpStatus.UNAUTHORIZED);
     }
 
     // ---------- Errores de registro (DFD Registro) ----------
@@ -85,6 +88,53 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ReglaNegocioException.class)
     public ResponseEntity<ErrorResponse> manejarReglaNegocio(ReglaNegocioException ex) {
         return construir("REGLA_NEGOCIO", ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * 409 ante una violacion de constraint UNIQUE de la base.
+     *
+     * Es la red de seguridad de la condicion de carrera del registro: dos altas
+     * concurrentes pasan ambas el chequeo existsBy... del service (ninguna ve la
+     * fila aun sin confirmar de la otra) y chocan recien en el INSERT contra el
+     * indice UNIQUE. La base rechaza a la segunda con esta excepcion; sin este
+     * handler, escaparia como 500 ERROR_INTERNO. Aca se traduce al mismo 409
+     * RECURSO_DUPLICADO que habria dado el chequeo previo.
+     *
+     * El mensaje se afina segun el nombre de la constraint violada (van con
+     * nombre explicito en las @Entity justamente para poder distinguirlas). Si
+     * no se reconoce, cae en un texto generico: nunca se expone el SQL crudo.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> manejarViolacionIntegridad(DataIntegrityViolationException ex) {
+        Throwable causa = ex.getMostSpecificCause();
+        String detalle = causa != null ? causa.getMessage() : null;
+        log.warn("Violacion de integridad traducida a 409: {}", detalle);
+        return construir("RECURSO_DUPLICADO", mensajeSegunConstraint(detalle), HttpStatus.CONFLICT);
+    }
+
+    private String mensajeSegunConstraint(String detalle) {
+        if (detalle != null) {
+            String d = detalle.toLowerCase();
+            if (d.contains("uk_usuario_email"))      return "Ya existe una cuenta registrada con ese email";
+            if (d.contains("uk_usuario_nickname"))   return "Ese nickname ya esta en uso";
+            if (d.contains("uk_persona_fisica_dni")) return "Ya existe una cuenta registrada con ese DNI";
+            if (d.contains("uk_persona_juridica_cuit")) return "Ya existe una organizacion registrada con ese CUIT";
+        }
+        return "Ya existe una cuenta con esos datos";
+    }
+
+    // ---------- Errores de dominio (Modulos 2, 4 y 7) ----------
+
+    /** 404. Tambien cubre el recurso ajeno: ver el javadoc de la excepcion. */
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity<ErrorResponse> manejarNoEncontrado(RecursoNoEncontradoException ex) {
+        return construir("RECURSO_NO_ENCONTRADO", ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    /** 409. El dato es valido, pero el estado actual del recurso no admite la accion. */
+    @ExceptionHandler(OperacionNoPermitidaException.class)
+    public ResponseEntity<ErrorResponse> manejarOperacionNoPermitida(OperacionNoPermitidaException ex) {
+        return construir("OPERACION_NO_PERMITIDA", ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     // ---------- Validacion de DTOs ----------

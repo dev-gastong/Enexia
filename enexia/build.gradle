@@ -22,6 +22,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// Envio de correo (RF-1.5 y aviso de bloqueo silencioso). Si no hay SMTP
+	// configurado, EmailService cae solo al modo log: ver esa clase.
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -43,8 +46,19 @@ dependencies {
 	testImplementation 'org.mockito:mockito-core'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 
-	// Playwright Java
+	// Playwright Java. Ademas del navegador se usa su APIRequestContext, que
+	// permite probar los endpoints de extremo a extremo mientras las pantallas
+	// del sprint todavia no existen.
 	testImplementation 'com.microsoft.playwright:playwright:1.61.0'
+
+	// Awaitility: espera activa con timeout para el pipeline asincrono de
+	// moderacion. Reemplaza a los Thread.sleep fijos, que son a la vez lentos
+	// (esperan de mas casi siempre) y fragiles (a veces no esperan lo suficiente).
+	testImplementation 'org.awaitility:awaitility:4.2.2'
+
+	// Jackson en las pruebas: para armar y leer los cuerpos JSON del cliente de
+	// API. La version la fija el BOM de Spring Boot.
+	testImplementation 'com.fasterxml.jackson.core:jackson-databind'
 
 	testImplementation platform('org.junit:junit-bom:6.0.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'

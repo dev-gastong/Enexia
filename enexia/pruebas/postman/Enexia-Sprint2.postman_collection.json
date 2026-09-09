@@ -1,0 +1,1381 @@
+{
+  "info": {
+    "name": "Enexia - Sprint 2 (Organizaciones, Eventos y Catalogo)",
+    "description": "Suite de API de Sprint 2. Cubre:\n  - Politica de bloqueo silencioso del login (2026-09-08)\n  - Recuperacion de acceso (RF-1.5)\n  - Alta de organizaciones y validacion de CUIT (RF-7.2, RF-7.3)\n  - Creacion de eventos con moderacion asincrona (RF-2.1 a RF-2.6)\n  - Catalogo publico, ficha tecnica y visitas (RF-4.1 a RF-4.5)\n\nREQUISITOS: backend en {{baseUrl}} (./gradlew bootRun) y MariaDB arriba.\nSe ejecuta EN ORDEN: cada peticion deja variables que usa la siguiente.\n\nCOMO CORRERLA:\n  cd enexia/pruebas/postman\n  npx newman run Enexia-Sprint2.postman_collection.json -e Enexia-Local.postman_environment.json\n\nEl paso de creacion de evento sube fixtures/portada.png, asi que hay que\nejecutar Newman DESDE esta carpeta para que la ruta relativa resuelva.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Identidad unica por corrida. El sistema usa borrado logico y nunca",
+          "// borra filas, asi que reutilizar un email, un DNI o un CUIT haria que",
+          "// la suite pase una sola vez y despues devuelva 409 en todo.",
+          "if (!pm.collectionVariables.get('sufijo')) {",
+          "    const sufijo = String(Date.now()).slice(-8);",
+          "    pm.collectionVariables.set('sufijo', sufijo);",
+          "    pm.collectionVariables.set('emailOrg', 'org.' + sufijo + '@enexia.test');",
+          "    pm.collectionVariables.set('nickOrg', 'org_' + sufijo);",
+          "    pm.collectionVariables.set('dniOrg', sufijo);",
+          "    pm.collectionVariables.set('emailPart', 'part.' + sufijo + '@enexia.test');",
+          "    pm.collectionVariables.set('nickPart', 'part_' + sufijo);",
+          "    pm.collectionVariables.set('dniPart', String((Number(sufijo) % 9000000) + 1000000));",
+          "    pm.collectionVariables.set('nombreEvento', 'Festival Newman ' + sufijo);",
+          "",
+          "    // Fecha futura para la agenda: el DTO exige @Future.",
+          "    const futura = new Date(Date.now() + 30 * 24 * 3600 * 1000);",
+          "    pm.collectionVariables.set('fechaEvento', futura.toISOString().slice(0, 10));",
+          "",
+          "    // CUIT valido generado al vuelo: 30 + 8 digitos + verificador",
+          "    // calculado con el modulo 11 estandar. Se genera en vez de fijarlo",
+          "    // porque el CUIT es UNIQUE y no se puede repetir entre corridas.",
+          "    const base = '30' + sufijo;",
+          "    const mult = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];",
+          "    let suma = 0;",
+          "    for (let i = 0; i < 10; i++) { suma += Number(base[i]) * mult[i]; }",
+          "    let dv = 11 - (suma % 11);",
+          "    if (dv === 11) { dv = 0; } else if (dv === 10) { dv = 9; }",
+          "    pm.collectionVariables.set('cuitValido', base + dv);",
+          "",
+          "    // Mismo numero con el verificador corrido: sirve para probar el rechazo.",
+          "    pm.collectionVariables.set('cuitInvalido', base + ((dv + 1) % 10));",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Chequeos transversales a toda peticion de la coleccion.",
+          "pm.test('Responde JSON', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type') || '').to.include('json');",
+          "});",
+          "",
+          "pm.test('Sin cabeceras que delaten el estado de la cuenta', function () {",
+          "    // X-Reintentar-Despues publicaba el fin del cooldown y, leida desde",
+          "    // las DevTools, confirmaba que la cuenta existe y esta penalizada.",
+          "    pm.expect(pm.response.headers.get('X-Reintentar-Despues')).to.be.undefined;",
+          "});",
+          "",
+          "pm.test('Ningun 500: los errores previstos se traducen, no explotan', function () {",
+          "    pm.expect(pm.response.code).to.not.eql(500);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Sonda: el backend esta arriba",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK: el backend responde', function () { pm.response.to.have.status(200); });",
+              "",
+              "pm.test('El catalogo de categorias esta sembrado', function () {",
+              "    // Si esto falla, DatosInicialesConfig no corrio y todo lo demas",
+              "    // va a fallar en cascada con errores confusos.",
+              "    pm.expect(pm.response.json().length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/categorias",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "categorias"
+          ]
+        },
+        "description": "Verifica de entrada que la aplicacion este levantada y con catalogos."
+      }
+    },
+    {
+      "name": "01 - Registro PF + organizacion (201) [DFD 7.1/7.2]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('La CUENTA nace ACTIVA y usable', function () {",
+              "    // El estado de revision es de la ORGANIZACION, no del usuario.",
+              "    // Si recayera sobre la cuenta, el fundador no podria ni entrar.",
+              "    pm.expect(c.cuenta.estado).to.eql('ACTIVO');",
+              "});",
+              "",
+              "pm.test('El ORGANIZADOR recibe tambien el rol PARTICIPANTE', function () {",
+              "    pm.expect(c.cuenta.roles).to.include('ORGANIZADOR');",
+              "    pm.expect(c.cuenta.roles).to.include('PARTICIPANTE');",
+              "});",
+              "",
+              "pm.test('La ORGANIZACION nace APROBADA + ACTIVA (ADR-14)', function () {",
+              "    pm.expect(c.organizacion.estadoSistema).to.eql('APROBADO');",
+              "    pm.expect(c.organizacion.estado).to.eql('ACTIVO');",
+              "});",
+              "",
+              "pm.test('El fundador queda como ADMINISTRADOR', function () {",
+              "    pm.expect(c.organizacion.rolEnEmpresa).to.eql('ADMINISTRADOR');",
+              "});",
+              "",
+              "pm.test('El CUIT se devuelve formateado XX-XXXXXXXX-X', function () {",
+              "    pm.expect(c.organizacion.cuit).to.match(/^\\d{2}-\\d{8}-\\d$/);",
+              "});",
+              "",
+              "pm.collectionVariables.set('idOrganizacion', c.organizacion.idPersonaJuridica);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/registro/organizacion",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "registro",
+            "organizacion"
+          ]
+        },
+        "description": "Rama Juridica de la bifurcacion del DFD 7.1/7.2: cuenta personal + organizacion en un solo paso.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{emailOrg}}\",\n  \"nickname\": \"{{nickOrg}}\",\n  \"password\": \"Segura123\",\n  \"passwordConfirmacion\": \"Segura123\",\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"dni\": \"{{dniOrg}}\",\n  \"fechaNacimiento\": \"1990-05-10\",\n  \"perfil\": \"ORGANIZADOR\",\n  \"organizacion\": {\n    \"razonSocial\": \"Cultural Fueguina SRL\",\n    \"nombreFantasia\": \"Fueguina Eventos\",\n    \"cuit\": \"{{cuitValido}}\",\n    \"emailCorporativo\": \"contacto{{sufijo}}@fueguina.test\",\n    \"telefonoContacto\": \"+54 2901 123456\",\n    \"domicilioFiscal\": {\n      \"calle\": \"San Martin\",\n      \"numeroExterior\": \"1234\",\n      \"idCiudad\": 13\n    }\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "02 - CUIT con verificador invalido (400) [RF-7.3]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "",
+              "pm.test('El mensaje explica que fallo el digito verificador', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.include('digito verificador');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/registro/organizacion",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "registro",
+            "organizacion"
+          ]
+        },
+        "description": "Modulo 11 del DFD 7.3: el mismo numero con el verificador corrido en 1.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"malo.{{sufijo}}@enexia.test\",\n  \"nickname\": \"malo_{{sufijo}}\",\n  \"password\": \"Segura123\",\n  \"passwordConfirmacion\": \"Segura123\",\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"dni\": \"{{dniPart}}\",\n  \"fechaNacimiento\": \"1990-05-10\",\n  \"perfil\": \"ORGANIZADOR\",\n  \"organizacion\": {\n    \"razonSocial\": \"Cultural Fueguina SRL\",\n    \"nombreFantasia\": \"Fueguina Eventos\",\n    \"cuit\": \"{{cuitInvalido}}\",\n    \"emailCorporativo\": \"contacto{{sufijo}}@fueguina.test\",\n    \"telefonoContacto\": \"+54 2901 123456\",\n    \"domicilioFiscal\": {\n      \"calle\": \"San Martin\",\n      \"numeroExterior\": \"1234\",\n      \"idCiudad\": 13\n    }\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "03 - CUIT mal formado: lo corta el DTO (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "",
+              "pm.test('Lo frena la validacion del DTO, no el service', function () {",
+              "    // El @Pattern es la barrera mas barata: corta antes de la",
+              "    // aritmetica y antes de tocar la base.",
+              "    pm.expect(pm.response.json().error).to.eql('VALIDACION_FALLIDA');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/registro/organizacion",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "registro",
+            "organizacion"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"corto.{{sufijo}}@enexia.test\",\n  \"nickname\": \"corto_{{sufijo}}\",\n  \"password\": \"Segura123\",\n  \"passwordConfirmacion\": \"Segura123\",\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"dni\": \"{{dniPart}}\",\n  \"fechaNacimiento\": \"1990-05-10\",\n  \"perfil\": \"ORGANIZADOR\",\n  \"organizacion\": {\n    \"razonSocial\": \"Cultural Fueguina SRL\",\n    \"nombreFantasia\": \"Fueguina Eventos\",\n    \"cuit\": \"3071\",\n    \"emailCorporativo\": \"contacto{{sufijo}}@fueguina.test\",\n    \"telefonoContacto\": \"+54 2901 123456\",\n    \"domicilioFiscal\": {\n      \"calle\": \"San Martin\",\n      \"numeroExterior\": \"1234\",\n      \"idCiudad\": 13\n    }\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "04 - CUIT duplicado con otro formato (409)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+              "",
+              "pm.test('Detecta el duplicado pese al formato distinto', function () {",
+              "    // El CUIT se persiste normalizado a 11 digitos. Sin eso,",
+              "    // '30-71659554-0' y '30716595540' serian dos filas distintas.",
+              "    pm.expect(pm.response.json().mensaje).to.include('CUIT');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/registro/organizacion",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "registro",
+            "organizacion"
+          ]
+        },
+        "description": "Reintenta el alta 01 con el mismo CUIT: tiene que chocar contra la unicidad.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"dup.{{sufijo}}@enexia.test\",\n  \"nickname\": \"dup_{{sufijo}}\",\n  \"password\": \"Segura123\",\n  \"passwordConfirmacion\": \"Segura123\",\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"dni\": \"{{dniPart}}\",\n  \"fechaNacimiento\": \"1990-05-10\",\n  \"perfil\": \"ORGANIZADOR\",\n  \"organizacion\": {\n    \"razonSocial\": \"Cultural Fueguina SRL\",\n    \"nombreFantasia\": \"Fueguina Eventos\",\n    \"cuit\": \"{{cuitValido}}\",\n    \"emailCorporativo\": \"contacto{{sufijo}}@fueguina.test\",\n    \"telefonoContacto\": \"+54 2901 123456\",\n    \"domicilioFiscal\": {\n      \"calle\": \"San Martin\",\n      \"numeroExterior\": \"1234\",\n      \"idCiudad\": 13\n    }\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "05 - Login del organizador (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('Devuelve un JWT de tres partes', function () {",
+              "    pm.expect(c.token.split('.')).to.have.lengthOf(3);",
+              "});",
+              "",
+              "pm.test('El token trae los roles adentro (RF-1.2)', function () {",
+              "    const payload = JSON.parse(atob(c.token.split('.')[1]));",
+              "    pm.expect(payload.roles).to.include('ORGANIZADOR');",
+              "});",
+              "",
+              "pm.collectionVariables.set('token', c.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{emailOrg}}\",\n  \"password\": \"Segura123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "06 - Login fallido: 401 generico",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('Codigo y mensaje genericos', function () {",
+              "    pm.expect(c.error).to.eql('CREDENCIALES_INVALIDAS');",
+              "    pm.expect(c.mensaje).to.eql('Email o contrasena incorrectos');",
+              "});",
+              "",
+              "// Se guarda para comparar con el email inexistente de la proxima.",
+              "pm.collectionVariables.set('cuerpoFalloPassword', c.error + '|' + c.mensaje + '|' + pm.response.code);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Primera pieza de la politica de bloqueo silencioso: contrasena incorrecta.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{emailOrg}}\",\n  \"password\": \"ClaveEquivocada1\"\n}"
+        }
+      }
+    },
+    {
+      "name": "07 - Email inexistente: respuesta IDENTICA (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('Indistinguible del fallo por contrasena', function () {",
+              "    // Es LA prueba de la politica. Si status, codigo o mensaje",
+              "    // difirieran, un atacante podria enumerar que correos estan",
+              "    // registrados probando de a uno.",
+              "    const actual = c.error + '|' + c.mensaje + '|' + pm.response.code;",
+              "    pm.expect(actual).to.eql(pm.collectionVariables.get('cuerpoFalloPassword'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"nadie.{{sufijo}}@enexia.test\",\n  \"password\": \"ClaveEquivocada1\"\n}"
+        }
+      }
+    },
+    {
+      "name": "08 - Tercer fallo: dispara cooldown y SIGUE sin notarse (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401, no 403: el cooldown no cambia el status', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test('Mismo cuerpo que el primer fallo', function () {",
+              "    const c = pm.response.json();",
+              "    const actual = c.error + '|' + c.mensaje + '|' + pm.response.code;",
+              "    pm.expect(actual).to.eql(pm.collectionVariables.get('cuerpoFalloPassword'));",
+              "});",
+              "",
+              "pm.test('Sin cabecera con el momento de reintento', function () {",
+              "    pm.expect(pm.response.headers.get('X-Reintentar-Despues')).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Antes de la politica nueva, este intento devolvia 403 + cabecera con el fin del cooldown.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{emailOrg}}\",\n  \"password\": \"ClaveEquivocada2\"\n}"
+        }
+      }
+    },
+    {
+      "name": "09 - Recuperacion de acceso: email existente (202)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('202 Accepted', function () { pm.response.to.have.status(202); });",
+              "pm.collectionVariables.set('mensajeRecuperacion', pm.response.json().mensaje);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/recuperacion",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "recuperacion"
+          ]
+        },
+        "description": "RF-1.5. El envio es asincrono, de ahi el 202 y no un 200.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{emailOrg}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "10 - Recuperacion: email inexistente da lo MISMO (202)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('202 Accepted', function () { pm.response.to.have.status(202); });",
+              "",
+              "pm.test('Mismo texto que para un email registrado', function () {",
+              "    // Un 404 aca convertiria este endpoint publico en un",
+              "    // enumerador de cuentas mas comodo todavia que el login.",
+              "    pm.expect(pm.response.json().mensaje)",
+              "      .to.eql(pm.collectionVariables.get('mensajeRecuperacion'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/recuperacion",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "recuperacion"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"fantasma.{{sufijo}}@enexia.test\"\n}"
+        }
+      }
+    },
+    {
+      "name": "11 - Token de recuperacion inventado (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "",
+              "pm.test('Mismo mensaje para token inexistente y vencido', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.include('no es valido o ya fue utilizado');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/recuperacion/confirmar",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "recuperacion",
+            "confirmar"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"tokenInventadoQueNoExisteEnLaBase123\",\n  \"password\": \"NuevaClave123\",\n  \"passwordConfirmacion\": \"NuevaClave123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "12 - Sin token no se entra al area de organizador (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/eventos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "eventos"
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "13 - Listado de organizaciones propias (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('Devuelve la organizacion creada, con su estado a la vista', function () {",
+              "    pm.expect(c).to.be.an('array').that.is.not.empty;",
+              "    pm.expect(c[0].estadoSistema).to.eql('APROBADO');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/organizaciones",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "organizaciones"
+          ]
+        },
+        "description": "Alimenta el selector 'publicar como...' del formulario de evento (RF-2.1)."
+      }
+    },
+    {
+      "name": "14 - Evento bajo organizacion NO aprobada (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "",
+              "pm.test('Explica que la organizacion esta en revision', function () {",
+              "    // Publicar a nombre de una empresa sin verificar seria",
+              "    // exactamente el fraude que la revision existe para evitar.",
+              "    pm.expect(pm.response.json().mensaje).to.include('revision');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/eventos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "eventos"
+          ]
+        },
+        "description": "RF-2.1: la organizacion tiene que estar APROBADA + ACTIVA para firmar eventos.",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "datos",
+              "type": "text",
+              "contentType": "application/json",
+              "value": "{\"nombre\":\"{{nombreEvento}}\",\"descripcion\":\"Tres jornadas de musica en vivo, gastronomia regional y actividades para toda la familia en Ushuaia.\",\"idCategoria\":1,\"idPersonaJuridica\":{{idOrganizacion}},\"ubicacion\":{\"calle\":\"Maipu\",\"numeroExterior\":\"505\",\"idCiudad\":13},\"cronogramas\":[{\"fecha\":\"{{fechaEvento}}\",\"horaInicio\":\"18:00\",\"horaFin\":\"23:30\",\"tickets\":[{\"tipoTicket\":\"Inscripcion General\",\"precio\":0,\"cupoMaximo\":200},{\"tipoTicket\":\"Pase VIP\",\"precio\":15000.5,\"cupoMaximo\":30}]}]}"
+            },
+            {
+              "key": "imagenes",
+              "type": "file",
+              "src": "fixtures/portada.png"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "15 - Crear evento a titulo personal (202) [RF-2.1 a RF-2.6]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('202 Accepted, no 201', function () {",
+              "    // El recurso quedo ACEPTADO pero todavia no publicado: falta",
+              "    // la moderacion asincrona. Un 201 mentiria sobre su estado.",
+              "    pm.response.to.have.status(202);",
+              "});",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('Nace EN_PROCESO (paso 2.4 del DFD)', function () {",
+              "    pm.expect(c.estadoSistema).to.eql('EN_PROCESO');",
+              "});",
+              "",
+              "pm.test('El skeleton NO guarda el titulo (RF-2.2)', function () {",
+              "    // Moderar antes de persistir contenido: si el titulo se",
+              "    // guardara aca, uno ofensivo quedaria en la base aunque",
+              "    // despues se rechace el evento.",
+              "    pm.expect(c.nombre).to.eql('(Evento en validacion)');",
+              "    pm.expect(c.categoria).to.be.null;",
+              "    pm.expect(c.urlPortada).to.be.null;",
+              "});",
+              "",
+              "pm.test('La firma del organizador ya viene resuelta (RF-7.4)', function () {",
+              "    pm.expect(c.organizador).to.eql('Ana Gomez');",
+              "});",
+              "",
+              "pm.collectionVariables.set('idEvento', c.idEvento);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/eventos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "eventos"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "datos",
+              "type": "text",
+              "contentType": "application/json",
+              "value": "{\"nombre\":\"{{nombreEvento}}\",\"descripcion\":\"Tres jornadas de musica en vivo, gastronomia regional y actividades para toda la familia en Ushuaia.\",\"idCategoria\":1,\"ubicacion\":{\"calle\":\"Maipu\",\"numeroExterior\":\"505\",\"idCiudad\":13},\"cronogramas\":[{\"fecha\":\"{{fechaEvento}}\",\"horaInicio\":\"18:00\",\"horaFin\":\"23:30\",\"tickets\":[{\"tipoTicket\":\"Inscripcion General\",\"precio\":0,\"cupoMaximo\":200},{\"tipoTicket\":\"Pase VIP\",\"precio\":15000.5,\"cupoMaximo\":30}]}]}"
+            },
+            {
+              "key": "imagenes",
+              "type": "file",
+              "src": "fixtures/portada.png"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "16 - Esperar el pipeline asincrono",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// El pipeline corre en otro hilo: texto -> imagenes -> persistencia.",
+              "// Newman no tiene espera activa, asi que se da un margen fijo.",
+              "// En la suite de JUnit esto se resuelve mejor, con Awaitility.",
+              "setTimeout(function () {}, 3000);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Pausa completada', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/categorias",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "categorias"
+          ]
+        },
+        "description": "Paso tecnico: da tiempo a que la moderacion dictamine antes de consultar."
+      }
+    },
+    {
+      "name": "17 - El evento quedo APROBADO_SISTEMA (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const id = Number(pm.collectionVariables.get('idEvento'));",
+              "const evento = pm.response.json().content.find(function (e) { return e.idEvento === id; });",
+              "",
+              "pm.test('El evento esta en el dashboard', function () {",
+              "    pm.expect(evento, 'no aparecio el evento ' + id).to.not.be.undefined;",
+              "});",
+              "",
+              "pm.test('La moderacion lo aprobo', function () {",
+              "    pm.expect(evento.estadoSistema).to.eql('APROBADO_SISTEMA');",
+              "});",
+              "",
+              "pm.test('Ahora SI se persistio el contenido', function () {",
+              "    pm.expect(evento.nombre).to.eql(pm.collectionVariables.get('nombreEvento'));",
+              "    pm.expect(evento.categoria).to.eql('Cultural');",
+              "    pm.expect(evento.ciudad).to.eql('Ushuaia');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/eventos?tamano=50",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "eventos"
+          ],
+          "query": [
+            {
+              "key": "tamano",
+              "value": "50"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "18 - Catalogo publico sin token (200) [RF-4.1]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK sin autenticacion', function () {",
+              "    // RF-4.1 pide un catalogo indexable y anonimo: si exigiera",
+              "    // token, ningun buscador podria indexarlo.",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('La busqueda por texto encuentra el evento (RF-4.2)', function () {",
+              "    pm.expect(pm.response.json().totalElements).to.eql(1);",
+              "});",
+              "",
+              "pm.test('La tarjeta trae portada, ciudad y proxima fecha', function () {",
+              "    const e = pm.response.json().content[0];",
+              "    pm.expect(e.urlPortada).to.be.a('string').and.not.empty;",
+              "    pm.expect(e.ciudad).to.eql('Ushuaia');",
+              "    pm.expect(e.proximaFecha).to.eql(pm.collectionVariables.get('fechaEvento'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/eventos?texto={{nombreEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "eventos"
+          ],
+          "query": [
+            {
+              "key": "texto",
+              "value": "{{nombreEvento}}"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "19 - Ficha tecnica y registro de visita (200) [RF-4.4, RF-4.5]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('Direccion resuelta hasta el pais', function () {",
+              "    pm.expect(c.ciudad).to.eql('Ushuaia');",
+              "    pm.expect(c.provincia).to.eql('Tierra del Fuego');",
+              "    pm.expect(c.pais).to.eql('Argentina');",
+              "});",
+              "",
+              "pm.test('Agenda con sus tickets y cupos (RF-2.5, RF-2.6)', function () {",
+              "    pm.expect(c.cronogramas).to.have.lengthOf(1);",
+              "    const tickets = c.cronogramas[0].tickets;",
+              "    pm.expect(tickets).to.have.lengthOf(2);",
+              "    pm.expect(tickets[0].gratuito).to.be.true;",
+              "    pm.expect(tickets[0].cupoDisponible).to.eql(200);",
+              "});",
+              "",
+              "pm.test('Evento a titulo personal, no corporativo (RF-7.4)', function () {",
+              "    pm.expect(c.organizadorEsOrganizacion).to.be.false;",
+              "    pm.expect(c.organizador).to.eql('Ana Gomez');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/eventos/{{idEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "eventos",
+            "{{idEvento}}"
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "20 - Filtro por categoria y ubicacion (200) [RF-4.3]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "",
+              "pm.test('Los filtros combinados devuelven resultados', function () {",
+              "    pm.expect(pm.response.json().totalElements).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/eventos?idCategoria=1&idCiudad=13",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "eventos"
+          ],
+          "query": [
+            {
+              "key": "idCategoria",
+              "value": "1"
+            },
+            {
+              "key": "idCiudad",
+              "value": "13"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "21 - Rango de fechas invertido (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/eventos?desde=2027-12-01&hasta=2027-01-01",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "eventos"
+          ],
+          "query": [
+            {
+              "key": "desde",
+              "value": "2027-12-01"
+            },
+            {
+              "key": "hasta",
+              "value": "2027-01-01"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "22 - Tope de paginacion (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "",
+              "pm.test('El tamano de pagina se recorta a 50', function () {",
+              "    // Sin techo, un solo parametro traeria la tabla entera a",
+              "    // memoria en el endpoint mas expuesto del sistema.",
+              "    pm.expect(pm.response.json().size).to.be.at.most(50);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/eventos?tamano=100000",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "eventos"
+          ],
+          "query": [
+            {
+              "key": "tamano",
+              "value": "100000"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "23 - Estadisticas del evento (200) [RF-2.10]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const c = pm.response.json();",
+              "",
+              "pm.test('La visita anonima de la peticion 19 quedo registrada', function () {",
+              "    pm.expect(c.visitasTotales).to.be.at.least(1);",
+              "});",
+              "",
+              "pm.test('Las visitas anonimas NO cuentan como unicas', function () {",
+              "    // De una visita sin sesion no hay forma de saber si es una",
+              "    // persona o cien.",
+              "    pm.expect(c.visitasUnicas).to.eql(0);",
+              "});",
+              "",
+              "pm.test('Suma el cupo ofrecido de todos los tickets', function () {",
+              "    pm.expect(c.cupoTotalOfrecido).to.eql(230);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/eventos/{{idEvento}}/estadisticas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "eventos",
+            "{{idEvento}}",
+            "estadisticas"
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "24 - Baja logica del evento (200) [RF-2.9]",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "",
+              "pm.test('Muta el estado a DADO_DE_BAJA', function () {",
+              "    pm.expect(pm.response.json().estadoOrganizador).to.eql('DADO_DE_BAJA');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/eventos/{{idEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "eventos",
+            "{{idEvento}}"
+          ]
+        },
+        "description": "DELETE por semantica HTTP, pero NO borra la fila: romperia inscripciones y pagos."
+      }
+    },
+    {
+      "name": "25 - Baja repetida (409)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizador/eventos/{{idEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizador",
+            "eventos",
+            "{{idEvento}}"
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "26 - El evento dado de baja ya no esta en el catalogo (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "",
+              "pm.test('Desaparecio del catalogo publico', function () {",
+              "    pm.expect(pm.response.json().totalElements).to.eql(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/eventos?texto={{nombreEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "eventos"
+          ],
+          "query": [
+            {
+              "key": "texto",
+              "value": "{{nombreEvento}}"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "27 - Su ficha publica responde 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });",
+              "",
+              "pm.test('Mismo 404 que un evento inexistente', function () {",
+              "    // Distinguirlos permitiria descubrir que eventos fueron",
+              "    // dados de baja o rechazados probando ids.",
+              "    pm.expect(pm.response.json().error).to.eql('RECURSO_NO_ENCONTRADO');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/publico/eventos/{{idEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "publico",
+            "eventos",
+            "{{idEvento}}"
+          ]
+        },
+        "description": ""
+      }
+    }
+  ]
+}

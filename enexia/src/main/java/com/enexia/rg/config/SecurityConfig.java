@@ -81,7 +81,18 @@ public class SecurityConfig {
                         // --- Endpoints API publicos: son la puerta de entrada, no
                         // pueden exigir el token que todavia no existe.
                         .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/registro/organizacion").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        // Recuperacion de acceso (RF-1.5): tambien publica, por
+                        // definicion la pide quien no puede autenticarse.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/recuperacion").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/recuperacion/confirmar").permitAll()
+
+                        // --- Catalogo publico (RF-4.1 a RF-4.5): accesible de
+                        // forma anonima. El JWT, si viene, se decodifica igual
+                        // (el filtro corre siempre) para poder atribuir la visita
+                        // al usuario; pero su ausencia no bloquea.
+                        .requestMatchers(HttpMethod.GET, "/api/publico/**").permitAll()
 
                         // --- Recursos estaticos (siempre publicos)
                         // Los HTML viven bajo /pages/**, y CSS/assets quedaron
@@ -159,7 +170,9 @@ public class SecurityConfig {
                 "http://localhost:5500"));
         configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuracion.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        configuracion.setExposedHeaders(List.of("X-Reintentar-Despues"));
+        // NO se expone ninguna cabecera de diagnostico de login. La antigua
+        // X-Reintentar-Despues publicaba el fin del cooldown y, leida desde las
+        // DevTools, delataba que la cuenta existe y esta penalizada.
         configuracion.setMaxAge(3600L);   // cachea el preflight OPTIONS por 1 hora
 
         UrlBasedCorsConfigurationSource fuente = new UrlBasedCorsConfigurationSource();

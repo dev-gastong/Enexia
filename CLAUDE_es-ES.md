@@ -88,7 +88,9 @@ Este archivo proporciona una guía en español sobre el proyecto Enexia. La vers
 
 El sistema se centra en estas entidades clave (ver `docs/diseño_bd/MER.md` para el ERD completo):
 
-- **Persona**: Entidad base (Física = Individual, Jurídica = Organización)
+- **Persona**: Identidad de una persona HUMANA, nada mas. Supertipo de `Persona_Fisica` y unica identidad que puede tener `Usuario` (login).
+  - **Cambio de Sprint 2 (2026-09-08):** se **elimino** la columna `tipo_persona`. Suponia una jerarquia `Persona -> (Fisica | Juridica)` que nunca existio: el MER solo declara `Persona ||--|| Persona_Fisica`, y `Persona_Juridica` no tiene FK a `Persona`. La columna valia `"FISICA"` en el 100% de las filas, y admitir `"JURIDICA"` habria permitido crear una persona juridica sin persona fisica asociada, rompiendo el invariante de que todo `Usuario` es un ser humano.
+- **Persona_Juridica**: contenedor administrativo, **no es identidad de acceso**. Se vincula a las personas por `Miembros_Organizacion` (RF-7.2).
 - **Usuario**: Cuenta de usuario con roles (Participante, Organizador, Administrador). **Nota de diseño:** los Organizadores reciben ambos roles ORGANIZADOR + PARTICIPANTE para crear eventos Y participar en los de otros; solo las Personas Físicas pueden registrarse directamente. Las Personas Jurídicas gestionan participantes a través de Miembros_Organizacion (Sprint 2).
 - **Evento**: Evento creado por organizadores con seguimiento de estado
 - **Evento_Cronograma**: Múltiples fechas/horarios para un mismo evento
@@ -286,9 +288,8 @@ backend/src/main/java/com/enexia/
 - **Autenticación**: JWT (JSON Web Tokens) emitido en login exitoso
 - **Autorización**: Extraer roles del JWT; validar en `@PreAuthorize` en métodos de servicio o controller
 - **Contraseña**: Hashing BCrypt (nunca en texto plano)
-- **Rate Limiting**: Rastrear intentos por email/IP; bloquear en 3 fallos por 5 minutos
-- **Bloqueo de Cuenta**: Después de 3 intentos fallidos, establecer `estado_usuario` = "BLOQUEADO"
-- **Cooldown**: Timestamp `fecha_desbloqueo_cooldown` previene reintentos inmediatos
+- **Rate limiting por IP**: ❌ **eliminado** (ADR-09). El conteo es por cuenta, nunca por IP.
+- **Bloqueo de Cuenta**: silencioso, a los 3 intentos fallidos → `estado_usuario` = `BLOQUEADO`. Ver la política de fallos de login más abajo.
 - **Moderación de Texto**: Librería `better-profanity` para filtrado de contenido (Registro + Login)
 - **Validación de Entrada**: Usar `@Valid` + `@NotNull`, `@Email`, `@Pattern` en DTOs
 
@@ -336,7 +337,136 @@ backend/src/main/java/com/enexia/
 
 ---
 
-## Sprint 1: Backend Autenticación MVP (Actual)
+## Sprint 2: Organizaciones, Eventos y Catálogo Público (Actual)
+
+**Estado:** backend completo; frontend pendiente (a la espera de los diseños de Figma).
+
+| Módulo | Alcance entregado |
+|---|---|
+| **M1** — Autenticación | Bloqueo silencioso de cuenta, eliminación del rate limiting por IP, recuperación de contraseña y desbloqueo por email (RF-1.5) |
+| **M7** — Organizaciones | Alta de `Persona_Juridica` por los dos caminos, validación de CUIT módulo 11 (RF-7.3), `Miembros_Organizacion`. *Control por revisión eliminado el 2026-09-09 (ADR-14) — la especificación aprueba en el acto; el código todavía escribe `REVISION_PENDIENTE`.* |
+| **M2** — Eventos | Creación con pipeline asíncrono de moderación (RF-2.1 a RF-2.6), integración Cloudinary (RF-2.3), dashboard del organizador (RF-2.8), baja lógica (RF-2.9), estadísticas (RF-2.10) |
+| **M4** — Interfaz pública | Catálogo paginado, búsqueda por texto, filtros por categoría/fecha/ubicación, ficha técnica, registro pasivo de visitas (RF-4.1 a RF-4.5) |
+| **M5** — Moderación | Fase de texto + fase de imágenes, secuencial y asíncrona (RF-5.1 a RF-5.3) |
+
+### ⚠️ Cambio de política de fallos de login (2026-09-08, decisión del usuario)
+
+**1. Se ELIMINÓ el rate limiting por IP.**
+Detrás de un CGNAT o del wifi de una institución, cientos de dispositivos legítimos comparten una única IP pública. Bloquear esa IP dejaba sin servicio a toda una zona por culpa de un solo atacante: una denegación de servicio que el propio atacante podía provocar a voluntad.
+
+> **Riesgo abierto y asumido:** sin control por IP, el *password spraying* (una contraseña común contra miles de emails) ya no tiene freno propio, porque ninguna cuenta acumula fallos. **Resuelto el 2026-09-09 (ADR-13):** el bloqueo al 3° fallo por cuenta, junto con un rechazo indistinguible en cuerpo, cabeceras y tiempo — y un endpoint de recuperación igual de opaco — le quita al atacante tanto el margen de intentos como la señal de enumeración que necesita. Alertar por volumen anómalo en `historial_interacciones`, **sin** rechazar peticiones, queda como mejora deseable.
+
+**2. El bloqueo de cuenta pasó a ser SILENCIOSO.**
+Todos los rechazos de login responden idéntico: `401`, código `CREDENCIALES_INVALIDAS`, mismo mensaje, sin cabeceras extra y con el mismo costo en tiempo. El atacante no puede distinguir "el email no existe" de "la contraseña está mal" ni de "la cuenta está bloqueada": ni por el cuerpo, ni por el status, ni por las cabeceras, ni por el reloj.
+
+- Todos los fallos heredan de `AutenticacionFallidaException`, que lleva un código **interno** (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_EN_COOLDOWN`, `CUENTA_SUSPENDIDA`). Ese código va al log y a `historial_interacciones`, **nunca** a la respuesta HTTP.
+- `GlobalExceptionHandler` tiene **un solo** handler para toda la familia. **No agregar un `@ExceptionHandler` más específico** para ninguna subclase: Spring elegiría el más específico y la respuesta volvería a delatar el estado de la cuenta.
+- Cada rama de rechazo paga una comparación BCrypt (hash señuelo) para que el tiempo de respuesta sea constante.
+- Se quitó la cabecera `X-Reintentar-Despues`: leída desde las DevTools, confirmaba que la cuenta existe y está penalizada.
+- **Al titular legítimo se le avisa por email**, con enlace de recuperación de un solo uso (`RecuperacionCuentaService`): el único canal que el atacante no controla.
+
+**3. Umbral de bloqueo — DECISIÓN FINAL 2026-09-09: bloqueo al 3° fallo.**
+La antigua escalera de penalización (3 → captcha + cooldown de 5 min, 6 → cooldown de 30 min, 9 → bloqueo) **desaparece de la especificación**. La regla es ahora un único escalón, contado **por cuenta** (`usuario.intentos_fallidos`), nunca por IP:
+
+- 3 fallos consecutivos → `estado_usuario = BLOQUEADO` + email de seguridad al titular
+- Cualquier login exitoso → contador a 0
+
+El correo incluye un **enlace de desbloqueo directo** — `/unlock-account?token=XYZ`, token de un solo uso y con vencimiento acotado. Al consumirlo, se pone `estado_usuario = ACTIVO`, `intentos_fallidos = 0`, se limpia `fecha_desbloqueo_cooldown` y se invalida el token. El titular vuelve a entrar con sus **credenciales habituales**, sin cambiar la contraseña.
+
+Con esto queda cerrada la divergencia de RF-1.4: `docs/requisitos/requisitos_funcionales/modulo_1.md` y `docs/diagrams/login_registro/login.md` se reescribieron el 2026-09-09 y ahora coinciden. CAPTCHA y 2FA quedan fuera de alcance y se quitaron del DFD de login.
+
+> ### ⚠️ ACÁ LA DOCUMENTACIÓN VA POR DELANTE DEL CÓDIGO
+> Lo de arriba (escalón único al 3° fallo + endpoint de desbloqueo) es el **objetivo**. Lo que hoy ejecutan `AuthService` / `IntentosLoginService` sigue siendo la escalera 3/6/9, y `/unlock-account` **todavía no existe** — `RecuperacionCuentaService` solo emite el enlace de restablecimiento de contraseña. Alinear el código es trabajo pendiente; hasta entonces, el código refleja el comportamiento viejo y esta sección refleja el requisito.
+
+### Registro de Persona Jurídica: los dos caminos
+
+La documentación describe dos flujos y ninguno invalida al otro, así que **ambos se implementaron sobre el mismo método de servicio** (`PersonaJuridicaService.crearOrganizacion`), de modo que no puede haber dos reglas de negocio que diverjan:
+
+| Punto de entrada | De dónde sale | Quién puede llamarlo |
+|---|---|---|
+| `POST /api/auth/registro/organizacion` | DFD 7.1/7.2 (la bifurcación Física/Jurídica **dentro** del formulario de registro) | Público — crea cuenta personal + organización en una transacción |
+| `POST /api/organizador/organizaciones` | RF-7.2 — una organización adicional sobre una cuenta que ya existe | `ORGANIZADOR` autenticado |
+
+> **"Flujo separado" significaba entidad separada, no momento separado.** La redacción vieja de RF-7.2 ("no como parte del registro inicial") se leía como una prohibición del primer punto de entrada y contradecía la mitad de la implementación. RF-7.2 se reescribió el 2026-09-09: el alta de la organización es un proceso propio, con sus propias validaciones, independientemente de *cuándo* lo ejecute la persona. Los dos caminos son legítimos.
+
+**La cuenta que se crea es siempre la de la persona humana.** No existe un login "de empresa".
+
+##### Resolución del alta — REESCRITO 2026-09-09 (ADR-14): sin estado de revisión
+
+El alta se resuelve **de forma inmediata, en la misma petición**:
+- CUIT válido según el módulo 11 de RF-7.3 → `APROBADO` + `ACTIVO` en el acto, habilitada para publicar.
+- CUIT inválido → se rechaza la petición completa, no se persiste nada, el CUIT queda libre para reintentar.
+
+**No hay `REVISION_PENDIENTE` en el alta ni aprobación diferida.** Verificar la existencia real contra el padrón de AFIP/ARCA exige clave fiscal y certificado digital: no hay servicio público, gratuito y estable. Sostener un estado de revisión que ningún proceso podía cerrar dejaba a toda organización permanentemente inhabilitada para publicar, y volvía inalcanzable la firma corporativa de RF-7.4. Resolver con el único control realmente disponible es mejor que una puerta sin llave.
+
+> **Limitación asumida:** el módulo 11 es **aritmético, no probatorio**. Acredita que el CUIT está bien formado, no que exista una entidad detrás. Un CUIT inventado cuyo dígito verificador cierre será aceptado.
+
+> `REVISION_PENDIENTE` y `RECHAZADO` **se conservan** en el catálogo y en el historial (el MER los declara). No se usan en el alta, pero hacen falta para la suspensión por parte de un administrador en el Módulo 6.
+
+### ⚠️ `ddl-auto=update` NO PUEDE AGREGAR COLUMNAS EN ESTE ENTORNO
+
+Detectado el 2026-09-08. Hibernate genera `ALTER TABLE IF EXISTS <t> ADD COLUMN ...`, y la MariaDB que trae XAMPP (**10.4.32**) no soporta `IF EXISTS` en un `ALTER TABLE`: responde **error 1064, de sintaxis**. Hibernate registra el fallo pero **no detiene el arranque**, así que la aplicación levanta con normalidad y la columna simplemente no existe. El síntoma aparece después, en tiempo de ejecución, como `Unknown column '...' in 'field list'`.
+
+Venía roto en silencio desde Sprint 1: cuatro columnas de `persona_juridica` declaradas en la entidad desde el 2026-07-26 nunca existieron en la base. Nadie lo notó porque ninguna consulta tocaba esa tabla hasta que lo hizo el catálogo público.
+
+**Regla para el equipo:** toda columna que se agregue a una `@Entity` de ahora en más tiene que ir también a un script de migración en `docs/diseño_bd/migraciones/`. El arreglo de fondo es actualizar MariaDB a **10.6+** (el mínimo que soporta Hibernate 7) o pasar a Flyway/Liquibase con `ddl-auto=validate`, que es lo que corresponde antes de producción.
+
+```bash
+# Aplicar la migración pendiente (NO es opcional)
+mysql -u root -p enexia < docs/diseño_bd/migraciones/2026-09-08_sprint2.sql
+```
+
+### Endpoints principales
+
+```
+POST   /api/auth/registro                    público   alta de Persona Física
+POST   /api/auth/registro/organizacion       público   alta PF + organización (DFD 7.1/7.2)
+POST   /api/auth/login                       público
+POST   /api/auth/recuperacion                público   pide enlace (RF-1.5)
+POST   /api/auth/recuperacion/confirmar      público   consume el enlace y desbloquea
+
+POST   /api/organizador/organizaciones       ORGANIZADOR   alta de organización (RF-7.2)
+GET    /api/organizador/organizaciones       ORGANIZADOR
+POST   /api/organizador/eventos              ORGANIZADOR   multipart: datos (JSON) + imagenes
+GET    /api/organizador/eventos              ORGANIZADOR   dashboard paginado (RF-2.8)
+DELETE /api/organizador/eventos/{id}         ORGANIZADOR   baja lógica (RF-2.9)
+GET    /api/organizador/eventos/{id}/estadisticas         métricas (RF-2.10)
+
+GET    /api/publico/eventos                  anónimo   catálogo + búsqueda + filtros
+GET    /api/publico/eventos/{id}             anónimo   ficha técnica + registra visita
+GET    /api/publico/categorias               anónimo
+GET    /api/publico/provincias               anónimo
+GET    /api/publico/provincias/{id}/ciudades anónimo
+```
+
+### Máquina de estados del evento
+
+Dos ejes independientes; el catálogo público exige que **ambos** habiliten:
+
+```
+estado_sistema (moderación)          estado_organizador (dueño)
+  EN_PROCESO                           PUBLICADO
+    ├─→ APROBADO_SISTEMA   ← visible   CANCELADO
+    ├─→ RECHAZADO_SISTEMA              DADO_DE_BAJA
+    └─→ APROBADO_MANUAL    ← visible   FINALIZADO
+        RECHAZADO_MANUAL
+```
+
+`motivo_codigo` vive en el catálogo `evento_estado_sistema` (según el MER), así que `RECHAZADO_SISTEMA` tiene **una fila por motivo**: `MODERACION_TEXTO`, `MODERACION_IMAGEN`, `SIN_IMAGENES_VALIDAS`, `ERROR_PIPELINE`.
+
+### Dos trampas de Spring que ya costaron un error real
+
+1. **Trabajo asíncrono y commit.** El pipeline se dispara publicando un evento de aplicación (`ApplicationEventPublisher` + `@TransactionalEventListener(AFTER_COMMIT)`), **nunca** llamando al servicio asíncrono directo desde un método `@Transactional`. La llamada directa arranca el hilo con la fila todavía sin confirmar e invisible para él: los eventos terminaban en `RECHAZADO_SISTEMA/ERROR_PIPELINE`.
+
+2. **`@Transactional` y auto-invocación.** `REQUIRES_NEW` solo se aplica cuando la llamada cruza el proxy de Spring, o sea cuando viene de **otro** bean. Un método auxiliar que necesita su propia transacción dentro de la misma clase deja la anotación sin efecto, en silencio. Por eso `IntentosLoginService` y `VisitaService` son beans aparte.
+
+### Cloudinary
+
+Sin `CLOUDINARY_CLOUD_NAME` el servicio corre en **modo simulado**: valida formato y peso, no sube nada y aprueba por defecto. Un nombre de archivo que contenga `rechazar` se rechaza, y así se prueba la rama de rechazo sin credenciales.
+
+---
+
+## Sprint 1: Backend Autenticación MVP (completado)
 
 ### Alcance y Medidas de Seguridad
 
@@ -352,12 +482,9 @@ backend/src/main/java/com/enexia/
 
 **Persona Jurídica (PJ):**
 - El usuario se registra con: nickname, email, password, razon_social, nombre_fantasia (opcional), CUIT, teléfono, domicilio
-- La cuenta se crea pero **entra en estado de revisión**
-- Estos dos campos de estado pertenecen a la propia `Persona_Juridica` (`Persona_Juridica_Estado_Sistema` / `Persona_Juridica_Estado`), **no** al `Usuario_Estado` del fundador — la cuenta de login del fundador se mantiene `ACTIVO` en todo momento, solo la organización queda condicionada:
-  - `estado_persona_juridica_sistema`: `REVISION_PENDIENTE` (moderador/admin revisa CUIT + razón social)
-  - `estado_persona_juridica`: Inicialmente `INACTIVO` hasta la aprobación
-  - Tras la aprobación: `estado_persona_juridica_sistema` → `APROBADO`, `estado_persona_juridica` → `ACTIVO`
-- El usuario queda vinculado a la PJ vía la tabla `Miembros_Organizacion` con `rol_en_empresa` = "ADMINISTRADOR"
+- La cuenta personal queda `ACTIVO`, y la organización **aprobada y activa de inmediato** si el CUIT valida (ver la resolución del alta más arriba). Si no valida, se rechaza todo y no se persiste nada.
+- Estos campos de estado pertenecen a la propia `Persona_Juridica` (`Persona_Juridica_Estado_Sistema` / `Persona_Juridica_Estado`), **no** al `Usuario_Estado` del fundador.
+- El usuario queda vinculado a la PJ vía `Miembros_Organizacion` con `rol_en_empresa` = "ADMINISTRADOR", **de forma atómica con la organización misma** — una organización sin miembros es inadministrable y retiene su CUIT para siempre.
 
 | Característica | Sprint 1 | Sprint 2+ |
 |---|---|---|
@@ -365,13 +492,14 @@ backend/src/main/java/com/enexia/
 | Registro de Usuarios (Persona Jurídica) | ✅ | - |
 | Moderación de PJ (Revisión manual + seguimiento de estado) | ✅ | - |
 | Autenticación con JWT | ✅ | - |
-| Rate Limiting (por IP) | ✅ | - |
-| Bloqueo en 3 intentos fallidos | ✅ | - |
-| Cooldown (penalización 5 min) | ✅ | - |
+| ~~Rate Limiting (por IP)~~ | ❌ **ELIMINADO 2026-09-08** | ver ADR-09 |
+| Bloqueo de cuenta silencioso en 3 intentos fallidos | ✅ *(en código sigue la escalera 3/6/9; la especificación quedó en un solo escalón el 2026-09-09)* | alinear código |
+| Cooldown (penalización 5 / 30 min) | ✅ *(retirado de la especificación el 2026-09-09)* | quitar |
+| Desbloqueo por enlace `/unlock-account?token=` | ❌ especificado, sin construir | siguiente |
 | Moderación de texto (better-profanity) | ✅ | - |
-| 2FA (Verificación por email) | ❌ | Sprint 2+ |
-| CAPTCHA | ❌ | Sprint 2+ |
-| Recuperación de Contraseña | ❌ | Sprint 2+ |
+| 2FA (Verificación por email) | ❌ fuera de alcance | - |
+| CAPTCHA | ❌ fuera de alcance | - |
+| Restablecimiento de contraseña por email (RF-1.5) | ✅ **hecho en Sprint 2** | - |
 
 ### Integraciones Externas (Sprint 1)
 

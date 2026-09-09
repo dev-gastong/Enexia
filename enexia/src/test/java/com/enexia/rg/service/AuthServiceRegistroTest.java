@@ -88,8 +88,9 @@ class AuthServiceRegistroTest {
     @Mock private JwtService jwtService;
     @Mock private ModeracionTextoService moderacionService;
     @Mock private AuditoriaService auditoriaService;
-    @Mock private RateLimitService rateLimitService;
     @Mock private IntentosLoginService intentosLoginService;
+    @Mock private RecuperacionCuentaService recuperacionCuentaService;
+    @Mock private PersonaJuridicaService personaJuridicaService;
 
     @Mock private HttpServletRequest request;
 

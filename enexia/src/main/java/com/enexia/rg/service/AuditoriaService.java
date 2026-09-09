@@ -65,7 +65,21 @@ public class AuditoriaService {
     public static final String ACCION_REGISTRO_EXITOSO = "REGISTRO_EXITOSO";
     public static final String ACCION_REGISTRO_RECHAZADO_MODERACION = "REGISTRO_RECHAZADO_MODERACION";
 
+    // --- Modulo 7: organizaciones (RF-7.2)
+    public static final String ACCION_ALTA_ORGANIZACION = "ALTA_ORGANIZACION";
+    public static final String ACCION_ALTA_ORGANIZACION_RECHAZADA = "ALTA_ORGANIZACION_RECHAZADA";
+
+    // --- Modulo 2: eventos (RF-2.2, RF-2.7, RF-2.9)
+    public static final String ACCION_EVENTO_CREADO = "EVENTO_CREADO";
+    public static final String ACCION_EVENTO_APROBADO = "EVENTO_APROBADO";
+    public static final String ACCION_EVENTO_RECHAZADO = "EVENTO_RECHAZADO";
+    public static final String ACCION_EVENTO_MODIFICADO = "EVENTO_MODIFICADO";
+    public static final String ACCION_EVENTO_DADO_DE_BAJA = "EVENTO_DADO_DE_BAJA";
+    public static final String ACCION_MODERACION_ERROR = "MODERACION_ERROR";
+
     private static final String MODULO_AUTENTICACION = "AUTENTICACION";
+    private static final String MODULO_EVENTOS = "EVENTOS";
+    private static final String MODULO_ORGANIZACIONES = "ORGANIZACIONES";
 
     /** Limite de la columna user_agent; los navegadores mandan cadenas larguisimas. */
     private static final int MAX_USER_AGENT = 255;
@@ -122,7 +136,7 @@ public class AuditoriaService {
         HistorialInteracciones registro = new HistorialInteracciones();
         registro.setUsuario(usuario);
         registro.setAccion(accion);
-        registro.setModulo(MODULO_AUTENTICACION);
+        registro.setModulo(moduloDe(accion));
         registro.setDetalles(detalles);
         registro.setFechaInteraccion(LocalDateTime.now());
 
@@ -158,6 +172,26 @@ public class AuditoriaService {
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    /**
+     * Deduce el modulo a partir del prefijo de la accion.
+     *
+     * Alternativa descartada: agregar un parametro 'modulo' a cada llamada.
+     * Serian ~20 puntos de llamada donde el dato es siempre derivable de la
+     * accion, y cada uno una oportunidad de escribir el modulo equivocado.
+     */
+    private String moduloDe(String accion) {
+        if (accion == null) {
+            return MODULO_AUTENTICACION;
+        }
+        if (accion.startsWith("EVENTO_") || accion.startsWith("MODERACION_")) {
+            return MODULO_EVENTOS;
+        }
+        if (accion.startsWith("ALTA_ORGANIZACION")) {
+            return MODULO_ORGANIZACIONES;
+        }
+        return MODULO_AUTENTICACION;
     }
 
     private String truncar(String valor) {

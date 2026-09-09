@@ -2,9 +2,17 @@
 erDiagram
     Persona {
         int id_persona PK
-        varchar tipo_persona
         timestamp fecha_registro
     }
+    %% Cambio 2026-09-08 (Sprint 2): se ELIMINO la columna tipo_persona.
+    %% Suponia una jerarquia Persona -> (Fisica | Juridica) que este modelo nunca
+    %% tuvo: la unica relacion declarada es `Persona ||--|| Persona_Fisica`, y
+    %% Persona_Juridica es una entidad independiente, SIN FK a Persona.
+    %% La columna valia "FISICA" en el 100% de las filas (no discriminaba nada) y
+    %% admitir "JURIDICA" habria permitido crear una persona juridica sin persona
+    %% fisica asociada, rompiendo el invariante de que todo Usuario es una persona
+    %% humana. Una Persona Juridica NO es identidad de acceso: es un contenedor
+    %% administrativo que se vincula por Miembros_Organizacion (RF-7.2).
     Rol {
         int id_rol PK
         varchar nombre_rol
@@ -109,12 +117,23 @@ erDiagram
     Evento {
         int id_evento PK
         int id_organizador FK
+        int id_persona_juridica FK
         int id_categoria FK
         int id_estado_sistema FK
         int id_estado_organizador FK
         varchar nombre
         varchar url_portada
+        timestamp fecha_creacion
     }
+    %% Cambios 2026-09-08 (Sprint 2):
+    %% fecha_creacion: la exige RF-2.2 de forma literal como parte del registro
+    %%   "skeleton" que se persiste ANTES de moderar. Sin ella el dashboard del
+    %%   organizador no puede ordenar por antiguedad ni detectar eventos atascados
+    %%   en EN_PROCESO por una moderacion que nunca termino.
+    %% id_persona_juridica: implementa RF-2.1 (Sprint 2) y RF-7.4. Es NULLABLE:
+    %%   null = evento a titulo personal del organizador; con valor = se publica a
+    %%   nombre de esa organizacion. NO se guarda la razon social como texto porque
+    %%   un cambio de nombre dejaria los eventos viejos con el anterior.
     Tipo_Ticket {
         int id_tipo_ticket PK
         varchar nombre
@@ -319,6 +338,7 @@ erDiagram
     Rol ||--o{ Usuario_Rol : "asignado"
     
     Usuario ||--o{ Evento : "organiza"
+    Persona_Juridica ||--o{ Evento : "respalda"
     Categoria ||--o{ Evento : "clasifica"
     Evento_Estado_Sistema ||--o{ Evento : "modera"
     Evento_Estado_Organizador ||--o{ Evento : "gestiona"

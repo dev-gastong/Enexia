@@ -88,7 +88,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The system revolves around these key entities (see `docs/diseño_bd/MER.md` for full ERD):
 
-- **Persona**: Base entity (Física = Individual, Jurídica = Organization)
+- **Persona**: Identity of a HUMAN person only. Supertype of `Persona_Fisica` and the only identity that can own a `Usuario` (login).
+  - **Sprint 2 change (2026-09-08):** the `tipo_persona` column was **removed**. It implied a `Persona -> (Fisica | Juridica)` hierarchy that never existed — the MER only declares `Persona ||--|| Persona_Fisica`, and `Persona_Juridica` has no FK to `Persona`. The column held `"FISICA"` in 100% of rows, and allowing `"JURIDICA"` would have permitted a legal person with no physical person attached, breaking the invariant that every `Usuario` is a human being.
+- **Persona_Juridica**: Administrative container, **not a login identity**. Linked to people through `Miembros_Organizacion` (RF-7.2).
 - **Usuario**: User account with roles (Participante, Organizador, Administrador). **Design note:** Organizadores receive both ORGANIZADOR + PARTICIPANTE roles to create events AND participate in others' events; only Personas Físicas can register directly. Personas Jurídicas manage participants through Miembros_Organizacion (Sprint 2).
 - **Evento**: Event created by organizers with state tracking
 - **Evento_Cronograma**: Multiple dates/times for a single event
@@ -282,13 +284,39 @@ backend/src/main/java/com/enexia/
 - Use `@ControllerAdvice` with `@ExceptionHandler` to map exceptions to HTTP status codes
 - Return consistent error JSON: `{ "error": "...", "timestamp": "...", "status": 400 }`
 
-#### Security (Sprint 1 MVP)
+#### Security
 - **Authentication**: JWT (JSON Web Tokens) issued on successful login with `roles[]` array (multi-role support)
 - **Authorization**: Extract roles[] array from JWT; validate in `@PreAuthorize("hasAnyRole(...)")` on service methods or controller
-- **Password**: BCrypt hashing (never plain text)
-- **Rate Limiting**: Track login attempts by email/IP; block at 3 failures for 5 minutes
-- **Account Blocking**: After 3 failed attempts, set `estado_usuario` = "BLOQUEADO"
-- **Cooldown**: `fecha_desbloqueo_cooldown` timestamp prevents immediate retry
+- **Password**: BCrypt hashing, cost factor 12 (never plain text)
+
+##### ⚠️ Login failure policy — REWRITTEN 2026-09-08 (user decision)
+
+**1. IP-based rate limiting was REMOVED.**
+Behind CGNAT or an institution's wifi, hundreds of legitimate devices share one public IP. Blocking that IP took a whole area offline because of a single attacker — a denial of service the attacker could trigger at will. `RateLimitService` and `RateLimitExcedidoException` were deleted.
+
+> **Open risk, deliberately accepted:** with no per-IP control, *password spraying* (one common password against thousands of emails) has no dedicated brake, because no single account accumulates failures. **Resolved 2026-09-09 (ADR-13):** blocking on the 3rd failure per account, combined with a rejection that is indistinguishable in body, headers and timing — and a recovery endpoint that is equally opaque — denies the sprayer both the attempt budget and the enumeration signal it needs. Alerting on anomalous volume in `historial_interacciones`, **without** rejecting requests, remains a nice-to-have.
+
+**2. Account blocking is now SILENT.**
+Every login rejection answers identically: `401`, code `CREDENCIALES_INVALIDAS`, same message, no extra headers, and the same wall-clock cost. The attacker cannot tell "email doesn't exist" from "wrong password" from "account blocked" — not by body, status, headers, or timing.
+
+- All auth failures extend `AutenticacionFallidaException`, which carries an **internal** code (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_EN_COOLDOWN`, `CUENTA_SUSPENDIDA`). That code goes to the log and `historial_interacciones` — **never** to the HTTP response.
+- `GlobalExceptionHandler` has **one** handler for the whole family. **Do not add a more specific `@ExceptionHandler`** for any subclass: Spring would pick it and the response would start leaking account state again.
+- Every rejection path pays one BCrypt comparison (decoy hash) so response time is constant.
+- The `X-Reintentar-Despues` header was removed: read from DevTools, it confirmed the account exists and is penalized.
+- **The legitimate owner is notified by email** with a single-use recovery link (`RecuperacionCuentaService`) — the one channel the attacker does not control.
+
+**3. Blocking threshold — FINAL DECISION 2026-09-09: block on the 3rd failure.**
+The former escalation ladder (3 → captcha + 5 min cooldown, 6 → 30 min cooldown, 9 → block) is **gone from the spec**. The rule is now a single step, counted **per account** (`usuario.intentos_fallidos`), never per IP:
+
+- 3 consecutive failures → `estado_usuario = BLOQUEADO` + security email to the owner
+- Any successful login → counter back to 0
+
+The email carries a **direct unlock link** — `/unlock-account?token=XYZ`, a single-use, time-limited token. Consuming it sets `estado_usuario = ACTIVO`, `intentos_fallidos = 0`, clears `fecha_desbloqueo_cooldown`, and invalidates the token. The owner then logs in with their **usual credentials** — no password change required.
+
+This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modulo_1.md` and `docs/diagrams/login_registro/login.md` were both rewritten on 2026-09-09 and now agree. CAPTCHA and 2FA are out of scope and were removed from the login DFD.
+
+> ### ⚠️ DOCS ARE AHEAD OF CODE HERE
+> The spec above (single 3-failure step + unlock endpoint) is the **target**. What `AuthService` / `IntentosLoginService` actually run today is still the old 3/6/9 ladder, and `/unlock-account` **does not exist yet** — `RecuperacionCuentaService` only issues the password-reset link. Aligning the code is pending work; until then, read the code as the old behavior and this section as the requirement.
 - **Text Moderation**: `better-profanity` library for content filtering (Registro + Login + Events later)
 - **Input Validation**: Use `@Valid` + `@NotNull`, `@Email`, `@Pattern` on DTOs
 
@@ -338,7 +366,59 @@ backend/src/main/java/com/enexia/
 
 ---
 
-## Sprint 1: Backend Authentication MVP (Current)
+## Sprint 2: Organizations, Events & Public Catalog (Current)
+
+**Status:** backend complete, frontend pending (waiting on Figma designs).
+
+| Module | Scope delivered |
+|---|---|
+| **M1** — Auth | Silent account blocking, per-IP rate limiting removed, password reset + unlock by email (RF-1.5) |
+| **M7** — Organizations | `Persona_Juridica` registration through both entry points, CUIT mod-11 validation (RF-7.3), `Miembros_Organizacion`. *Alta gating removed 2026-09-09 (ADR-14) — the spec now approves on the spot; the code still writes `REVISION_PENDIENTE`.* |
+| **M2** — Events | Creation with async moderation pipeline (RF-2.1 to RF-2.6), Cloudinary integration (RF-2.3), organizer dashboard (RF-2.8), logical delete (RF-2.9), statistics (RF-2.10) |
+| **M4** — Public interface | Paginated catalog, text search, category/date/location filters, technical sheet, passive visit tracking (RF-4.1 to RF-4.5) |
+| **M5** — Moderation | Text phase + image phase, sequential and asynchronous (RF-5.1 to RF-5.3) |
+
+**Key endpoints**
+
+```
+POST   /api/auth/registro                    público   alta de Persona Física
+POST   /api/auth/registro/organizacion       público   alta PF + organización (DFD 7.1/7.2)
+POST   /api/auth/login                       público
+POST   /api/auth/recuperacion                público   pide enlace (RF-1.5)
+POST   /api/auth/recuperacion/confirmar      público   consume el enlace y desbloquea
+
+POST   /api/organizador/organizaciones       ORGANIZADOR   alta de organización (RF-7.2)
+GET    /api/organizador/organizaciones       ORGANIZADOR
+POST   /api/organizador/eventos              ORGANIZADOR   multipart: datos (JSON) + imagenes
+GET    /api/organizador/eventos              ORGANIZADOR   dashboard paginado (RF-2.8)
+DELETE /api/organizador/eventos/{id}         ORGANIZADOR   baja lógica (RF-2.9)
+GET    /api/organizador/eventos/{id}/estadisticas         métricas (RF-2.10)
+
+GET    /api/publico/eventos                  anónimo   catálogo + búsqueda + filtros
+GET    /api/publico/eventos/{id}             anónimo   ficha técnica + registra visita
+GET    /api/publico/categorias               anónimo
+GET    /api/publico/provincias               anónimo
+GET    /api/publico/provincias/{id}/ciudades anónimo
+```
+
+**Event state machine** (two independent axes — the public catalog requires BOTH to allow):
+
+```
+estado_sistema (moderation)          estado_organizador (owner)
+  EN_PROCESO                           PUBLICADO
+    ├─→ APROBADO_SISTEMA   ← visible   CANCELADO
+    ├─→ RECHAZADO_SISTEMA              DADO_DE_BAJA
+    └─→ APROBADO_MANUAL    ← visible   FINALIZADO
+        RECHAZADO_MANUAL
+```
+
+`motivo_codigo` lives in the `evento_estado_sistema` catalog (per the MER), so `RECHAZADO_SISTEMA` has **one row per reason**: `MODERACION_TEXTO`, `MODERACION_IMAGEN`, `SIN_IMAGENES_VALIDAS`, `ERROR_PIPELINE`.
+
+**Cloudinary**: without `CLOUDINARY_CLOUD_NAME` the service runs in **simulated mode** — validates format/size, uploads nothing, approves by default. A filename containing `rechazar` is rejected, which is how the rejection branch is tested without credentials.
+
+---
+
+## Sprint 1: Backend Authentication MVP (completed)
 
 ### Scope & Security Measures
 
@@ -352,14 +432,33 @@ backend/src/main/java/com/enexia/
 - Estado: `ACTIVO` (Usuario_Estado)
 - Can immediately browse events and register as "PARTICIPANTE"
 
-**Persona Jurídica (PJ):**
-- User registers with: nickname, email, password, razon_social, nombre_fantasia (optional), CUIT, phone, address
-- Account created but **enters review state**
-- These two state fields belong to `Persona_Juridica` itself (`Persona_Juridica_Estado_Sistema` / `Persona_Juridica_Estado`), **not** to the founder's own `Usuario_Estado` — the founder's login account stays `ACTIVO` throughout, only the organization is gated:
-  - `estado_persona_juridica_sistema`: `REVISION_PENDIENTE` (moderator/admin reviews CUIT + razon_social)
-  - `estado_persona_juridica`: Initially `INACTIVO` until approved
-  - Upon approval: `estado_persona_juridica_sistema` → `APROBADO`, `estado_persona_juridica` → `ACTIVO`
-- User is linked to PJ via `Miembros_Organizacion` table with `rol_en_empresa` = "ADMINISTRADOR"
+**Persona Jurídica (PJ) — implemented in Sprint 2, via TWO entry points:**
+
+The documentation describes two flows and neither invalidates the other, so **both are implemented on top of the same service method** (`PersonaJuridicaService.crearOrganizacion`), so no two business rules can drift apart:
+
+| Entry point | Source | Who can call it |
+|---|---|---|
+| `POST /api/auth/registro/organizacion` | DFD 7.1/7.2 (the Física/Jurídica split **inside** the registration form) | Public — creates personal account + organization in one transaction |
+| `POST /api/organizador/organizaciones` | RF-7.2 — an additional organization on an account that already exists | Authenticated `ORGANIZADOR` |
+
+> **"Separate flow" meant a separate *entity*, not a separate *moment*.** The old RF-7.2 wording ("not part of the initial registration") read as a ban on the first entry point and contradicted half the implementation. RF-7.2 was rewritten on 2026-09-09: the organization's alta is its own process with its own validations, regardless of *when* the person runs it. Both entry points are legitimate.
+
+- Organization data: razon_social, nombre_fantasia (optional), CUIT, corporate email, phone, fiscal address
+- **The account created is always the human person's.** There is no "company login".
+- User is linked to PJ via `Miembros_Organizacion` with `rol_en_empresa` = "ADMINISTRADOR", **atomically with the organization itself** — an organization with no members is unadministrable and holds its CUIT forever.
+- These state fields belong to `Persona_Juridica` itself (`Persona_Juridica_Estado_Sistema` / `Persona_Juridica_Estado`), **not** to the founder's `Usuario_Estado` — the founder's login account is `ACTIVO` throughout.
+
+##### Alta resolution — REWRITTEN 2026-09-09 (ADR-14): no review state
+
+The alta resolves **immediately, in the same request**:
+- CUIT passes RF-7.3 mod-11 → `APROBADO` + `ACTIVO` on the spot, cleared to publish events.
+- CUIT fails → the whole request is rejected, nothing is persisted, the CUIT stays free to retry.
+
+There is **no `REVISION_PENDIENTE` on alta and no deferred approval.** Verifying real existence against the AFIP/ARCA padrón needs a fiscal key and a digital certificate — there is no free, stable public service. Holding a review state that no process could ever close left every organization permanently unable to publish, and made RF-7.4's corporate signature unreachable. Resolving with the only check actually available beats a gate with no key.
+
+> **Accepted limitation:** mod-11 is **arithmetic, not probative**. It proves the CUIT is well-formed, not that an entity exists behind it. An invented CUIT whose check digit closes will be accepted.
+
+> `REVISION_PENDIENTE` and `RECHAZADO` **stay in the catalog** and in the history table (the MER declares them). Unused on alta, they are needed for admin suspension in Módulo 6.
 
 | Feature | Sprint 1 | Sprint 2+ |
 |---------|----------|----------|
@@ -367,13 +466,15 @@ backend/src/main/java/com/enexia/
 | User Registration (Persona Jurídica) | ✅ | - |
 | PJ Moderation (Manual review + status tracking) | ✅ | - |
 | JWT Authentication | ✅ | - |
-| Rate Limiting (IP-based) | ✅ | - |
-| Account Locking (3 failed attempts) | ✅ | - |
-| Cooldown (5 min penalty) | ✅ | - |
+| ~~Rate Limiting (IP-based)~~ | ❌ **REMOVED 2026-09-08** | see below |
+| Account Locking (silent) | ✅ *(3/6/9 ladder in code; spec is now a single 3-failure step)* | align code |
+| Cooldown (5 / 30 min penalty) | ✅ *(dropped from the spec 2026-09-09)* | remove |
+| Account unlock via `/unlock-account?token=` | ❌ spec'd, not built | next |
+| Password Reset + account unlock by email (RF-1.5) | ✅ **Sprint 2** | - |
 | Text Moderation (better-profanity) | ✅ | - |
 | 2FA (Email verification) | ❌ | Sprint 2+ |
 | CAPTCHA | ❌ | Sprint 2+ |
-| Password Reset Flow | ❌ | Sprint 2+ |
+| Password Reset Flow | ✅ **done in Sprint 2** | - |
 
 ### External Integrations (Sprint 1)
 
@@ -392,9 +493,19 @@ mysql -u root -p
 CREATE DATABASE enexia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 EXIT;
 
-# 2. Spring Boot auto-creates tables via @Entity + application.yml
-# Set: spring.jpa.hibernate.ddl-auto=create-drop (dev) or validate (prod)
+# 2. Spring Boot creates the tables from @Entity (ddl-auto=update)
+
+# 3. Apply pending migrations — NOT OPTIONAL, see the warning below
+mysql -u root -p enexia < docs/diseño_bd/migraciones/2026-09-08_sprint2.sql
 ```
+
+> ### ⚠️ `ddl-auto=update` CANNOT ADD COLUMNS ON THIS SETUP
+>
+> Discovered 2026-09-08. Hibernate emits `ALTER TABLE IF EXISTS <t> ADD COLUMN ...`, and the MariaDB shipped with XAMPP (**10.4.32**) does not support `IF EXISTS` in `ALTER TABLE`: it answers **error 1064, syntax error**. Hibernate logs the failure but **does not abort startup**, so the app comes up normally and the column simply isn't there. The symptom shows up later at runtime as `Unknown column '...' in 'field list'`.
+>
+> This had been silently broken since Sprint 1: four `persona_juridica` columns declared in the entity since 2026-07-26 never existed in the database. Nobody noticed because no query touched that table until the public catalog did.
+>
+> **Rule for the team:** every column added to an `@Entity` from now on must also go into a migration script under `docs/diseño_bd/migraciones/`. The real fix is upgrading MariaDB to **10.6+** (the minimum Hibernate 7 supports) or moving to Flyway/Liquibase with `ddl-auto=validate`, which is what production needs anyway.
 
 ### Key Database Fields (Sprint 1 - Usuario table)
 
@@ -420,13 +531,16 @@ public class Usuario {
 }
 ```
 
+> Note: in the real entity, states are **related tables** (`usuario_estado`), not enums — see ADR-02. The enum above is the CLAUDE.md draft, kept for reference.
+
 ### Important Implementation Notes
 
 - **Content Moderation** (Sprint 1): Use `better-profanity` for registration names/nicknames
 - **Content Moderation** (Sprint 2+): Backend must validate titles/descriptions of events (Module 2, RF-2.2)
 - **State Tracking**: Users have `estado_usuario` (ACTIVO, BLOQUEADO, etc.) — check in login
-- **Rate Limiting**: Track failed attempts in `Historial_Interacciones` table by email/IP
-- **Account Locking**: After exactly 3 failed attempts, set estado = "BLOQUEADO" + send security email (Sprint 2)
+- **Account Locking**: silent. See the login failure policy above — never expose the block through the HTTP response; notify by email instead.
+- **Async pipeline**: background work is dispatched via `ApplicationEventPublisher` + `@TransactionalEventListener(AFTER_COMMIT)`, **never** by calling the async service directly from a `@Transactional` method. A direct call starts the worker thread while the row is still uncommitted and invisible to it — this actually happened and left events stuck in `RECHAZADO_SISTEMA/ERROR_PIPELINE`.
+- **`@Transactional` and self-invocation**: `REQUIRES_NEW` only applies when the call crosses the Spring proxy, i.e. comes from *another* bean. Writing helpers that need their own transaction inside the same class silently disables the annotation. This is why `IntentosLoginService` and `VisitaService` are separate beans.
 - **Soft Deletes**: Use `fecha_baja` field; never hard-delete users or events
 - **RBAC (Backend)**: Always validate roles in service layer via `@PreAuthorize` or manual checks; frontend can render UI conditionally, but backend enforces
 - **Cloudinary Integration**: Planned for Sprint 2 (Module 2 - Event Images); for now skip image uploads
