@@ -144,6 +144,7 @@ public class EventoMapper {
                 .nombre(evento.getNombre())
                 .descripcion(detalle == null ? null : detalle.getDescripcion())
                 .categoria(evento.getCategoria() == null ? null : evento.getCategoria().getNombreCategoria())
+                .idCategoria(evento.getCategoria() == null ? null : evento.getCategoria().getIdCategoria())
                 .urlPortada(evento.getUrlPortada())
                 .organizador(firmaOrganizador(evento))
                 .organizadorEsOrganizacion(evento.getPersonaJuridica() != null)
@@ -153,7 +154,9 @@ public class EventoMapper {
                         : evento.getEstadoOrganizador().getEstadoOrganizador())
                 .calle(ubicacion == null ? null : ubicacion.getCalle())
                 .numero(ubicacion == null ? null : ubicacion.getNumeroExterior())
+                .numeroInterior(ubicacion == null ? null : ubicacion.getNumeroInterior())
                 .ciudad(ciudad == null ? null : ciudad.getNombre())
+                .idCiudad(ciudad == null ? null : ciudad.getIdCiudad())
                 .provincia(ciudad == null || ciudad.getProvincia() == null
                         ? null : ciudad.getProvincia().getNombre())
                 .pais(ciudad == null || ciudad.getProvincia() == null

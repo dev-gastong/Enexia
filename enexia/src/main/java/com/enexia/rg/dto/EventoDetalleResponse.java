@@ -30,6 +30,7 @@ public class EventoDetalleResponse {
     private String nombre;
     private String descripcion;
     private String categoria;
+    private Long idCategoria;
     private String urlPortada;
 
     /** Firma ya resuelta segun RF-7.4. */
@@ -44,7 +45,9 @@ public class EventoDetalleResponse {
     // --- Direccion resuelta (RF-4.4)
     private String calle;
     private String numero;
+    private String numeroInterior;
     private String ciudad;
+    private Long idCiudad;
     private String provincia;
     private String pais;
     private BigDecimal latitud;

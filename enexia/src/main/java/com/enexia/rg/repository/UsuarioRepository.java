@@ -36,12 +36,20 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      *
      * Filtra {@code fecha_baja IS NULL} para respetar el borrado logico (RF-1.6):
      * una cuenta dada de baja se comporta como inexistente.
+     *
+     * Tambien trae {@code personaFisica} (y su {@code persona}): es la misma
+     * relacion 1:1 que "Mi Perfil" necesita (nombre, apellido, DNI, fecha de
+     * nacimiento), y este es el punto unico donde ya se carga un Usuario
+     * completo para el resto de los servicios autenticados. Agregarla aca evita
+     * una consulta aparte por cada pantalla de perfil sin duplicar el metodo.
      */
     @Query("""
             SELECT u FROM Usuario u
             LEFT JOIN FETCH u.usuarioRoles ur
             LEFT JOIN FETCH ur.rol
             LEFT JOIN FETCH u.estadoUsuario
+            LEFT JOIN FETCH u.personaFisica pf
+            LEFT JOIN FETCH pf.persona
             WHERE LOWER(u.email) = LOWER(:email)
               AND u.fechaBaja IS NULL
             """)

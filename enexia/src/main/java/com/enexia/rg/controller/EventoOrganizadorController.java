@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.enexia.rg.dto.EventoCrearRequest;
+import com.enexia.rg.dto.EventoDetalleResponse;
 import com.enexia.rg.dto.EventoEstadisticasResponse;
 import com.enexia.rg.dto.EventoResponse;
 import com.enexia.rg.exception.ReglaNegocioException;
@@ -113,6 +115,42 @@ public class EventoOrganizadorController {
             }
         }
         return pendientes;
+    }
+
+    /**
+     * Trae un evento propio con el detalle completo, para precargar el
+     * formulario de edicion (RF-2.7). El mismo endpoint sirve el
+     * "Crear / Modificar Evento" de la pantalla: al crear no se llama, al
+     * editar es el primer pedido antes de mostrar el formulario con datos.
+     */
+    @GetMapping("/{idEvento}")
+    @PreAuthorize("hasRole('ORGANIZADOR')")
+    public ResponseEntity<EventoDetalleResponse> obtenerParaEditar(@PathVariable Long idEvento,
+                                                                    Principal principal) {
+
+        return ResponseEntity.ok(eventoService.obtenerParaEditar(principal.getName(), idEvento));
+    }
+
+    /**
+     * Edita un evento propio ya aprobado (RF-2.7).
+     *
+     * A diferencia de {@link #crear}, responde 200 OK y no 202 Accepted: la
+     * moderacion de la edicion es sincronica (ver EventoService.editar), asi
+     * que para cuando la respuesta llega el resultado ya es definitivo.
+     */
+    @PutMapping(value = "/{idEvento}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ORGANIZADOR')")
+    public ResponseEntity<EventoResponse> editar(
+            @PathVariable Long idEvento,
+            @Valid @RequestPart("datos") EventoCrearRequest datos,
+            @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes,
+            Principal principal,
+            HttpServletRequest request) {
+
+        EventoResponse respuesta = eventoService.editar(
+                principal.getName(), idEvento, datos, leerImagenes(imagenes), request);
+
+        return ResponseEntity.ok(respuesta);
     }
 
     /**

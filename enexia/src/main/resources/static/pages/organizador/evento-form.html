@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear Evento - Enexia</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Crear / Modificar Evento (Modulo 2, RF-2.1 a RF-2.7)
+   Paleta clara "Atardecer Fueguino" (tokens.css). El Figma de referencia
+   esta en tema oscuro; esta pagina reusa su estructura y jerarquia, no sus
+   colores literales.
+   ===================================================================== */
+
+:root {
+    --panel-ancho: 260px;
+    --radio-tarjeta: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--lienzo);
+    color: var(--texto-secundario);
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--acento); text-decoration: none; }
+a:hover { color: var(--acento-fuerte); }
+
+.app { display: flex; min-height: 100vh; }
+
+/* ===================================================================
+   Barra lateral (compartida por las pantallas de organizador)
+   =================================================================== */
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    width: var(--panel-ancho);
+    min-height: 100vh;
+    border-right: 1px solid var(--borde);
+    background: var(--superficie);
+}
+
+.sidebar__logo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 26px 24px 18px;
+}
+
+.sidebar__marca { display: flex; align-items: center; gap: 4px; }
+.sidebar__marca svg { display: block; width: 22px; height: 22px; }
+.sidebar__marca span {
+    font-family: var(--marca);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--texto);
+    letter-spacing: -.3px;
+}
+.sidebar__rol { font-size: 11px; color: var(--texto-secundario); padding-left: 2px; }
+
+.sidebar__separador { margin: 4px 24px 12px; border: 0; border-top: 1px solid var(--borde); }
+
+.sidebar__nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; flex: 1; }
+
+.sidebar__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-left: 3px solid transparent;
+    border-radius: 10px;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    font-weight: 500;
+}
+.sidebar__item svg { display: block; width: 17px; height: 17px; flex: none; }
+.sidebar__item:hover { background: var(--superficie-alt); color: var(--texto); }
+
+.sidebar__item--activo {
+    background: var(--acento-tinte);
+    border-left-color: var(--acento);
+    color: var(--acento-fuerte);
+}
+.sidebar__item--activo:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
+
+.sidebar__plan { margin: 12px 16px 8px; padding: 16px; border: 1px solid var(--alerta-borde); border-radius: 16px; background: var(--alerta-tinte); }
+.sidebar__plan-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border: 1px solid var(--alerta-borde);
+    border-radius: 4px;
+    color: var(--alerta);
+    font-family: var(--marca);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .6px;
+}
+.sidebar__plan-texto { margin: 10px 0 0; font-size: 11px; color: var(--texto-secundario); }
+.sidebar__plan-link { display: block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--acento); cursor: default; }
+
+.sidebar__salir {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 16px 20px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    color: var(--error);
+    font-size: 14px;
+    font-weight: 500;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+}
+.sidebar__salir:hover { background: var(--error-tinte); }
+.sidebar__salir svg { width: 16px; height: 16px; flex: none; }
+
+/* ===================================================================
+   Contenido principal
+   =================================================================== */
+
+.contenido { flex: 1; min-width: 0; padding: 28px 32px 140px; }
+
+.franja {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 12px 18px;
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    background: var(--superficie);
+}
+.franja__aviso { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-secundario); }
+.franja__aviso svg { width: 15px; height: 15px; color: var(--acento); flex: none; }
+.franja__pro { font-size: 13px; font-weight: 600; color: var(--acento-fuerte); cursor: default; }
+
+.cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.migas { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-secundario); margin-bottom: 4px; }
+.migas a { font-weight: 500; }
+
+.cabecera h1 {
+    margin: 4px 0 6px;
+    color: var(--texto);
+    font-family: var(--marca);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.5px;
+}
+.cabecera p { margin: 0; font-size: 14px; color: var(--texto-secundario); }
+
+.chip-organizador {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: var(--superficie);
+    font-size: 12px;
+    color: var(--texto-secundario);
+    white-space: nowrap;
+}
+.chip-organizador svg { width: 13px; height: 13px; color: var(--acento); }
+.chip-organizador strong { color: var(--texto); }
+
+/* --- Indicador de pasos ------------------------------------------- */
+
+.pasos {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 4px 0;
+    overflow-x: auto;
+}
+.paso-item { display: flex; align-items: center; gap: 10px; flex: none; }
+.paso-item__num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--superficie-alt);
+    color: var(--texto-secundario);
+    font-size: 12px;
+    font-weight: 700;
+}
+.paso-item--visto .paso-item__num { background: var(--acento); color: #fff; }
+.paso-item__texto { font-size: 13px; color: var(--texto-secundario); white-space: nowrap; }
+.paso-item--visto .paso-item__texto { color: var(--texto); font-weight: 600; }
+.paso-item__linea { width: 32px; height: 1px; background: var(--borde); margin: 0 8px; flex: none; }
+
+/* --- Tarjeta grande del formulario ---------------------------------- */
+
+.tarjeta-form {
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--superficie);
+    box-shadow: var(--sombra-tarjeta);
+    overflow: hidden;
+}
+
+.seccion-form { padding: 32px; border-bottom: 1px solid var(--borde); scroll-margin-top: 90px; }
+.seccion-form:last-child { border-bottom: 0; }
+
+.seccion-form__cabecera { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.seccion-form__num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--acento-tinte);
+    color: var(--acento-fuerte);
+    font-family: var(--marca);
+    font-size: 14px;
+    font-weight: 700;
+    flex: none;
+}
+.seccion-form__titulo { margin: 0; color: var(--texto); font-family: var(--marca); font-size: 19px; font-weight: 700; }
+.seccion-form__tabla { font-size: 11px; color: var(--texto-secundario); font-family: var(--mono); }
+
+/* --- Campos ---------------------------------------------------------- */
+
+.grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.grilla--3 { grid-template-columns: repeat(3, 1fr); }
+.grilla--estrecha { grid-template-columns: 2fr 1fr 1fr; }
+
+@media (max-width: 720px) {
+    .grilla--3, .grilla--estrecha { grid-template-columns: 1fr; }
+}
+
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo--ancho { grid-column: 1 / -1; }
+
+.campo__etiqueta { display: flex; align-items: baseline; gap: 4px; color: var(--texto); font-size: 13px; font-weight: 600; }
+.campo__etiqueta .oblig { color: var(--accion); }
+.campo__etiqueta .opc { font-weight: 400; color: var(--texto-secundario); font-size: 11px; }
+
+.entrada {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border: 1px solid var(--borde-campo);
+    border-radius: var(--radio-campo);
+    background: var(--superficie);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.entrada:focus-within { border-color: var(--acento); box-shadow: var(--foco-accion); }
+.entrada input, .entrada select, .entrada textarea {
+    flex: 1 1 0; min-width: 0; padding: 0; border: 0; background: transparent;
+    color: var(--texto); font-family: inherit; font-size: 14px; line-height: 20px; outline: none;
+}
+.entrada textarea { resize: vertical; min-height: 96px; padding-top: 2px; }
+.entrada__prefijo { color: var(--texto-secundario); font-size: 13px; flex: none; }
+
+.campo__ayuda { font-size: 12px; color: var(--texto-secundario); }
+.campo__error { display: none; color: var(--error); font-size: 12px; }
+.campo--invalido .campo__error { display: block; }
+.campo--invalido .entrada { border-color: var(--error-borde); background: var(--error-tinte); }
+
+/* --- Tipo de cuenta / toggles genericos (reuso del sistema) --------- */
+
+.boton-secundario {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--acento-borde);
+    border-radius: 10px;
+    background: var(--acento-tinte);
+    color: var(--acento-fuerte);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.boton-secundario:hover { background: var(--acento-borde); }
+.boton-secundario svg { width: 12px; height: 12px; }
+
+.boton-quitar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border: 1px solid var(--error-borde);
+    border-radius: 8px;
+    background: var(--error-tinte);
+    color: var(--error);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.boton-quitar:hover { background: var(--error-borde); }
+.boton-quitar svg { width: 10px; height: 10px; }
+.boton-quitar:disabled { opacity: .4; cursor: not-allowed; }
+
+/* --- Instancias del cronograma --------------------------------------- */
+
+.instancia {
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    background: var(--superficie-alt);
+}
+.instancia__cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.instancia__titulo { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--texto); }
+.instancia__titulo span.num {
+    display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--acento); color: #fff; font-size: 11px; font-weight: 700;
+}
+
+.aviso-inline {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 15px;
+    border: 1px solid var(--alerta-borde);
+    border-radius: 12px;
+    background: var(--alerta-tinte);
+    color: var(--alerta);
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+.aviso-inline svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+.aviso-inline--info { border-color: var(--info-borde); background: var(--info-tinte); color: var(--info); }
+.aviso-inline--error { border-color: var(--error-borde); background: var(--error-tinte); color: var(--error); }
+
+.sync-nota { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--texto-secundario); margin-bottom: 16px; }
+.sync-nota svg { width: 14px; height: 14px; color: var(--acento); flex: none; }
+.sync-nota .badge-vivo {
+    display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 4px 10px;
+    border-radius: 999px; background: var(--ok-tinte); color: var(--ok); font-size: 11px; font-weight: 600;
+}
+.badge-vivo__punto { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+
+/* --- Sectores de ticket ----------------------------------------------- */
+
+.ticket {
+    padding: 18px;
+    margin-bottom: 14px;
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    background: var(--superficie);
+}
+.ticket__cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.ticket__titulo { font-size: 12.5px; font-weight: 700; color: var(--texto); }
+.ticket__titulo .nombre { color: var(--acento-fuerte); }
+
+.resumen-tickets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--borde);
+}
+.resumen-tickets__item { display: flex; gap: 12px; align-items: center; }
+.resumen-tickets__icono {
+    display: flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+    border-radius: 10px; background: var(--acento-tinte); color: var(--acento); flex: none;
+}
+.resumen-tickets__icono svg { width: 15px; height: 15px; }
+.resumen-tickets__etq { font-size: 11px; color: var(--texto-secundario); }
+.resumen-tickets__val { font-size: 19px; font-weight: 700; color: var(--texto); font-family: var(--marca); }
+
+/* --- Galeria / portada -------------------------------------------------- */
+
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 36px 20px;
+    border: 1.5px dashed var(--borde-fuerte);
+    border-radius: 14px;
+    background: var(--superficie-alt);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+}
+.dropzone:hover, .dropzone--sobre { border-color: var(--acento); background: var(--acento-tinte); }
+.dropzone--con-imagen { padding: 0; border-style: solid; overflow: hidden; }
+.dropzone__icono { width: 44px; height: 44px; border-radius: 14px; background: var(--acento-tinte); display: flex; align-items: center; justify-content: center; color: var(--acento); }
+.dropzone__icono svg { width: 22px; height: 22px; }
+.dropzone__texto { font-size: 14px; color: var(--texto); font-weight: 500; }
+.dropzone__subtexto { font-size: 12px; color: var(--texto-secundario); }
+.dropzone__preview { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+.dropzone__quitar {
+    position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(31,26,46,.65); color: #fff; border: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.dropzone__quitar svg { width: 12px; height: 12px; }
+.dropzone-contenedor { position: relative; }
+
+.galeria-adicional { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-top: 14px; }
+.galeria-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 120px;
+    border: 1.5px dashed var(--borde-fuerte);
+    border-radius: 12px;
+    background: var(--superficie-alt);
+    color: var(--texto-secundario);
+    font-size: 12px;
+    cursor: pointer;
+    overflow: hidden;
+}
+.galeria-tile:hover { border-color: var(--acento); }
+.galeria-tile svg { width: 20px; height: 20px; color: var(--acento); }
+.galeria-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+input[type="file"] { display: none; }
+
+/* --- Aviso general del formulario ----------------------------------- */
+
+.aviso { display: none; margin: 0 32px 24px; padding: 14px 16px; border: 1px solid transparent; border-radius: var(--radio-campo); font-size: 13px; line-height: 1.5; }
+.aviso--visible { display: block; }
+.aviso--ok { background: var(--ok-tinte); border-color: var(--ok-borde); color: var(--ok); }
+.aviso--error { background: var(--error-tinte); border-color: var(--error-borde); color: var(--error); }
+.aviso--alerta { background: var(--alerta-tinte); border-color: var(--alerta-borde); color: var(--alerta); }
+
+/* --- Barra de acciones inferior (sticky) ----------------------------- */
+
+.barra-acciones {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 18px 32px;
+    border-top: 1px solid var(--borde);
+    background: rgba(250, 248, 250, .92);
+    backdrop-filter: blur(6px);
+    border-radius: 0 0 var(--radio-tarjeta) var(--radio-tarjeta);
+}
+.barra-acciones__derecha { display: flex; align-items: center; gap: 20px; }
+.barra-acciones__nota { font-size: 12px; color: var(--texto-secundario); }
+
+.boton {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 26px; border: 0; border-radius: var(--radio-campo);
+    background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease, transform .15s ease;
+}
+.boton:hover { background: var(--accion-hover); }
+.boton:active { transform: translateY(1px); }
+.boton:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+.boton svg { width: 15px; height: 15px; }
+
+.boton__spinner {
+    display: none; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; animation: girar .7s linear infinite;
+}
+.boton--cargando .boton__spinner { display: inline-block; }
+.boton--cargando .boton__icono { display: none; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* --- Toast ------------------------------------------------------------ */
+
+.toast-pila { position: fixed; top: 20px; right: 20px; z-index: 60; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+    display: flex; align-items: flex-start; gap: 12px; width: 360px; padding: 16px;
+    border: 1px solid var(--borde); border-left: 4px solid var(--ok);
+    border-radius: 12px; background: var(--superficie); box-shadow: var(--sombra-tarjeta);
+    animation: entrar-toast .25s ease;
+}
+.toast--error { border-left-color: var(--error); }
+@keyframes entrar-toast { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.toast__icono { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ok-tinte); color: var(--ok); flex: none; }
+.toast--error .toast__icono { background: var(--error-tinte); color: var(--error); }
+.toast__icono svg { width: 15px; height: 15px; }
+.toast__titulo { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: var(--texto); }
+.toast__texto { margin: 0; font-size: 13px; color: var(--texto-secundario); }
+.toast__cerrar { margin-left: auto; background: none; border: 0; color: var(--texto-secundario); cursor: pointer; padding: 2px; }
+.toast__cerrar svg { width: 13px; height: 13px; }
+
+@media (max-width: 900px) {
+    .sidebar { display: none; }
+    .contenido { padding: 20px 16px 140px; }
+    .grilla--estrecha { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="sidebar__logo">
+            <a class="sidebar__marca" href="../../index.html">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                    <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                    <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                    <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                    <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                    <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                    <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                    <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                    <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                    <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                    <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                    <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                </svg>
+                <span>NEXIA</span>
+            </a>
+            <span class="sidebar__rol">Organizador</span>
+        </div>
+        <hr class="sidebar__separador">
+        <nav class="sidebar__nav">
+            <a class="sidebar__item" href="dashboard.html">
+                <svg viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="9.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/></svg>
+                Panel de Control
+            </a>
+            <a class="sidebar__item" href="mis-eventos.html">
+                <svg viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="3" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5H15M5.5 2V4.2M11.5 2V4.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                Mis Eventos
+            </a>
+            <a class="sidebar__item sidebar__item--activo" href="evento-form.html" id="navCrearEvento">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 3.33333V12.6667M3.33333 8H12.6667" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <span id="navCrearEventoTexto">Crear Evento</span>
+            </a>
+            <a class="sidebar__item" href="perfil.html">
+                <svg viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8.5" cy="5.5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M2.83 14.5c0-3.13 2.54-5.5 5.67-5.5s5.67 2.37 5.67 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                Mi Perfil
+            </a>
+            <a class="sidebar__item" href="equipo.html">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 8.66667C8.20914 8.66667 10 6.87581 10 4.66667C10 2.45753 8.20914 0.666667 6 0.666667C3.79086 0.666667 2 2.45753 2 4.66667C2 6.87581 3.79086 8.66667 6 8.66667Z" stroke="currentColor" stroke-width="1.3"/><path d="M0.666687 15.3333C0.666687 12.388 3.05403 10 6.00002 10C8.94601 10 11.3334 12.388 11.3334 15.3333" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11.5 3C12.8807 3 14 4.11929 14 5.5C14 6.88071 12.8807 8 11.5 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M12.6667 10.2222C14.2493 10.8163 15.3333 12.4506 15.3333 14.3333" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                Mi Equipo
+            </a>
+        </nav>
+        <div class="sidebar__plan">
+            <span class="sidebar__plan-badge">PLAN GRATIS</span>
+            <p class="sidebar__plan-texto" id="planTexto">Cargando limite de eventos...</p>
+            <span class="sidebar__plan-link" title="Disponible mas adelante">Mejorar a Plan Pro &#9889;</span>
+        </div>
+        <button class="sidebar__salir" id="btnCerrarSesion" type="button">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 14H3.33C2.6 14 2 13.4 2 12.67V3.33C2 2.6 2.6 2 3.33 2H6M10.67 11.33L14 8L10.67 4.67M14 8H6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Cerrar Sesion
+        </button>
+    </aside>
+
+    <main class="contenido">
+
+        <div class="franja">
+            <div class="franja__aviso">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.3"/><path d="M8 11V7.5M8 5.25H8.005" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                <span id="franjaPlanTexto">Cargando limite de plan...</span>
+            </div>
+            <span class="franja__pro" title="Disponible mas adelante">&#161;Pasate a Plan Pro &#9889;</span>
+        </div>
+
+        <div class="cabecera">
+            <div>
+                <div class="migas">
+                    <a href="mis-eventos.html">Mis Eventos</a>
+                    <span>/</span>
+                    <span id="migaActual">Nuevo Evento</span>
+                </div>
+                <h1 id="tituloPagina">Crear Nuevo Evento</h1>
+                <p id="subtituloPagina">Completa todos los campos para publicar tu evento en Tierra del Fuego.</p>
+            </div>
+            <div class="chip-organizador">
+                <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="6.5" cy="4" r="2.3" stroke="currentColor" stroke-width="1.2"/><path d="M2.17 11.5c0-2.4 1.94-4.2 4.33-4.2s4.33 1.8 4.33 4.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                Organizador: <strong id="nombreOrganizador">&hellip;</strong>
+            </div>
+        </div>
+
+        <nav class="pasos" aria-hidden="true">
+            <div class="paso-item paso-item--visto"><span class="paso-item__num">1</span><span class="paso-item__texto">Informacion</span></div>
+            <span class="paso-item__linea"></span>
+            <div class="paso-item"><span class="paso-item__num">2</span><span class="paso-item__texto">Cronograma</span></div>
+            <span class="paso-item__linea"></span>
+            <div class="paso-item"><span class="paso-item__num">3</span><span class="paso-item__texto">Ubicacion</span></div>
+            <span class="paso-item__linea"></span>
+            <div class="paso-item"><span class="paso-item__num">4</span><span class="paso-item__texto">Tickets</span></div>
+            <span class="paso-item__linea"></span>
+            <div class="paso-item"><span class="paso-item__num">5</span><span class="paso-item__texto">Galeria</span></div>
+        </nav>
+
+        <div id="avisoEvento" class="aviso" role="alert" aria-live="polite" style="margin: 0 0 20px;"></div>
+
+        <form id="formEvento" novalidate>
+        <section class="tarjeta-form">
+
+            <!-- ============================== 1. INFORMACION BASICA ============================== -->
+            <div class="seccion-form" id="seccion-info">
+                <div class="seccion-form__cabecera">
+                    <span class="seccion-form__num">1</span>
+                    <h2 class="seccion-form__titulo">Informacion Basica</h2>
+                    <span class="seccion-form__tabla">Tabla: Evento &amp; EventoDetalle</span>
+                </div>
+
+                <div class="grilla" style="margin-bottom: 20px;">
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="nombre">Nombre del Evento <span class="oblig">*</span></label>
+                        <div class="entrada"><input type="text" id="nombre" name="nombre" placeholder="Ej: Gran Torneo de Basquetbol" maxlength="150" required></div>
+                        <span class="campo__ayuda">Entre 5 y 150 caracteres. Debe ser descriptivo y unico.</span>
+                        <span class="campo__error"></span>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="idCategoria">Categoria <span class="oblig">*</span></label>
+                        <div class="entrada">
+                            <select id="idCategoria" name="idCategoria" required>
+                                <option value="">Seleccionar categoria...</option>
+                            </select>
+                        </div>
+                        <span class="campo__error"></span>
+                    </div>
+
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="descripcion">Descripcion del Evento <span class="oblig">*</span></label>
+                        <div class="entrada"><textarea id="descripcion" name="descripcion" maxlength="5000" placeholder="Describe el proposito, las actividades y los beneficios de tu evento para los participantes..." required></textarea></div>
+                        <span class="campo__ayuda">Entre 20 y 5000 caracteres. Se muestra en la pagina publica del evento.</span>
+                        <span class="campo__error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== 2. CRONOGRAMA ============================== -->
+            <div class="seccion-form" id="seccion-cronograma">
+                <div class="seccion-form__cabecera">
+                    <span class="seccion-form__num">2</span>
+                    <h2 class="seccion-form__titulo">Cronograma Dinamico</h2>
+                    <span class="seccion-form__tabla">Tabla: Evento_Cronograma</span>
+                </div>
+
+                <div id="listaCronogramas"></div>
+
+                <button type="button" class="boton-secundario" id="btnAgregarInstancia">
+                    <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2.5V9.5M2.5 6H9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    Anadir otra fecha / instancia
+                </button>
+            </div>
+
+            <!-- ============================== 3. UBICACION ============================== -->
+            <div class="seccion-form" id="seccion-ubicacion">
+                <div class="seccion-form__cabecera">
+                    <span class="seccion-form__num">3</span>
+                    <h2 class="seccion-form__titulo">Ubicacion</h2>
+                    <span class="seccion-form__tabla">Tablas: Ubicacion &amp; Ciudad</span>
+                </div>
+
+                <div class="grilla--estrecha grilla" style="margin-bottom: 20px;">
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="ubicacion.calle">Calle <span class="oblig">*</span></label>
+                        <div class="entrada"><input type="text" id="ubicacion.calle" name="ubicacion.calle" placeholder="Ej: Av. Belgrano" maxlength="120" required></div>
+                        <span class="campo__error"></span>
+                    </div>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="ubicacion.numeroExterior">Nro. Ext. <span class="oblig">*</span></label>
+                        <div class="entrada"><input type="text" inputmode="numeric" id="ubicacion.numeroExterior" name="ubicacion.numeroExterior" placeholder="Ej: 345" maxlength="5" required></div>
+                        <span class="campo__error"></span>
+                    </div>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="ubicacion.numeroInterior">Nro. Int. <span class="opc">(opc.)</span></label>
+                        <div class="entrada"><input type="text" id="ubicacion.numeroInterior" name="ubicacion.numeroInterior" placeholder="Ej: 2B" maxlength="12"></div>
+                        <span class="campo__error"></span>
+                    </div>
+                </div>
+
+                <div class="grilla--estrecha grilla" style="margin-bottom: 20px;">
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="provincia">Provincia</label>
+                        <div class="entrada">
+                            <select id="provincia" name="provincia"><option value="">Tierra del Fuego</option></select>
+                        </div>
+                    </div>
+                    <div class="campo campo--ancho">
+                        <label class="campo__etiqueta" for="ubicacion.idCiudad">Ciudad <span class="oblig">*</span></label>
+                        <div class="entrada">
+                            <select id="ubicacion.idCiudad" name="ubicacion.idCiudad" required>
+                                <option value="">Seleccionar ciudad...</option>
+                            </select>
+                        </div>
+                        <span class="campo__error"></span>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label class="campo__etiqueta">Coordenadas <span class="opc">(opcional)</span></label>
+                </div>
+                <div class="grilla--estrecha grilla" style="grid-template-columns: 1fr 1fr; margin-top: 8px;">
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="ubicacion.latitud">Latitud</label>
+                        <div class="entrada"><input type="text" inputmode="decimal" id="ubicacion.latitud" name="ubicacion.latitud" placeholder="Ej: -53.7878"></div>
+                        <span class="campo__ayuda">Entre -90 y 90.</span>
+                        <span class="campo__error"></span>
+                    </div>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="ubicacion.longitud">Longitud</label>
+                        <div class="entrada"><input type="text" inputmode="decimal" id="ubicacion.longitud" name="ubicacion.longitud" placeholder="Ej: -67.7034"></div>
+                        <span class="campo__ayuda">Entre -180 y 180.</span>
+                        <span class="campo__error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== 4. TICKETS ============================== -->
+            <div class="seccion-form" id="seccion-tickets">
+                <div class="seccion-form__cabecera">
+                    <span class="seccion-form__num">4</span>
+                    <h2 class="seccion-form__titulo">Parametrizacion de Tickets</h2>
+                    <span class="seccion-form__tabla">Tabla: Cronograma_Ticket</span>
+                </div>
+
+                <div class="sync-nota">
+                    <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="7" cy="7" r="5.3" stroke="currentColor" stroke-width="1.2"/><path d="M7 9.5V6.5M7 4.75h.005" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Cada sector de ticket se carga dentro de la instancia del cronograma a la que pertenece.
+                    <span class="badge-vivo"><span class="badge-vivo__punto"></span><span id="badgeInstancias">1 instancia activa</span></span>
+                </div>
+
+                <div class="aviso-inline aviso-inline--info" id="avisoEdicionTickets" hidden>
+                    <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 1.5 1 12.5h13L7.5 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7.5 6v3M7.5 10.8h.006" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Al editar, el cupo no puede bajar de las entradas ya cargadas, y el precio de un sector con inscripciones activas no se puede modificar.
+                </div>
+
+                <div id="listaTicketsPorInstancia"></div>
+
+                <div class="resumen-tickets">
+                    <div class="resumen-tickets__item">
+                        <div class="resumen-tickets__icono"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg></div>
+                        <div><div class="resumen-tickets__etq">Total Sectores</div><div class="resumen-tickets__val" id="resumenSectores">0</div></div>
+                    </div>
+                    <div class="resumen-tickets__item">
+                        <div class="resumen-tickets__icono"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8.66667C10.2091 8.66667 12 6.87581 12 4.66667C12 2.45753 10.2091 0.666667 8 0.666667" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M2 15.3333C2 12.388 4.68629 10 8 10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+                        <div><div class="resumen-tickets__etq">Cupo Total</div><div class="resumen-tickets__val" id="resumenCupo">0</div></div>
+                    </div>
+                    <div class="resumen-tickets__item">
+                        <div class="resumen-tickets__icono"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.33 9.5 5.5l4.5.33-3.44 2.9L11.6 13 8 10.6 4.4 13l1.04-4.27L2 5.83l4.5-.33z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg></div>
+                        <div><div class="resumen-tickets__etq">Capacidad Gratuita</div><div class="resumen-tickets__val" id="resumenGratis">0</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== 5. GALERIA Y PORTADA ============================== -->
+            <div class="seccion-form" id="seccion-galeria">
+                <div class="seccion-form__cabecera">
+                    <span class="seccion-form__num">5</span>
+                    <h2 class="seccion-form__titulo">Galeria y Portada</h2>
+                    <span class="seccion-form__tabla">Tabla: Evento_Multimedia</span>
+                </div>
+
+                <div class="campo campo--ancho" style="margin-bottom: 24px;">
+                    <label class="campo__etiqueta">Imagen de Portada <span class="oblig">*</span></label>
+                    <div class="dropzone-contenedor">
+                        <div class="dropzone" id="dropPortada">
+                            <div class="dropzone__icono"><svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 15V4M6 8.5 11 4l5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v2.5A1.5 1.5 0 0 0 5.5 19h11a1.5 1.5 0 0 0 1.5-1.5V15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+                            <p class="dropzone__texto">Arrastra y solta tu portada aqui</p>
+                            <p class="dropzone__subtexto">o hace clic para seleccionar desde tu dispositivo (JPG o PNG, maximo 2MB)</p>
+                        </div>
+                    </div>
+                    <input type="file" id="inputPortada" accept="image/jpeg,image/png">
+                    <span class="campo__error" id="errorPortada"></span>
+                </div>
+
+                <div class="campo campo--ancho">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <label class="campo__etiqueta">Imagenes Adicionales <span class="opc">(opcional)</span></label>
+                        <span class="campo__ayuda">Maximo 2 imagenes (JPG, PNG, maximo 2MB c/u)</span>
+                    </div>
+                    <div class="galeria-adicional" id="galeriaAdicional">
+                        <label class="galeria-tile" data-slot="0">
+                            <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 4.5v13M4.5 11h13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                            <span>Agregar</span>
+                            <input type="file" class="input-adicional" accept="image/jpeg,image/png">
+                        </label>
+                        <label class="galeria-tile" data-slot="1">
+                            <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 4.5v13M4.5 11h13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                            <span>Agregar</span>
+                            <input type="file" class="input-adicional" accept="image/jpeg,image/png">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="aviso-inline aviso-inline--error" style="margin-top: 20px; margin-bottom: 0;">
+                    <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5.8" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 10.3V7M7.5 5h.006" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Todas las imagenes estan sujetas a moderacion automatica de contenido sensible. Las que incumplan las politicas seran eliminadas y el evento podra ser rechazado.
+                </div>
+            </div>
+
+        </section>
+
+        <div class="barra-acciones">
+            <a href="mis-eventos.html" class="campo__ayuda">Cancelar</a>
+            <div class="barra-acciones__derecha">
+                <span class="barra-acciones__nota">* Campos obligatorios</span>
+                <button type="submit" class="boton" id="btnPublicar">
+                    <span class="boton__spinner"></span>
+                    <svg class="boton__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 8h12M8 2l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span id="btnPublicarTexto">Publicar Evento</span>
+                </button>
+            </div>
+        </div>
+        </form>
+
+    </main>
+</div>
+
+<div class="toast-pila" id="toastPila" aria-live="polite"></div>
+
+<!-- Plantilla de una instancia del cronograma (clonada por JS) -->
+<template id="plantillaInstancia">
+    <div class="instancia" data-instancia>
+        <div class="instancia__cabecera">
+            <span class="instancia__titulo"><span class="num"></span> Instancia</span>
+            <button type="button" class="boton-quitar" data-quitar-instancia>
+                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                Quitar
+            </button>
+        </div>
+        <div class="grilla grilla--3">
+            <div class="campo">
+                <label class="campo__etiqueta">Fecha <span class="oblig">*</span></label>
+                <div class="entrada"><input type="date" data-campo="fecha" required></div>
+                <span class="campo__ayuda">Solo fechas futuras.</span>
+                <span class="campo__error"></span>
+            </div>
+            <div class="campo">
+                <label class="campo__etiqueta">Hora Inicio <span class="oblig">*</span></label>
+                <div class="entrada"><input type="time" data-campo="horaInicio" required></div>
+                <span class="campo__error"></span>
+            </div>
+            <div class="campo">
+                <label class="campo__etiqueta">Hora Fin <span class="oblig">*</span></label>
+                <div class="entrada"><input type="time" data-campo="horaFin" required></div>
+                <span class="campo__error"></span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Plantilla de un grupo de tickets por instancia -->
+<template id="plantillaGrupoTickets">
+    <div class="instancia" data-grupo-tickets>
+        <div class="instancia__cabecera">
+            <span class="instancia__titulo"><span class="num"></span> <span data-etiqueta-instancia>Instancia</span></span>
+        </div>
+        <div data-lista-tickets></div>
+        <button type="button" class="boton-secundario" data-agregar-ticket>
+            <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2.5V9.5M2.5 6H9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            Agregar Sector de Ticket
+        </button>
+    </div>
+</template>
+
+<!-- Plantilla de un sector de ticket -->
+<template id="plantillaTicket">
+    <div class="ticket" data-ticket>
+        <div class="ticket__cabecera">
+            <span class="ticket__titulo">Sector de Ticket <span class="nombre" data-nombre-preview>General</span></span>
+            <button type="button" class="boton-quitar" data-quitar-ticket>
+                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                Eliminar
+            </button>
+        </div>
+        <div class="grilla grilla--3">
+            <div class="campo">
+                <label class="campo__etiqueta">Nombre del Sector <span class="oblig">*</span></label>
+                <div class="entrada"><input type="text" data-campo="tipoTicket" placeholder="Ej: General" maxlength="20" required></div>
+                <span class="campo__error"></span>
+            </div>
+            <div class="campo">
+                <label class="campo__etiqueta">Precio <span class="oblig">*</span></label>
+                <div class="entrada"><span class="entrada__prefijo">$</span><input type="text" inputmode="decimal" data-campo="precio" placeholder="0.00" required></div>
+                <span class="campo__ayuda">$0.00 = Gratis</span>
+                <span class="campo__error"></span>
+            </div>
+            <div class="campo">
+                <label class="campo__etiqueta">Cupo Maximo <span class="oblig">*</span></label>
+                <div class="entrada"><input type="number" min="1" max="1000000" data-campo="cupoMaximo" placeholder="150" required></div>
+                <span class="campo__ayuda" data-piso-cupo hidden></span>
+                <span class="campo__error"></span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script src="../../js/api.js"></script>
+<script src="../../js/auth.js"></script>
+<script src="../../js/utils.js"></script>
+
+<script>
+/* =====================================================================
+   Crear / Modificar Evento - conexion con
+   POST /api/organizador/eventos  (alta, RF-2.1 a RF-2.6)
+   PUT  /api/organizador/eventos/{id}  (edicion, RF-2.7)
+
+   Una sola pagina para las dos operaciones (igual que register-paso2.html
+   unifica PF/PJ): "?id=123" en la URL activa el modo edicion, precarga con
+   GET /api/organizador/eventos/{id} y cambia el verbo de la peticion.
+
+   Los ids de los campos dinamicos de cronogramas/tickets se generan con el
+   MISMO formato que usa Bean Validation para reportar errores en listas
+   ("cronogramas[0].fecha", "cronogramas[0].tickets[0].precio", ...), asi
+   UI.pintarErrores (utils.js) los encuentra sin ningun mapeo especial.
+   ===================================================================== */
+(function () {
+
+    if (!Auth.exigirSesion('../auth/login-desktop-claro.html')) return;
+    if (!Auth.hasRole('ORGANIZADOR')) {
+        window.location.href = '../auth/login-desktop-claro.html';
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const idEdicion = params.get('id');
+    const modoEdicion = !!idEdicion;
+
+    const form = document.getElementById('formEvento');
+    const btn = document.getElementById('btnPublicar');
+    const btnTexto = document.getElementById('btnPublicarTexto');
+    const listaCronogramas = document.getElementById('listaCronogramas');
+    const listaTicketsPorInstancia = document.getElementById('listaTicketsPorInstancia');
+
+    let cronogramaSeq = 0;               // ids internos, unicos aunque se borren instancias
+    const cronogramas = [];              // [{ seq, idCronograma, tickets: [{ seq, idCronogramaTicket }] }]
+
+    /* ------------------------------------------------------- Cabecera --- */
+
+    document.getElementById('nombreOrganizador').textContent =
+        (Auth.usuario() && Auth.usuario().email) || 'Organizador';
+
+    if (modoEdicion) {
+        document.getElementById('migaActual').textContent = 'Editar Evento';
+        document.getElementById('tituloPagina').textContent = 'Editar Evento';
+        document.getElementById('subtituloPagina').textContent =
+            'Los cambios se vuelven a moderar antes de reemplazar la version publicada.';
+        document.getElementById('navCrearEventoTexto').textContent = 'Crear Evento';
+        document.getElementById('navCrearEvento').classList.remove('sidebar__item--activo');
+        btnTexto.textContent = 'Guardar Cambios';
+        document.getElementById('avisoEdicionTickets').hidden = false;
+        document.title = 'Editar Evento - Enexia';
+    }
+
+    document.getElementById('btnCerrarSesion').addEventListener('click', function () {
+        Auth.cerrarSesion();
+        window.location.href = '../auth/login-desktop-claro.html';
+    });
+
+    /* ------------------------------------------------ Plan / limite --- */
+
+    (async function cargarPlan() {
+        const r = await API.listarEventos({ tamano: 1, estado: 'PUBLICADO' });
+        if (r.ok) {
+            // El total real de "vigentes" lo decide el backend al crear; aca
+            // solo se muestra un indicador orientativo con lo que ya se ve.
+            const total = r.cuerpo.totalElements != null ? r.cuerpo.totalElements : '-';
+            document.getElementById('planTexto').textContent = 'Eventos activos: ' + total;
+            document.getElementById('franjaPlanTexto').textContent =
+                'Plan Free: ' + total + ' evento(s) activos usados.';
+        } else {
+            document.getElementById('planTexto').textContent = 'Plan Gratis';
+            document.getElementById('franjaPlanTexto').textContent = 'Plan Free activo.';
+        }
+    })();
+
+    /* --------------------------------------------------- Categorias --- */
+
+    (async function cargarCategorias() {
+        const select = document.getElementById('idCategoria');
+        const r = await API.categorias();
+        if (r.ok && Array.isArray(r.cuerpo)) {
+            r.cuerpo.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.nombre;
+                select.appendChild(opt);
+            });
+        }
+        return select;
+    })();
+
+    /* ------------------------------------------------------- Ciudad --- */
+
+    let ciudadesCargadas = Promise.resolve();
+    (function cargarCiudades() {
+        const selectCiudad = document.getElementById('ubicacion.idCiudad');
+        ciudadesCargadas = API.provincias().then(async rp => {
+            if (!rp.ok || !Array.isArray(rp.cuerpo) || !rp.cuerpo.length) return;
+            // Enexia opera en Tierra del Fuego (ver CLAUDE.md); el catalogo de
+            // provincias trae mas filas porque lo comparten otras pruebas del
+            // proyecto, asi que se busca por nombre y no se asume la primera.
+            const provinciaTdf = rp.cuerpo.find(p => /tierra del fuego/i.test(p.nombre)) || rp.cuerpo[0];
+            const rc = await API.ciudadesDeProvincia(provinciaTdf.id);
+            if (rc.ok && Array.isArray(rc.cuerpo)) {
+                rc.cuerpo.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.nombre;
+                    selectCiudad.appendChild(opt);
+                });
+            }
+        });
+    })();
+
+    /* =====================================================================
+       CRONOGRAMA: agregar / quitar instancias, con su grupo de tickets
+       ===================================================================== */
+
+    function reindexar() {
+        cronogramas.forEach((cronograma, i) => {
+            cronograma.el.querySelector('[data-campo="fecha"]').id = 'cronogramas[' + i + '].fecha';
+            cronograma.el.querySelector('[data-campo="fecha"]').name = 'cronogramas[' + i + '].fecha';
+            cronograma.el.querySelector('[data-campo="horaInicio"]').id = 'cronogramas[' + i + '].horaInicio';
+            cronograma.el.querySelector('[data-campo="horaInicio"]').name = 'cronogramas[' + i + '].horaInicio';
+            cronograma.el.querySelector('[data-campo="horaFin"]').id = 'cronogramas[' + i + '].horaFin';
+            cronograma.el.querySelector('[data-campo="horaFin"]').name = 'cronogramas[' + i + '].horaFin';
+            cronograma.el.querySelector('.num').textContent = i + 1;
+            cronograma.el.querySelector('[data-quitar-instancia]').disabled = cronogramas.length <= 1;
+
+            cronograma.grupoEl.querySelector('.num').textContent = i + 1;
+            const etiqueta = cronograma.el.querySelector('[data-campo="fecha"]').value
+                ? 'Instancia ' + (i + 1) + ' (' + cronograma.el.querySelector('[data-campo="fecha"]').value + ')'
+                : 'Instancia ' + (i + 1);
+            cronograma.grupoEl.querySelector('[data-etiqueta-instancia]').textContent = etiqueta;
+
+            cronograma.tickets.forEach((ticket, j) => {
+                ['tipoTicket', 'precio', 'cupoMaximo'].forEach(campo => {
+                    const input = ticket.el.querySelector('[data-campo="' + campo + '"]');
+                    input.id = 'cronogramas[' + i + '].tickets[' + j + '].' + campo;
+                    input.name = input.id;
+                });
+                ticket.el.querySelector('[data-quitar-ticket]').disabled = cronograma.tickets.length <= 1;
+            });
+        });
+
+        document.getElementById('badgeInstancias').textContent =
+            cronogramas.length + (cronogramas.length === 1 ? ' instancia activa' : ' instancias activas');
+
+        recalcularResumen();
+    }
+
+    function agregarTicket(cronograma, datos) {
+        const tplTicket = document.getElementById('plantillaTicket').content.cloneNode(true);
+        const el = tplTicket.querySelector('[data-ticket]');
+        cronograma.grupoEl.querySelector('[data-lista-tickets]').appendChild(tplTicket);
+
+        const ticket = { seq: cronogramaSeq++, idCronogramaTicket: (datos && datos.idCronogramaTicket) || null, el };
+        cronograma.tickets.push(ticket);
+
+        if (datos) {
+            el.querySelector('[data-campo="tipoTicket"]').value = datos.tipoTicket || '';
+            el.querySelector('[data-campo="precio"]').value = datos.precio != null ? datos.precio : '';
+            el.querySelector('[data-campo="cupoMaximo"]').value = datos.cupoMaximo != null ? datos.cupoMaximo : '';
+            if (datos.idCronogramaTicket && datos.cupoMaximo != null) {
+                const pie = el.querySelector('[data-piso-cupo]');
+                pie.hidden = false;
+                pie.textContent = 'No puede bajar de ' + datos.cupoMaximo + ' (ya cargado).';
+                el.querySelector('[data-campo="cupoMaximo"]').min = datos.cupoMaximo;
+            }
+        }
+
+        const actualizarPreview = () => {
+            const v = el.querySelector('[data-campo="tipoTicket"]').value.trim();
+            el.querySelector('[data-nombre-preview]').textContent = v || 'General';
+        };
+        el.querySelector('[data-campo="tipoTicket"]').addEventListener('input', actualizarPreview);
+        actualizarPreview();
+
+        el.querySelectorAll('[data-campo]').forEach(input => {
+            input.addEventListener('input', recalcularResumen);
+        });
+
+        el.querySelector('[data-quitar-ticket]').addEventListener('click', function () {
+            if (cronograma.tickets.length <= 1) return;
+            cronograma.tickets = cronograma.tickets.filter(t => t !== ticket);
+            el.remove();
+            reindexar();
+        });
+
+        return ticket;
+    }
+
+    function agregarInstancia(datos) {
+        if (cronogramas.length >= 20) return;
+
+        const tplInstancia = document.getElementById('plantillaInstancia').content.cloneNode(true);
+        const el = tplInstancia.querySelector('[data-instancia]');
+        listaCronogramas.appendChild(tplInstancia);
+
+        const tplGrupo = document.getElementById('plantillaGrupoTickets').content.cloneNode(true);
+        const grupoEl = tplGrupo.querySelector('[data-grupo-tickets]');
+        listaTicketsPorInstancia.appendChild(tplGrupo);
+
+        const cronograma = {
+            seq: cronogramaSeq++,
+            idCronograma: (datos && datos.idCronograma) || null,
+            el, grupoEl, tickets: []
+        };
+        cronogramas.push(cronograma);
+
+        if (datos) {
+            el.querySelector('[data-campo="fecha"]').value = datos.fecha || '';
+            el.querySelector('[data-campo="horaInicio"]').value = datos.horaInicio || '';
+            el.querySelector('[data-campo="horaFin"]').value = datos.horaFin || '';
+        }
+
+        el.querySelectorAll('[data-campo]').forEach(input => {
+            input.addEventListener('change', reindexar);
+        });
+
+        el.querySelector('[data-quitar-instancia]').addEventListener('click', function () {
+            if (cronogramas.length <= 1) return;
+            const idx = cronogramas.indexOf(cronograma);
+            cronogramas.splice(idx, 1);
+            el.remove();
+            grupoEl.remove();
+            reindexar();
+        });
+
+        grupoEl.querySelector('[data-agregar-ticket]').addEventListener('click', function () {
+            if (cronograma.tickets.length >= 10) return;
+            agregarTicket(cronograma);
+            reindexar();
+        });
+
+        if (datos && Array.isArray(datos.tickets) && datos.tickets.length) {
+            datos.tickets.forEach(t => agregarTicket(cronograma, t));
+        } else {
+            agregarTicket(cronograma);
+        }
+
+        reindexar();
+        return cronograma;
+    }
+
+    document.getElementById('btnAgregarInstancia').addEventListener('click', function () {
+        agregarInstancia();
+    });
+
+    function recalcularResumen() {
+        let sectores = 0, cupo = 0, gratis = 0;
+        cronogramas.forEach(c => c.tickets.forEach(t => {
+            sectores++;
+            const cupoVal = parseInt(t.el.querySelector('[data-campo="cupoMaximo"]').value, 10) || 0;
+            const precioVal = parseFloat((t.el.querySelector('[data-campo="precio"]').value || '0').replace(',', '.')) || 0;
+            cupo += cupoVal;
+            if (precioVal === 0) gratis += cupoVal;
+        }));
+        document.getElementById('resumenSectores').textContent = sectores;
+        document.getElementById('resumenCupo').textContent = cupo;
+        document.getElementById('resumenGratis').textContent = gratis;
+    }
+
+    /* =====================================================================
+       GALERIA: portada obligatoria + hasta 2 imagenes adicionales
+       ===================================================================== */
+
+    const MAX_BYTES = 2 * 1024 * 1024;
+    const FORMATOS_VALIDOS = ['image/jpeg', 'image/png'];
+
+    let archivoPortada = null;
+    const archivosAdicionales = [null, null];
+
+    function validarImagen(archivo) {
+        if (!FORMATOS_VALIDOS.includes(archivo.type)) return 'Formato no permitido: solo JPG o PNG.';
+        if (archivo.size > MAX_BYTES) return 'La imagen supera el maximo de 2MB.';
+        return null;
+    }
+
+    const dropPortada = document.getElementById('dropPortada');
+    const inputPortada = document.getElementById('inputPortada');
+    const errorPortada = document.getElementById('errorPortada');
+
+    dropPortada.addEventListener('click', () => inputPortada.click());
+    ['dragover', 'dragleave', 'drop'].forEach(evento => {
+        dropPortada.addEventListener(evento, e => {
+            e.preventDefault();
+            dropPortada.classList.toggle('dropzone--sobre', evento === 'dragover');
+        });
+    });
+    dropPortada.addEventListener('drop', e => {
+        if (e.dataTransfer.files[0]) manejarPortada(e.dataTransfer.files[0]);
+    });
+    inputPortada.addEventListener('change', () => {
+        if (inputPortada.files[0]) manejarPortada(inputPortada.files[0]);
+    });
+
+    function manejarPortada(archivo) {
+        const error = validarImagen(archivo);
+        if (error) {
+            errorPortada.textContent = error;
+            errorPortada.parentElement.classList.add('campo--invalido');
+            return;
+        }
+        errorPortada.textContent = '';
+        errorPortada.parentElement.classList.remove('campo--invalido');
+        archivoPortada = archivo;
+
+        const lector = new FileReader();
+        lector.onload = ev => {
+            dropPortada.classList.add('dropzone--con-imagen');
+            dropPortada.innerHTML = '<img class="dropzone__preview" src="' + ev.target.result + '" alt="Portada">';
+        };
+        lector.readAsDataURL(archivo);
+    }
+
+    document.querySelectorAll('.input-adicional').forEach((input, slot) => {
+        input.addEventListener('change', () => {
+            const archivo = input.files[0];
+            if (!archivo) return;
+            const tile = input.closest('.galeria-tile');
+            const error = validarImagen(archivo);
+            if (error) {
+                UI.aviso('avisoEvento', 'error', error);
+                input.value = '';
+                return;
+            }
+            archivosAdicionales[slot] = archivo;
+            const lector = new FileReader();
+            lector.onload = ev => {
+                tile.innerHTML = '<img src="' + ev.target.result + '" alt="Imagen adicional">';
+                tile.appendChild(input);
+            };
+            lector.readAsDataURL(archivo);
+        });
+    });
+
+    /* =====================================================================
+       ENVIO: arma el multipart con los nombres EXACTOS de EventoCrearRequest
+       ===================================================================== */
+
+    function armarDatos() {
+        const val = id => document.getElementById(id).value.trim();
+
+        return {
+            nombre: val('nombre'),
+            descripcion: val('descripcion'),
+            idCategoria: val('idCategoria') ? Number(val('idCategoria')) : null,
+            ubicacion: {
+                calle: val('ubicacion.calle'),
+                numeroExterior: val('ubicacion.numeroExterior'),
+                numeroInterior: val('ubicacion.numeroInterior') || null,
+                idCiudad: val('ubicacion.idCiudad') ? Number(val('ubicacion.idCiudad')) : null,
+                latitud: val('ubicacion.latitud') ? val('ubicacion.latitud').replace(',', '.') : null,
+                longitud: val('ubicacion.longitud') ? val('ubicacion.longitud').replace(',', '.') : null
+            },
+            cronogramas: cronogramas.map(c => ({
+                idCronograma: c.idCronograma,
+                fecha: c.el.querySelector('[data-campo="fecha"]').value,
+                horaInicio: c.el.querySelector('[data-campo="horaInicio"]').value,
+                horaFin: c.el.querySelector('[data-campo="horaFin"]').value,
+                tickets: c.tickets.map(t => ({
+                    idCronogramaTicket: t.idCronogramaTicket,
+                    tipoTicket: t.el.querySelector('[data-campo="tipoTicket"]').value.trim(),
+                    precio: t.el.querySelector('[data-campo="precio"]').value.replace(',', '.') || '0',
+                    cupoMaximo: t.el.querySelector('[data-campo="cupoMaximo"]').value
+                        ? Number(t.el.querySelector('[data-campo="cupoMaximo"]').value) : null
+                }))
+            }))
+        };
+    }
+
+    function archivosParaEnviar() {
+        const lista = [];
+        if (archivoPortada) lista.push(archivoPortada);
+        archivosAdicionales.forEach(a => { if (a) lista.push(a); });
+        return lista;
+    }
+
+    function bloquearBoton(bloquear) {
+        btn.disabled = bloquear;
+        btn.classList.toggle('boton--cargando', bloquear);
+        btnTexto.textContent = bloquear
+            ? (modoEdicion ? 'Guardando cambios...' : 'Publicando evento...')
+            : (modoEdicion ? 'Guardar Cambios' : 'Publicar Evento');
+    }
+
+    function mostrarToast(tipo, titulo, texto) {
+        const pila = document.getElementById('toastPila');
+        const toast = document.createElement('div');
+        toast.className = 'toast' + (tipo === 'error' ? ' toast--error' : '');
+        const icono = tipo === 'error'
+            ? '<path d="M7.5 1.5 1 12.5h13L7.5 1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7.5 6v3M7.5 10.8h.006" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'
+            : '<path d="M3 7.5l3 3 6-6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
+        toast.innerHTML =
+            '<span class="toast__icono"><svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">' + icono + '</svg></span>' +
+            '<div><p class="toast__titulo"></p><p class="toast__texto"></p></div>' +
+            '<button class="toast__cerrar" type="button" aria-label="Cerrar"><svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l9 9M11 2l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>';
+        toast.querySelector('.toast__titulo').textContent = titulo;
+        toast.querySelector('.toast__texto').textContent = texto;
+        toast.querySelector('.toast__cerrar').addEventListener('click', () => toast.remove());
+        pila.appendChild(toast);
+        setTimeout(() => toast.remove(), 6000);
+        return toast;
+    }
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        UI.limpiarErrores();
+        UI.ocultarAviso('avisoEvento');
+
+        if (!modoEdicion && !archivoPortada) {
+            errorPortada.textContent = 'La imagen de portada es obligatoria.';
+            errorPortada.parentElement.classList.add('campo--invalido');
+            document.getElementById('seccion-galeria').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        const datos = armarDatos();
+        bloquearBoton(true);
+
+        const respuesta = modoEdicion
+            ? await API.editarEvento(idEdicion, datos, archivosParaEnviar())
+            : await API.crearEvento(datos, archivosParaEnviar());
+
+        bloquearBoton(false);
+
+        if (respuesta.status === 202 || respuesta.status === 200) {
+            mostrarToast('ok',
+                modoEdicion ? 'Cambios Guardados' : 'Evento Publicado',
+                modoEdicion
+                    ? 'Los cambios se guardaron y el evento sigue publicado.'
+                    : 'Tu evento fue creado y esta en revision de moderacion.');
+
+            setTimeout(() => { window.location.href = 'mis-eventos.html'; }, 1600);
+            return;
+        }
+
+        if (respuesta.cuerpo && respuesta.cuerpo.errores) {
+            UI.pintarErrores(respuesta.cuerpo.errores);
+        }
+
+        UI.aviso('avisoEvento', 'error', UI.mensajeDeError(respuesta));
+        mostrarToast('error', 'No se pudo guardar', UI.mensajeDeError(respuesta).replace(/<[^>]+>/g, ''));
+
+        const primerInvalido = document.querySelector('.campo--invalido input, .campo--invalido select, .campo--invalido textarea');
+        if (primerInvalido) {
+            primerInvalido.focus();
+            primerInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            document.getElementById('avisoEvento').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    /* =====================================================================
+       PRECARGA (modo edicion)
+       ===================================================================== */
+
+    async function precargar() {
+        const r = await API.obtenerEventoParaEditar(idEdicion);
+        if (!r.ok) {
+            UI.aviso('avisoEvento', 'error', UI.mensajeDeError(r));
+            btn.disabled = true;
+            return;
+        }
+        const d = r.cuerpo;
+
+        document.getElementById('nombre').value = d.nombre || '';
+        document.getElementById('descripcion').value = d.descripcion || '';
+
+        await Promise.resolve();
+        if (d.idCategoria) document.getElementById('idCategoria').value = d.idCategoria;
+
+        document.getElementById('ubicacion.calle').value = d.calle || '';
+        document.getElementById('ubicacion.numeroExterior').value = d.numero || '';
+        document.getElementById('ubicacion.numeroInterior').value = d.numeroInterior || '';
+        document.getElementById('ubicacion.latitud').value = d.latitud != null ? d.latitud : '';
+        document.getElementById('ubicacion.longitud').value = d.longitud != null ? d.longitud : '';
+
+        await ciudadesCargadas;
+        if (d.idCiudad) document.getElementById('ubicacion.idCiudad').value = d.idCiudad;
+
+        if (d.urlPortada) {
+            dropPortada.classList.add('dropzone--con-imagen');
+            dropPortada.innerHTML = '<img class="dropzone__preview" src="' + d.urlPortada + '" alt="Portada actual">';
+        }
+        UI.aviso('avisoEvento', 'alerta',
+            'Las imagenes actuales se muestran de referencia. Para guardar cambios hay que volver a adjuntar '
+            + 'la portada (y las adicionales que quieras conservar): la edicion vuelve a moderar todo el contenido.');
+
+        listaCronogramas.innerHTML = '';
+        listaTicketsPorInstancia.innerHTML = '';
+        cronogramas.length = 0;
+
+        (d.cronogramas || []).forEach(c => {
+            agregarInstancia({
+                idCronograma: c.idCronograma,
+                fecha: c.fecha,
+                horaInicio: (c.horaInicio || '').slice(0, 5),
+                horaFin: (c.horaFin || '').slice(0, 5),
+                tickets: (c.tickets || []).map(t => ({
+                    idCronogramaTicket: t.idCronogramaTicket,
+                    tipoTicket: t.tipoTicket,
+                    precio: t.precio,
+                    cupoMaximo: t.cupoMaximo
+                }))
+            });
+        });
+        if (!cronogramas.length) agregarInstancia();
+    }
+
+    if (modoEdicion) {
+        precargar();
+    } else {
+        agregarInstancia();
+    }
+})();
+</script>
+
+</body>
+</html>

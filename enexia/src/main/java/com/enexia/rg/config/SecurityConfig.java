@@ -102,6 +102,7 @@ public class SecurityConfig {
                         .requestMatchers("/pages/assets/**").permitAll()
                         .requestMatchers("/js/**").permitAll()
                         .requestMatchers("/index.html").permitAll()
+                        .requestMatchers("/evento-detalle.html").permitAll()
                         .requestMatchers("/").permitAll()
 
                         // --- Paginas de autenticacion (publicas)
@@ -122,8 +123,14 @@ public class SecurityConfig {
                         // (dashboard.html:171) redirige si no hay sesion, y los
                         // datos de verdad viajan por /api/** protegido mas
                         // abajo, que si exige el token en cada fetch.
+                        //
+                        // /pages/organizador/** entero cae en esta misma regla
+                        // (dashboard, mis-eventos, evento-form, etc, RF-2.x): son
+                        // todas paginas de shell que hacen su propio guard de JS
+                        // y llaman a /api/organizador/** ya protegido abajo.
                         .requestMatchers("/pages/dashboard.html").permitAll()
                         .requestMatchers("/pages/prueba-token.html").permitAll()
+                        .requestMatchers("/pages/organizador/**").permitAll()
 
                         // --- Endpoints por rol (RF-1.3)
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")

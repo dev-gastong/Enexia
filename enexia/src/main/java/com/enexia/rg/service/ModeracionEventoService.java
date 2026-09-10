@@ -10,6 +10,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.enexia.rg.dto.EventoCrearRequest;
 import com.enexia.rg.event.EventoCreadoEvent;
+import com.enexia.rg.exception.ReglaNegocioException;
 import com.enexia.rg.model.MotivoModeracionEvento;
 
 import lombok.RequiredArgsConstructor;
@@ -146,6 +147,54 @@ public class ModeracionEventoService {
             log.error("El pipeline de moderacion fallo para el evento {}", idEvento, ex);
             intentarRechazoPorError(idEvento, datos, emailOrganizador);
         }
+    }
+
+    /**
+     * Version SINCRONICA de las dos fases, para EDITAR un evento ya aprobado
+     * (RF-2.7).
+     *
+     * POR QUE SINCRONICA Y NO POR EL PIPELINE ASINCRONO DE ARRIBA
+     * Crear es asincrono porque no hay nada que mostrar todavia: el organizador
+     * puede esperar el veredicto mirando "Validando...". Editar es distinto: el
+     * evento YA esta publicado y visible, y {@code EstadoEventoSistemaNombre.EN_REVISION}
+     * documenta la intencion de que "la version anterior siga en el catalogo
+     * mientras se remodera el borrador". Sin una tabla de borradores aparte (no
+     * existe en el MER), la unica forma de sostener esa promesa sin arriesgar el
+     * contenido ya publicado es no tocar ninguna fila hasta tener el veredicto:
+     * si la edicion se rechaza, el metodo sale con una excepcion y listo, la
+     * version vieja no se entero de que hubo un intento.
+     *
+     * El costo es bloquear la respuesta HTTP con la subida a Cloudinary, igual
+     * que ya hace el registro con la moderacion de texto (AuthService). Encaja
+     * en el presupuesto de la RNF de escritura (4s, ver CLAUDE.md): 1 a 3
+     * imagenes, no las decenas que si justificarian un pipeline aparte.
+     *
+     * @return URLs aprobadas, listas para reemplazar la multimedia vigente
+     * @throws ReglaNegocioException si el texto o todas las imagenes se rechazan
+     */
+    public List<String> moderarSincrono(EventoCrearRequest datos, List<ImagenPendiente> imagenes) {
+        if (contieneTextoInapropiado(datos)) {
+            throw new ReglaNegocioException(
+                    "El titulo o la descripcion contienen lenguaje no permitido");
+        }
+
+        List<String> aprobadas = new ArrayList<>();
+        for (ImagenPendiente imagen : imagenes) {
+            CloudinaryService.ResultadoImagen resultado =
+                    cloudinaryService.subirYModerar(imagen.contenido(), imagen.nombreArchivo());
+
+            if (resultado.aprobada()) {
+                aprobadas.add(resultado.url());
+            } else {
+                log.warn("Imagen '{}' rechazada durante la edicion: {}",
+                        imagen.nombreArchivo(), resultado.motivo());
+            }
+        }
+
+        if (aprobadas.isEmpty()) {
+            throw new ReglaNegocioException("Ninguna de las imagenes cargadas pudo publicarse");
+        }
+        return aprobadas;
     }
 
     /**

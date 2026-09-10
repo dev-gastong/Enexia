@@ -134,5 +134,128 @@ const API = {
     /** DELETE autenticado */
     delete(ruta) {
         return this.peticion('DELETE', ruta, null, true);
+    },
+
+    /**
+     * POST/PUT multipart autenticado (creacion/edicion de evento).
+     *
+     * No puede pasar por peticion(): esa siempre serializa a JSON y fija
+     * Content-Type: application/json, y un multipart necesita exactamente lo
+     * contrario -- el boundary lo calcula el navegador solo con tal de que
+     * Content-Type NO se toque a mano.
+     *
+     * @param formData FormData con la parte "datos" (Blob JSON) y, opcional,
+     *                 una o mas partes "imagenes"
+     */
+    async multipart(metodo, ruta, formData) {
+        const url = this.BASE + ruta;
+        const inicio = performance.now();
+
+        const opciones = { method: metodo, headers: {} };
+        if (Auth.token()) {
+            opciones.headers['Authorization'] = 'Bearer ' + Auth.token();
+        }
+        opciones.body = formData;
+
+        try {
+            const respuesta = await fetch(url, opciones);
+            const ms = Math.round(performance.now() - inicio);
+
+            let cuerpo = null;
+            const texto = await respuesta.text();
+            if (texto) {
+                try { cuerpo = JSON.parse(texto); } catch { cuerpo = texto; }
+            }
+
+            if (respuesta.status === 401) {
+                Auth.cerrarSesion();
+                window.location.href = '/pages/auth/login-desktop-claro.html';
+            }
+
+            return { ok: respuesta.ok, status: respuesta.status, cuerpo, headers: respuesta.headers,
+                      ms, url, metodo, errorRed: false };
+
+        } catch (error) {
+            return { ok: false, status: 0, cuerpo: { mensaje: error.message }, headers: new Headers(),
+                      ms: Math.round(performance.now() - inicio), url, metodo, errorRed: true };
+        }
+    },
+
+    /** Arma la parte "datos" como Blob JSON, tal como espera @RequestPart. */
+    parteJson(objeto) {
+        return new Blob([JSON.stringify(objeto)], { type: 'application/json' });
+    },
+
+    /* ===== Modulo 2: eventos del organizador ===== */
+
+    /** GET /api/organizador/eventos?... -> dashboard paginado (RF-2.8) */
+    listarEventos(parametros = {}) {
+        const query = new URLSearchParams(
+            Object.entries(parametros).filter(([, v]) => v !== null && v !== undefined && v !== '')
+        ).toString();
+        return this.get('/api/organizador/eventos' + (query ? '?' + query : ''));
+    },
+
+    /** GET /api/organizador/eventos/{id} -> detalle propio, para editar (RF-2.7) */
+    obtenerEventoParaEditar(idEvento) {
+        return this.get('/api/organizador/eventos/' + idEvento);
+    },
+
+    /** POST /api/organizador/eventos (multipart) -> crea, 202 Accepted (RF-2.1 a RF-2.6) */
+    crearEvento(datos, imagenes) {
+        const formData = new FormData();
+        formData.append('datos', this.parteJson(datos));
+        (imagenes || []).forEach(archivo => formData.append('imagenes', archivo));
+        return this.multipart('POST', '/api/organizador/eventos', formData);
+    },
+
+    /** PUT /api/organizador/eventos/{id} (multipart) -> edita, 200 OK (RF-2.7) */
+    editarEvento(idEvento, datos, imagenes) {
+        const formData = new FormData();
+        formData.append('datos', this.parteJson(datos));
+        (imagenes || []).forEach(archivo => formData.append('imagenes', archivo));
+        return this.multipart('PUT', '/api/organizador/eventos/' + idEvento, formData);
+    },
+
+    /** DELETE /api/organizador/eventos/{id} -> baja logica (RF-2.9) */
+    darDeBajaEvento(idEvento) {
+        return this.delete('/api/organizador/eventos/' + idEvento);
+    },
+
+    /* ===== Modulo 1: perfil propio ===== */
+
+    /** GET /api/usuario/perfil -> datos de identidad del usuario autenticado */
+    obtenerPerfil() {
+        return this.get('/api/usuario/perfil');
+    },
+
+    /** PUT /api/usuario/perfil -> actualiza nombre/apellido/fecha de nacimiento */
+    actualizarPerfil(datos) {
+        return this.put('/api/usuario/perfil', datos);
+    },
+
+    /* ===== Modulo 7: organizaciones propias ===== */
+
+    /** GET /api/organizador/organizaciones -> organizaciones donde el usuario es miembro */
+    misOrganizaciones() {
+        return this.get('/api/organizador/organizaciones');
+    },
+
+    /* ===== Catalogos publicos (sin token) ===== */
+
+    async publico(ruta) {
+        return this.peticion('GET', ruta, null, false);
+    },
+
+    categorias() {
+        return this.publico('/api/publico/categorias');
+    },
+
+    provincias() {
+        return this.publico('/api/publico/provincias');
+    },
+
+    ciudadesDeProvincia(idProvincia) {
+        return this.publico('/api/publico/provincias/' + idProvincia + '/ciudades');
     }
 };

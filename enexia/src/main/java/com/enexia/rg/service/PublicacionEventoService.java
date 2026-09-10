@@ -154,6 +154,78 @@ public class PublicacionEventoService {
     }
 
     /**
+     * Reemplaza el contenido de un evento YA APROBADO tras una edicion (RF-2.7).
+     *
+     * Corre DENTRO de la transaccion de {@code EventoService.editar}: a
+     * diferencia de {@code aprobarYPersistir}, este metodo no lleva
+     * {@code @Transactional} propio porque no hay nada que aislar de Cloudinary
+     * -- para cuando se llega aca, la moderacion sincrona ya termino (ver
+     * {@code ModeracionEventoService.moderarSincrono}) y lo unico que queda es
+     * escribir. Que las imagenes viejas y las nuevas compartan transaccion con
+     * el resto del reemplazo es ademas lo correcto: si algo despues falla, no
+     * queda un evento con multimedia nueva pero agenda vieja.
+     *
+     * EventoDetalle SE REUTILIZA (1:1 por @MapsId), no se vuelve a insertar:
+     * aprobarYPersistir siempre parte de un evento sin detalle (nada se persiste
+     * hasta la primera aprobacion), pero aca el detalle ya existe.
+     *
+     * Cronograma, tickets y multimedia se BORRAN y se vuelven a crear en vez de
+     * actualizarse fila por fila. Es seguro solo porque el Modulo 3
+     * (Inscripcion) todavia no existe: nada en la base referencia estas filas
+     * todavia. El dia que exista, este reemplazo tiene que dejar de borrar los
+     * tickets con inscripciones activas -- EventoService.validarCupoYPrecio ya
+     * bloquea esa edicion antes de llegar aca, pero el borrado en si necesitara
+     * revisarse igual.
+     */
+    public void reemplazarContenido(Evento evento, EventoCrearRequest datos, List<String> urlsAprobadas) {
+        Long idEvento = evento.getIdEvento();
+
+        evento.setNombre(datos.getNombre().trim());
+        evento.setCategoria(buscarCategoria(datos.getIdCategoria()));
+        if (!urlsAprobadas.isEmpty()) {
+            evento.setUrlPortada(urlsAprobadas.get(0));
+        }
+        eventoRepository.save(evento);
+
+        EventoDetalle detalle = eventoDetalleRepository.findById(idEvento).orElseGet(() -> {
+            EventoDetalle nuevo = new EventoDetalle();
+            nuevo.setEvento(evento);
+            return nuevo;
+        });
+        Ubicacion ubicacionAnterior = detalle.getUbicacion();
+        detalle.setDescripcion(datos.getDescripcion().trim());
+        detalle.setUbicacion(persistirUbicacion(datos.getUbicacion()));
+        eventoDetalleRepository.save(detalle);
+        if (ubicacionAnterior != null) {
+            ubicacionRepository.delete(ubicacionAnterior);
+        }
+
+        List<EventoCronograma> cronogramasAnteriores =
+                cronogramaRepository.findByEventoIdEventoOrderByFechaAscHoraInicioAsc(idEvento);
+        if (!cronogramasAnteriores.isEmpty()) {
+            List<Long> idsAnteriores = cronogramasAnteriores.stream()
+                    .map(EventoCronograma::getIdCronograma).toList();
+            ticketRepository.deleteAll(ticketRepository.buscarPorCronogramas(idsAnteriores));
+            cronogramaRepository.deleteAll(cronogramasAnteriores);
+        }
+        persistirAgenda(evento, datos.getCronogramas());
+
+        multimediaRepository.deleteAll(multimediaRepository.findByEventoIdEventoOrderByOrdenAsc(idEvento));
+        int orden = 1;
+        for (String url : urlsAprobadas) {
+            EventoMultimedia imagen = new EventoMultimedia();
+            imagen.setEvento(evento);
+            imagen.setTipoArchivo("IMAGEN");
+            imagen.setUrlArchivo(url);
+            imagen.setOrden(orden++);
+            imagen.setFechaSubida(LocalDateTime.now());
+            multimediaRepository.save(imagen);
+        }
+
+        log.info("Evento {} editado: contenido reemplazado con {} imagen(es)", idEvento, urlsAprobadas.size());
+    }
+
+    /**
      * Rama rechazada (DFD 2.5C).
      *
      * NO se persiste nada del contenido: ni titulo, ni descripcion, ni

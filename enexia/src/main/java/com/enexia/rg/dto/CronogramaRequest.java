@@ -56,4 +56,11 @@ public class CronogramaRequest {
     @Size(max = 10, message = "No se admiten mas de 10 tipos de ticket por fecha")
     @Valid
     private List<TicketRequest> tickets;
+
+    /**
+     * Identidad de la instancia que se esta editando (null = fecha nueva).
+     * Ver el javadoc de {@link TicketRequest#getIdCronogramaTicket()}: mismo
+     * mecanismo, un nivel arriba.
+     */
+    private Long idCronograma;
 }

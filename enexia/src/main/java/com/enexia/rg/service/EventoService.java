@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,15 +19,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.enexia.rg.dto.CronogramaRequest;
 import com.enexia.rg.dto.EventoCrearRequest;
+import com.enexia.rg.dto.EventoDetalleResponse;
 import com.enexia.rg.dto.EventoEstadisticasResponse;
 import com.enexia.rg.dto.EventoResponse;
+import com.enexia.rg.dto.TicketRequest;
 import com.enexia.rg.event.EventoCreadoEvent;
 import com.enexia.rg.exception.OperacionNoPermitidaException;
 import com.enexia.rg.exception.RecursoNoEncontradoException;
 import com.enexia.rg.exception.ReglaNegocioException;
+import com.enexia.rg.model.CronogramaTicket;
 import com.enexia.rg.model.EstadoEventoOrganizadorNombre;
 import com.enexia.rg.model.EstadoEventoSistemaNombre;
 import com.enexia.rg.model.Evento;
+import com.enexia.rg.model.EventoCronograma;
 import com.enexia.rg.model.EventoDetalle;
 import com.enexia.rg.model.EventoEstadoOrganizador;
 import com.enexia.rg.model.EventoEstadoSistema;
@@ -39,6 +44,7 @@ import com.enexia.rg.repository.EventoCronogramaRepository;
 import com.enexia.rg.repository.EventoDetalleRepository;
 import com.enexia.rg.repository.EventoEstadoOrganizadorRepository;
 import com.enexia.rg.repository.EventoEstadoSistemaRepository;
+import com.enexia.rg.repository.EventoMultimediaRepository;
 import com.enexia.rg.repository.EventoRepository;
 import com.enexia.rg.repository.HistorialEstadoEventoRepository;
 import com.enexia.rg.repository.UsuarioRepository;
@@ -77,6 +83,7 @@ public class EventoService {
     private final EventoDetalleRepository eventoDetalleRepository;
     private final EventoCronogramaRepository cronogramaRepository;
     private final CronogramaTicketRepository ticketRepository;
+    private final EventoMultimediaRepository multimediaRepository;
     private final EventoEstadoSistemaRepository estadoSistemaRepository;
     private final EventoEstadoOrganizadorRepository estadoOrganizadorRepository;
     private final HistorialEstadoEventoRepository historialRepository;
@@ -88,6 +95,8 @@ public class EventoService {
     private final ApplicationEventPublisher publicadorDeEventos;
     private final AuditoriaService auditoriaService;
     private final EventoMapper eventoMapper;
+    private final ModeracionEventoService moderacionEventoService;
+    private final PublicacionEventoService publicacionEventoService;
 
     /**
      * Tope de eventos vigentes del plan gratuito (DFD 2.1).
@@ -192,15 +201,200 @@ public class EventoService {
         return eventoMapper.aTarjeta(evento, null, null);
     }
 
+    // =====================================================================
+    // EDICION  (RF-2.7)
+    // =====================================================================
+
+    /**
+     * Trae un evento propio con el detalle completo para precargar el
+     * formulario de edicion.
+     *
+     * Reusa {@code EventoMapper.aFicha}, la misma composicion que arma la ficha
+     * publica (RF-4.4): mismos datos, un solo lugar donde se decide como se
+     * arma un evento completo. La diferencia con la ficha publica es la
+     * autorizacion -- aca no hace falta que el evento este APROBADO y visible,
+     * alcanza con que sea del organizador que pide -- y que exige el mismo
+     * estado editable que {@link #editar}, asi el botón "Editar" del dashboard
+     * y esta consulta nunca se contradicen sobre si un evento se puede tocar.
+     */
+    @Transactional(readOnly = true)
+    public EventoDetalleResponse obtenerParaEditar(String email, Long idEvento) {
+        Usuario organizador = usuarioRepository.buscarActivoPorEmailConRoles(email)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro la cuenta"));
+
+        Evento evento = buscarPropio(idEvento, organizador);
+        verificarEditable(evento);
+
+        EventoDetalle detalle = eventoDetalleRepository.buscarConUbicacion(idEvento).orElse(null);
+        List<EventoCronograma> cronogramas =
+                cronogramaRepository.findByEventoIdEventoOrderByFechaAscHoraInicioAsc(idEvento);
+        List<CronogramaTicket> tickets = cronogramas.isEmpty()
+                ? List.of()
+                : ticketRepository.buscarPorCronogramas(
+                        cronogramas.stream().map(EventoCronograma::getIdCronograma).toList());
+
+        return eventoMapper.aFicha(evento, detalle, cronogramas, tickets,
+                multimediaRepository.findByEventoIdEventoOrderByOrdenAsc(idEvento));
+    }
+
+    /**
+     * Reemplaza el contenido de un evento propio ya aprobado (RF-2.7).
+     *
+     * SINCRONICA A PROPOSITO: ver el javadoc de
+     * {@code ModeracionEventoService.moderarSincrono}. La moderacion corre
+     * DENTRO de esta transaccion, antes de escribir nada; si el texto o las
+     * imagenes se rechazan, la excepcion revierte la transaccion entera y el
+     * evento publicado queda exactamente como estaba.
+     *
+     * No usa {@code EventoCreadoEvent} ni el pipeline asincrono: ese mecanismo
+     * existe para no bloquear la respuesta mientras el evento todavia no tiene
+     * nada que mostrar (RF-2.2). Aca el evento YA esta publicado; bloquear la
+     * respuesta es justamente lo que permite no tocar la version vigente hasta
+     * tener el veredicto.
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public EventoResponse editar(String email, Long idEvento, EventoCrearRequest datos,
+                                 List<ImagenPendiente> imagenes, HttpServletRequest request) {
+
+        Usuario organizador = usuarioRepository.buscarActivoPorEmailConRoles(email)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro la cuenta"));
+
+        Evento evento = buscarPropio(idEvento, organizador);
+
+        // Bloqueo de fila: mismo motivo que darDeBaja, la moderacion o la baja
+        // del organizador pueden estar tocando este evento en paralelo.
+        evento = eventoRepository.bloquearParaActualizar(idEvento)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro el evento"));
+
+        verificarEditable(evento);
+
+        PersonaJuridica organizacion =
+                personaJuridicaService.resolverOrganizacionHabilitada(organizador, datos.getIdPersonaJuridica());
+
+        validarAgenda(datos.getCronogramas());
+
+        if (!categoriaRepository.existsById(datos.getIdCategoria())) {
+            throw new ReglaNegocioException("La categoria indicada no existe en el catalogo");
+        }
+        validarCantidadDeImagenes(imagenes);
+
+        // RF-2.7: ningun ticket existente puede terminar con menos cupo del que
+        // ya tiene, y el precio de uno con inscripciones activas no se toca.
+        validarCupoYPrecio(idEvento, datos.getCronogramas());
+
+        // Moderacion sincronica: si rechaza, tira una excepcion y no se
+        // modifico ninguna fila todavia.
+        List<String> urlsAprobadas = moderacionEventoService.moderarSincrono(datos, imagenes);
+
+        evento.setPersonaJuridica(organizacion);
+        publicacionEventoService.reemplazarContenido(evento, datos, urlsAprobadas);
+
+        registrarHistorial(evento, evento.getEstadoSistema(), evento.getEstadoOrganizador(), organizador);
+
+        auditoriaService.registrar(organizador, AuditoriaService.ACCION_EVENTO_MODIFICADO,
+                "Evento " + idEvento + " editado", request);
+
+        log.info("Evento {} editado por el usuario {}", idEvento, organizador.getIdUsuario());
+
+        EventoDetalle detalle = eventoDetalleRepository.findById(idEvento).orElse(null);
+        return eventoMapper.aTarjeta(evento, detalle, null);
+    }
+
+    /** Solo un evento aprobado y todavia gestionable por su organizador se puede editar. */
+    private void verificarEditable(Evento evento) {
+        String estadoSistema = evento.getEstadoSistema() == null
+                ? null : evento.getEstadoSistema().getEstadoSistema();
+
+        boolean aprobado = EstadoEventoSistemaNombre.APROBADO_SISTEMA.name().equalsIgnoreCase(estadoSistema)
+                || EstadoEventoSistemaNombre.APROBADO_MANUAL.name().equalsIgnoreCase(estadoSistema);
+
+        if (!aprobado) {
+            // Un evento EN_PROCESO o RECHAZADO_* no tiene contenido persistido
+            // todavia (RF-2.2): no hay nada que precargar en un formulario de
+            // edicion.
+            throw new OperacionNoPermitidaException(
+                    "Solo se pueden editar eventos aprobados y publicados");
+        }
+
+        String estadoOrganizador = evento.getEstadoOrganizador() == null
+                ? null : evento.getEstadoOrganizador().getEstadoOrganizador();
+
+        if (EstadoEventoOrganizadorNombre.DADO_DE_BAJA.name().equalsIgnoreCase(estadoOrganizador)
+                || EstadoEventoOrganizadorNombre.CANCELADO.name().equalsIgnoreCase(estadoOrganizador)
+                || EstadoEventoOrganizadorNombre.FINALIZADO.name().equalsIgnoreCase(estadoOrganizador)) {
+            throw new OperacionNoPermitidaException(
+                    "No se puede editar un evento " + estadoOrganizador.toLowerCase());
+        }
+    }
+
+    /**
+     * RF-2.7: el cupo maximo de un ticket existente no puede bajar del que ya
+     * tiene, y su precio no se toca si ya tiene inscripciones activas.
+     *
+     * La correspondencia entre un ticket del formulario y uno ya guardado se
+     * hace por {@code idCronogramaTicket} (ver el javadoc de ese campo en
+     * TicketRequest): si el formulario no manda ese id, o manda uno que no
+     * pertenece a este evento, se trata como un sector NUEVO y no hay piso que
+     * respetar.
+     */
+    private void validarCupoYPrecio(Long idEvento, List<CronogramaRequest> cronogramas) {
+        List<EventoCronograma> cronogramasActuales =
+                cronogramaRepository.findByEventoIdEventoOrderByFechaAscHoraInicioAsc(idEvento);
+        if (cronogramasActuales.isEmpty()) {
+            return;
+        }
+
+        Map<Long, CronogramaTicket> ticketsActualesPorId = ticketRepository.buscarPorCronogramas(
+                cronogramasActuales.stream().map(EventoCronograma::getIdCronograma).toList())
+                .stream()
+                .collect(Collectors.toMap(CronogramaTicket::getIdCronogramaTicket, t -> t));
+
+        for (CronogramaRequest cronograma : cronogramas) {
+            for (TicketRequest ticketNuevo : cronograma.getTickets()) {
+                if (ticketNuevo.getIdCronogramaTicket() == null) {
+                    continue; // sector nuevo: sin piso que respetar
+                }
+
+                CronogramaTicket actual = ticketsActualesPorId.get(ticketNuevo.getIdCronogramaTicket());
+                if (actual == null || !actual.getCronograma().getEvento().getIdEvento().equals(idEvento)) {
+                    continue; // id ajeno o de otro evento: se trata como nuevo
+                }
+
+                Integer cupoActualMaximo = actual.getCupoMaximo() == null ? 0 : actual.getCupoMaximo();
+                if (ticketNuevo.getCupoMaximo() < cupoActualMaximo) {
+                    throw new ReglaNegocioException(
+                            "El cupo de '" + nombreDeTicket(actual) + "' no puede bajar de "
+                            + cupoActualMaximo + " (el ya cargado)");
+                }
+
+                int cupoOcupado = actual.getCupoActual() == null ? 0 : actual.getCupoActual();
+                if (cupoOcupado > 0 && ticketNuevo.getPrecio().compareTo(actual.getPrecio()) != 0) {
+                    throw new OperacionNoPermitidaException(
+                            "No se puede cambiar el precio de '" + nombreDeTicket(actual)
+                            + "': ya tiene inscripciones activas");
+                }
+            }
+        }
+    }
+
+    private String nombreDeTicket(CronogramaTicket ticket) {
+        return ticket.getTipoTicket() == null ? "el sector" : ticket.getTipoTicket().getNombre();
+    }
+
     /**
      * Paso 2.2 del DFD: coherencia de la agenda.
      *
-     * {@code @Future} en el DTO ya asegura que cada fecha sea futura. Lo que
-     * ninguna anotacion puede ver es la relacion ENTRE campos y entre elementos
-     * de la lista, que es exactamente lo que se valida aca.
+     * {@code @Future} en el DTO ya asegura que la FECHA sea futura, pero eso
+     * mira solo el dia: un cronograma "hoy a las 00:01" pasa esa anotacion
+     * aunque ya sean las 20hs cuando se envia el formulario. Ninguna anotacion
+     * puede ver la relacion ENTRE campos (fecha + hora) ni entre elementos de
+     * la lista, que es exactamente lo que se valida aca. Se aplica igual al
+     * crear que al editar: un evento no puede empezar en el pasado en ninguno
+     * de los dos casos.
      */
     private void validarAgenda(List<CronogramaRequest> cronogramas) {
         Set<String> vistas = new HashSet<>();
+        LocalDateTime ahora = LocalDateTime.now();
 
         for (CronogramaRequest cronograma : cronogramas) {
             // Hora de fin posterior a la de inicio. Se compara con isAfter y no
@@ -209,6 +403,14 @@ public class EventoService {
                 throw new ReglaNegocioException(
                         "En la fecha " + cronograma.getFecha()
                         + " la hora de fin debe ser posterior a la de inicio");
+            }
+
+            // Fecha + hora de inicio posterior AL MOMENTO ACTUAL, no solo al dia.
+            LocalDateTime inicio = LocalDateTime.of(cronograma.getFecha(), cronograma.getHoraInicio());
+            if (!inicio.isAfter(ahora)) {
+                throw new ReglaNegocioException(
+                        "La fecha y hora de inicio (" + cronograma.getFecha() + " "
+                        + cronograma.getHoraInicio() + ") ya paso");
             }
 
             // Duplicados exactos: dos funciones identicas son un error de carga

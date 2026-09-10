@@ -64,6 +64,7 @@ public class AuditoriaService {
     public static final String ACCION_CUENTA_BLOQUEADA = "CUENTA_BLOQUEADA";
     public static final String ACCION_REGISTRO_EXITOSO = "REGISTRO_EXITOSO";
     public static final String ACCION_REGISTRO_RECHAZADO_MODERACION = "REGISTRO_RECHAZADO_MODERACION";
+    public static final String ACCION_PERFIL_ACTUALIZADO = "PERFIL_ACTUALIZADO";
 
     // --- Modulo 7: organizaciones (RF-7.2)
     public static final String ACCION_ALTA_ORGANIZACION = "ALTA_ORGANIZACION";

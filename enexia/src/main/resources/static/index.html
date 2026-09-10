@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enexia - Eventos en Tierra del Fuego</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="pages/css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Catalogo publico (Modulo 4, RF-4.1 a RF-4.5)
+   Paleta clara "Atardecer Fueguino". El Figma de referencia esta en tema
+   oscuro con acento celeste/azul propio del mockup; esta pagina reusa su
+   estructura y jerarquia, no sus colores literales -- el CTA sigue siendo
+   naranja (--accion) y el acento morado (--acento), igual que el resto de
+   Enexia, para que la home no se sienta un producto distinto del panel.
+   ===================================================================== */
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: var(--sans); background: var(--lienzo); color: var(--texto-secundario); -webkit-font-smoothing: antialiased; }
+a { color: var(--acento); text-decoration: none; }
+a:hover { color: var(--acento-fuerte); }
+img { max-width: 100%; display: block; }
+
+/* --- Navbar -------------------------------------------------------------- */
+
+.navbar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; padding: 16px 32px;
+    background: rgba(250, 248, 250, .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--borde);
+}
+.navbar__marca { display: flex; align-items: center; gap: 4px; flex: none; }
+.navbar__marca svg { display: block; width: 22px; height: 22px; }
+.navbar__marca span { font-family: var(--marca); font-size: 22px; font-weight: 700; color: var(--texto); letter-spacing: -.3px; }
+
+.navbar__nav { display: flex; align-items: center; gap: 28px; }
+.navbar__nav span, .navbar__nav a { font-size: 13px; font-weight: 500; color: var(--texto-secundario); }
+.navbar__nav a:hover { color: var(--texto); }
+
+.navbar__acciones { display: flex; align-items: center; gap: 14px; }
+.navbar__divisor { width: 1px; height: 20px; background: var(--borde); }
+
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 0; border-radius: 10px; background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease; white-space: nowrap; }
+.boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
+.boton--fantasma { background: transparent; color: var(--acento-fuerte); border: 1px solid var(--acento-borde); box-shadow: none; }
+.boton--fantasma:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
+
+.navbar__cuenta { display: flex; align-items: center; gap: 10px; }
+.navbar__avatar-bloque { display: flex; align-items: center; gap: 10px; color: inherit; }
+.navbar__avatar { position: relative; width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); color: #fff; font-family: var(--marca); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+.navbar__avatar-punto { position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 999px; background: var(--ok); border: 2px solid var(--lienzo); }
+.navbar__avatar-texto { display: flex; flex-direction: column; line-height: 1.25; }
+.navbar__avatar-nombre { font-family: var(--marca); font-size: 13px; font-weight: 700; color: var(--texto); }
+.navbar__avatar-sub { font-size: 11px; color: var(--texto-secundario); }
+.navbar__salir { background: none; border: 0; padding: 4px; color: var(--texto-secundario); font-size: 12px; font-weight: 600; cursor: pointer; }
+.navbar__salir:hover { color: var(--error); }
+
+@media (max-width: 900px) { .navbar__nav { display: none; } }
+
+/* --- Hero ------------------------------------------------------------------ */
+
+.hero { position: relative; overflow: hidden; padding: 72px 32px 8px; display: flex; flex-direction: column; align-items: center; }
+.hero__halo { position: absolute; width: 700px; height: 400px; left: 50%; top: -80px; transform: translateX(-50%); background: var(--halo-1); filter: blur(20px); pointer-events: none; }
+.hero__halo--2 { width: 400px; height: 300px; left: 65%; top: 40px; background: var(--halo-2); }
+
+.hero__badge { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; background: var(--acento-tinte); border: 1px solid var(--acento-borde); color: var(--acento-fuerte); font-size: 12px; font-weight: 600; margin-bottom: 18px; }
+.hero__badge-punto { width: 6px; height: 6px; border-radius: 999px; background: var(--acento); }
+
+.hero h1 { position: relative; margin: 0 0 14px; text-align: center; max-width: 760px; color: var(--texto); font-family: var(--marca); font-size: 44px; line-height: 1.15; font-weight: 700; letter-spacing: -.5px; }
+.hero p { position: relative; margin: 0 0 36px; text-align: center; max-width: 560px; color: var(--texto-secundario); font-size: 17px; line-height: 1.6; }
+
+/* --- Barra de busqueda ------------------------------------------------------ */
+
+.busqueda { position: relative; width: 100%; max-width: 1024px; margin-bottom: 8px; }
+.busqueda__caja {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px;
+    border: 1px solid var(--borde); border-radius: 20px; background: var(--superficie);
+    box-shadow: var(--sombra-tarjeta);
+}
+.busqueda__campo { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid var(--borde-campo); border-radius: 10px; background: var(--superficie-alt); }
+.busqueda__campo svg { width: 14px; height: 14px; color: var(--texto-secundario); flex: none; }
+.busqueda__campo input, .busqueda__campo select { border: 0; background: transparent; outline: none; color: var(--texto); font-family: inherit; font-size: 13px; min-width: 0; }
+.busqueda__texto { flex: 1 1 220px; }
+.busqueda__texto input { width: 100%; }
+.busqueda__select { flex: 0 0 auto; min-width: 150px; }
+.busqueda__select select { width: 100%; cursor: pointer; }
+.busqueda__fecha input { cursor: pointer; }
+
+@media (max-width: 700px) {
+    .busqueda__campo { flex: 1 1 100%; }
+}
+
+/* --- Seccion de eventos ------------------------------------------------------ */
+
+.seccion-eventos { max-width: 1280px; margin: 0 auto; padding: 56px 32px 80px; }
+.seccion-eventos__cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.seccion-eventos__cabecera h2 { margin: 0 0 4px; color: var(--texto); font-family: var(--marca); font-size: 24px; font-weight: 700; }
+.seccion-eventos__cabecera p { margin: 0; font-size: 13px; color: var(--texto-secundario); }
+
+.grilla-eventos { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+
+.tarjeta-evento { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: 20px; background: var(--superficie); box-shadow: var(--sombra-tarjeta); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
+.tarjeta-evento:hover { transform: translateY(-3px); box-shadow: var(--sombra-md), var(--sombra-tarjeta); }
+
+.tarjeta-evento__media { position: relative; height: 180px; background: var(--acento-tinte); display: flex; align-items: center; justify-content: center; color: var(--acento); flex: none; }
+.tarjeta-evento__media img { width: 100%; height: 100%; object-fit: cover; }
+.tarjeta-evento__media svg { width: 30px; height: 30px; }
+
+.chip-categoria-flot { position: absolute; top: 12px; left: 12px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; backdrop-filter: blur(4px); }
+
+.tarjeta-evento__cuerpo { padding: 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.tarjeta-evento__fecha { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--acento-fuerte); }
+.tarjeta-evento__fecha svg { width: 13px; height: 13px; flex: none; }
+.tarjeta-evento__nombre { margin: 0; font-size: 16px; font-weight: 700; color: var(--texto); line-height: 1.3; }
+.tarjeta-evento__lugar { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--texto-secundario); }
+.tarjeta-evento__lugar svg { width: 13px; height: 13px; flex: none; }
+
+.tarjeta-evento__pie { margin-top: auto; padding-top: 10px; display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: var(--acento-fuerte); }
+.tarjeta-evento__pie svg { width: 13px; height: 13px; }
+
+.mas-eventos { display: flex; justify-content: center; padding-top: 32px; }
+.boton-cargar-mas { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 14px; border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-tarjeta); }
+.boton-cargar-mas:hover { background: var(--superficie-alt); color: var(--texto); }
+.boton-cargar-mas:disabled { opacity: .5; cursor: not-allowed; }
+.boton-cargar-mas svg { width: 14px; height: 14px; }
+
+.cargando, .vacio { grid-column: 1 / -1; text-align: center; padding: 48px 24px; color: var(--texto-secundario); font-size: 14px; }
+.vacio__titulo { margin: 0 0 6px; color: var(--texto); font-size: 16px; font-weight: 700; }
+
+/* --- Footer ---------------------------------------------------------------- */
+
+footer { border-top: 1px solid var(--borde); background: var(--superficie); }
+.footer__cont { max-width: 1280px; margin: 0 auto; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.footer__marca { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-secundario); }
+.footer__icono { width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); display: flex; align-items: center; justify-content: center; color: #fff; flex: none; }
+.footer__icono svg { width: 12px; height: 12px; }
+.footer__links { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.footer__links span, .footer__links a { font-size: 13px; color: var(--texto-secundario); }
+.footer__links a:hover { color: var(--acento-fuerte); }
+
+@media (max-width: 640px) {
+    .hero h1 { font-size: 32px; }
+    .navbar { padding: 14px 18px; }
+    .seccion-eventos { padding: 40px 18px 60px; }
+}
+</style>
+</head>
+<body>
+
+<header class="navbar">
+    <a class="navbar__marca" href="index.html">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+            <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+            <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+            <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+            <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+            <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+            <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+            <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+            <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+            <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+            <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+            <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+        </svg>
+        <span>NEXIA</span>
+    </a>
+    <nav class="navbar__nav">
+        <a href="index.html">Explorar</a>
+        <a href="mailto:soporte@enexia.com.ar">Contacto</a>
+        <span title="Disponible mas adelante">Legales</span>
+    </nav>
+    <div class="navbar__acciones" id="navbarAcciones"><!-- inyectado por JS --></div>
+</header>
+
+<section class="hero">
+    <div class="hero__halo"></div>
+    <div class="hero__halo hero__halo--2"></div>
+    <span class="hero__badge"><span class="hero__badge-punto"></span>Tierra del Fuego, Argentina</span>
+    <h1>Descubrí eventos en<br>Tierra del Fuego</h1>
+    <p>Cultura, educación, deportes y gaming en un solo lugar.</p>
+
+    <div class="busqueda">
+        <div class="busqueda__caja">
+            <div class="busqueda__campo busqueda__texto">
+                <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6.5" cy="6.5" r="4.8" stroke="currentColor" stroke-width="1.3"/><path d="M13 13l-3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                <input type="search" id="filtroTexto" placeholder="Buscar eventos por nombre...">
+            </div>
+            <div class="busqueda__campo busqueda__select">
+                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1.5" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+                <select id="filtroCategoria"><option value="">Categoría</option></select>
+            </div>
+            <div class="busqueda__campo busqueda__fecha">
+                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="11" height="10" rx="1.3" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 5.5h11M4.5 1.5v2M9.5 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                <input type="date" id="filtroFecha" title="Desde esta fecha">
+            </div>
+            <div class="busqueda__campo busqueda__select">
+                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.67 5.83c0 3.5-4.67 7-4.67 7s-4.67-3.5-4.67-7a4.67 4.67 0 1 1 9.34 0Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="5.83" r="1.75" stroke="currentColor" stroke-width="1.2"/></svg>
+                <select id="filtroCiudad"><option value="">Ubicación</option></select>
+            </div>
+            <button class="boton" id="btnBuscar" type="button">Buscar</button>
+        </div>
+    </div>
+</section>
+
+<section class="seccion-eventos">
+    <div class="seccion-eventos__cabecera">
+        <div>
+            <h2>Eventos próximos</h2>
+            <p id="totalEventos">Cargando eventos...</p>
+        </div>
+    </div>
+
+    <div class="grilla-eventos" id="grillaEventos">
+        <div class="cargando">Cargando eventos...</div>
+    </div>
+
+    <div class="mas-eventos" id="contenedorMas" hidden>
+        <button class="boton-cargar-mas" id="btnCargarMas" type="button">
+            <span>Cargar más eventos</span>
+            <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.75 5.63l3.75 3.75 3.75-3.75" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+    </div>
+</section>
+
+<footer>
+    <div class="footer__cont">
+        <div class="footer__marca">
+            <span class="footer__icono">
+                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 8.5V3.5L6 1l4 2.5v5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M4.5 11V6.5h3V11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            </span>
+            <span>&copy; 2026 Enexia. Todos los derechos reservados.</span>
+        </div>
+        <div class="footer__links">
+            <span title="Disponible mas adelante">Política de Privacidad</span>
+            <span title="Disponible mas adelante">Términos de Servicio</span>
+            <a href="mailto:soporte@enexia.com.ar">Soporte / Contacto</a>
+        </div>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+
+<script>
+/* =====================================================================
+   Catalogo publico - GET /api/publico/eventos (RF-4.1 a RF-4.3)
+
+   Pagina publica: NUNCA redirige si no hay sesion (a diferencia de
+   Auth.exigirSesion, que usan las paginas privadas). Auth.autenticado()
+   solo decide que header pintar.
+   ===================================================================== */
+(function () {
+
+    const CATEGORIA_COLOR = {
+        cultural: 'cat-cultural', educativo: 'cat-educativo', social: 'cat-social',
+        deportivo: 'cat-deportivo', deportes: 'cat-deportivo', gaming: 'cat-gaming'
+    };
+
+    /* ------------------------------------------------------- Navbar --- */
+
+    function pintarNavbar() {
+        const cont = document.getElementById('navbarAcciones');
+
+        if (!Auth.autenticado()) {
+            cont.innerHTML = `
+                <a href="pages/auth/login-desktop-claro.html" style="font-size:13px;font-weight:500;color:var(--texto-secundario)">Iniciar Sesión</a>
+                <a href="pages/auth/register-paso2.html" class="boton">Registrarse</a>
+            `;
+            return;
+        }
+
+        const usuario = Auth.usuario();
+        const esOrganizador = Auth.hasRole('ORGANIZADOR');
+        const inicial = (usuario && usuario.email ? usuario.email.trim().charAt(0) : '?').toUpperCase();
+        const etiqueta = (usuario && usuario.email) || 'Mi cuenta';
+
+        const bloqueAvatar = esOrganizador
+            ? `<a class="navbar__avatar-bloque" href="pages/organizador/perfil.html">
+                    <span class="navbar__avatar">${inicial}<span class="navbar__avatar-punto"></span></span>
+                    <span class="navbar__avatar-texto">
+                        <span class="navbar__avatar-nombre">${etiqueta}</span>
+                        <span class="navbar__avatar-sub">Mi cuenta</span>
+                    </span>
+               </a>`
+            : `<span class="navbar__avatar-bloque" title="El perfil de participante todavia no esta disponible">
+                    <span class="navbar__avatar">${inicial}<span class="navbar__avatar-punto"></span></span>
+                    <span class="navbar__avatar-texto">
+                        <span class="navbar__avatar-nombre">${etiqueta}</span>
+                        <span class="navbar__avatar-sub">Participante</span>
+                    </span>
+               </span>`;
+
+        cont.innerHTML = `
+            ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">+ Crear Evento</a>' : ''}
+            <span class="navbar__divisor"></span>
+            ${bloqueAvatar}
+            <button class="navbar__salir" id="btnSalirNav" type="button">Salir</button>
+        `;
+
+        const btnSalir = document.getElementById('btnSalirNav');
+        if (btnSalir) btnSalir.addEventListener('click', () => { Auth.cerrarSesion(); window.location.reload(); });
+    }
+
+    pintarNavbar();
+
+    /* ------------------------------------------------------- Filtros --- */
+
+    (async function cargarCategorias() {
+        const select = document.getElementById('filtroCategoria');
+        const r = await API.categorias();
+        if (r.ok && Array.isArray(r.cuerpo)) {
+            r.cuerpo.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.nombre;
+                select.appendChild(opt);
+            });
+        }
+    })();
+
+    (async function cargarCiudades() {
+        const select = document.getElementById('filtroCiudad');
+        const rp = await API.provincias();
+        if (!rp.ok || !Array.isArray(rp.cuerpo) || !rp.cuerpo.length) return;
+        // Enexia opera en Tierra del Fuego (ver CLAUDE.md): se resuelve la
+        // provincia por nombre en vez de asumir la primera del catalogo.
+        const tdf = rp.cuerpo.find(p => /tierra del fuego/i.test(p.nombre)) || rp.cuerpo[0];
+        const rc = await API.ciudadesDeProvincia(tdf.id);
+        if (rc.ok && Array.isArray(rc.cuerpo)) {
+            rc.cuerpo.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.nombre;
+                select.appendChild(opt);
+            });
+        }
+    })();
+
+    /* ---------------------------------------------------- Formateo --- */
+
+    function fechaCorta(iso) {
+        if (!iso) return null;
+        const [y, m, d] = iso.split('-').map(Number);
+        const fecha = new Date(y, m - 1, d);
+        const texto = fecha.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function tarjetaEvento(evento) {
+        const catKey = (evento.categoria || '').toLowerCase();
+        const catVar = CATEGORIA_COLOR[catKey];
+        const catStyle = catVar
+            ? `background:var(--${catVar}-tinte); color:var(--${catVar});`
+            : 'background:var(--superficie-alt); color:var(--texto-secundario); border:1px solid var(--borde);';
+
+        const fecha = fechaCorta(evento.proximaFecha);
+        const lugar = [evento.ciudad, evento.provincia].filter(Boolean).join(', ');
+
+        const el = document.createElement('article');
+        el.className = 'tarjeta-evento';
+        el.innerHTML = `
+            <div class="tarjeta-evento__media">
+                ${evento.urlPortada
+                    ? `<img src="${evento.urlPortada}" alt="${evento.nombre}" loading="lazy">`
+                    : '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'}
+                ${evento.categoria ? `<span class="chip-categoria-flot" style="${catStyle}">${evento.categoria}</span>` : ''}
+            </div>
+            <div class="tarjeta-evento__cuerpo">
+                ${fecha ? `<div class="tarjeta-evento__fecha">
+                    <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.3" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 1.3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    ${fecha}</div>` : ''}
+                <h3 class="tarjeta-evento__nombre">${evento.nombre}</h3>
+                ${lugar ? `<div class="tarjeta-evento__lugar">
+                    <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.67 5.83c0 3.5-4.67 7-4.67 7s-4.67-3.5-4.67-7a4.67 4.67 0 1 1 9.34 0Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="5.83" r="1.75" stroke="currentColor" stroke-width="1.2"/></svg>
+                    ${lugar}</div>` : ''}
+                <a class="tarjeta-evento__pie" href="evento-detalle.html?id=${evento.idEvento}">
+                    Ver detalle
+                    <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 6h7M6 2.5 9.5 6 6 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+            </div>
+        `;
+        return el;
+    }
+
+    /* ------------------------------------------------------- Listado --- */
+
+    const TAMANO_PAGINA = 9;
+    let pagina = 0;
+    let totalPaginas = 1;
+
+    function parametrosActuales() {
+        return {
+            texto: document.getElementById('filtroTexto').value.trim(),
+            idCategoria: document.getElementById('filtroCategoria').value,
+            idCiudad: document.getElementById('filtroCiudad').value,
+            desde: document.getElementById('filtroFecha').value
+        };
+    }
+
+    async function cargar(reiniciar) {
+        const grilla = document.getElementById('grillaEventos');
+        const contMas = document.getElementById('contenedorMas');
+        const btnMas = document.getElementById('btnCargarMas');
+
+        if (reiniciar) {
+            pagina = 0;
+            grilla.innerHTML = '<div class="cargando">Cargando eventos...</div>';
+        } else {
+            btnMas.disabled = true;
+            btnMas.querySelector('span').textContent = 'Cargando...';
+        }
+
+        const parametros = Object.assign({}, parametrosActuales(), { pagina, tamano: TAMANO_PAGINA });
+        const query = new URLSearchParams(
+            Object.entries(parametros).filter(([, v]) => v !== null && v !== undefined && v !== '')
+        ).toString();
+        const r = await API.publico('/api/publico/eventos' + (query ? '?' + query : ''));
+
+        if (reiniciar) grilla.innerHTML = '';
+
+        if (!r.ok) {
+            grilla.innerHTML = '<div class="cargando">No se pudieron cargar los eventos. Intenta de nuevo en unos segundos.</div>';
+            contMas.hidden = true;
+            return;
+        }
+
+        const eventos = (r.cuerpo && r.cuerpo.content) || [];
+        totalPaginas = r.cuerpo.totalPages != null ? r.cuerpo.totalPages : 1;
+        const total = r.cuerpo.totalElements != null ? r.cuerpo.totalElements : eventos.length;
+
+        document.getElementById('totalEventos').textContent =
+            total + (total === 1 ? ' evento encontrado en la región' : ' eventos encontrados en la región');
+
+        if (reiniciar && !eventos.length) {
+            grilla.innerHTML = `
+                <div class="vacio">
+                    <p class="vacio__titulo">No encontramos eventos con estos filtros</p>
+                    <p>Proba con otra búsqueda o mirá el catálogo completo.</p>
+                </div>`;
+        } else {
+            eventos.forEach(evento => grilla.appendChild(tarjetaEvento(evento)));
+        }
+
+        btnMas.disabled = false;
+        btnMas.querySelector('span').textContent = 'Cargar más eventos';
+        contMas.hidden = (pagina + 1) >= totalPaginas;
+    }
+
+    document.getElementById('btnBuscar').addEventListener('click', () => cargar(true));
+    document.getElementById('filtroTexto').addEventListener('keydown', e => { if (e.key === 'Enter') cargar(true); });
+    document.getElementById('btnCargarMas').addEventListener('click', () => { pagina++; cargar(false); });
+
+    cargar(true);
+})();
+</script>
+
+</body>
+</html>

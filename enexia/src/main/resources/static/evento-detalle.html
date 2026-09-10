@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evento - Enexia</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="pages/css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Ficha tecnica de un evento (RF-4.4) + estado "no encontrado"
+   Paleta clara "Atardecer Fueguino". El estado de error replica el Figma
+   "evento not found" (re-skinneado). El estado "encontrado" NO tiene un
+   Figma de referencia todavia -- se armo con los mismos componentes ya
+   usados en el resto del sitio (tarjeta, chip, entrada) para no inventar
+   un lenguaje visual nuevo mientras no exista el diseno real.
+   ===================================================================== */
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: var(--sans); background: var(--lienzo); color: var(--texto-secundario); -webkit-font-smoothing: antialiased; }
+a { color: var(--acento); text-decoration: none; }
+a:hover { color: var(--acento-fuerte); }
+img { max-width: 100%; display: block; }
+
+/* --- Navbar (identico a index.html) --------------------------------------- */
+
+.navbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 32px; background: rgba(250, 248, 250, .85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--borde); }
+.navbar__marca { display: flex; align-items: center; gap: 4px; flex: none; }
+.navbar__marca svg { display: block; width: 22px; height: 22px; }
+.navbar__marca span { font-family: var(--marca); font-size: 22px; font-weight: 700; color: var(--texto); letter-spacing: -.3px; }
+.navbar__nav { display: flex; align-items: center; gap: 28px; }
+.navbar__nav span, .navbar__nav a { font-size: 13px; font-weight: 500; color: var(--texto-secundario); }
+.navbar__nav a:hover { color: var(--texto); }
+.navbar__acciones { display: flex; align-items: center; gap: 14px; }
+.navbar__divisor { width: 1px; height: 20px; background: var(--borde); }
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 0; border-radius: 10px; background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease; white-space: nowrap; }
+.boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
+.boton--fantasma { background: transparent; color: var(--acento-fuerte); border: 1px solid var(--acento-borde); box-shadow: none; }
+.boton--fantasma:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
+.navbar__avatar-bloque { display: flex; align-items: center; gap: 10px; color: inherit; }
+.navbar__avatar { position: relative; width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); color: #fff; font-family: var(--marca); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+.navbar__avatar-punto { position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 999px; background: var(--ok); border: 2px solid var(--lienzo); }
+.navbar__avatar-texto { display: flex; flex-direction: column; line-height: 1.25; }
+.navbar__avatar-nombre { font-family: var(--marca); font-size: 13px; font-weight: 700; color: var(--texto); }
+.navbar__avatar-sub { font-size: 11px; color: var(--texto-secundario); }
+.navbar__salir { background: none; border: 0; padding: 4px; color: var(--texto-secundario); font-size: 12px; font-weight: 600; cursor: pointer; }
+.navbar__salir:hover { color: var(--error); }
+@media (max-width: 900px) { .navbar__nav { display: none; } }
+
+/* --- Estado: cargando -------------------------------------------------------- */
+
+.cargando-pagina { padding: 100px 24px; text-align: center; color: var(--texto-secundario); font-size: 14px; }
+
+/* --- Estado: no encontrado (re-skin del Figma) ------------------------------- */
+
+.no-encontrado {
+    position: relative; min-height: calc(100vh - 65px); overflow: hidden;
+    display: flex; align-items: center; justify-content: center; padding: 60px 24px;
+    background: radial-gradient(ellipse 70% 55% at 50% 38%, var(--acento-tinte) 0%, var(--lienzo) 55%);
+}
+.no-encontrado__tarjeta {
+    position: relative; width: 100%; max-width: 580px; padding: 48px 40px;
+    border-radius: 24px; background: var(--superficie); border: 1px solid var(--borde);
+    box-shadow: var(--sombra-tarjeta); text-align: center;
+}
+.no-encontrado__franja { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 280px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, transparent, var(--acento), var(--accion), transparent); opacity: .7; }
+.no-encontrado__icono-aros { position: relative; width: 96px; height: 96px; margin: 0 auto 28px; display: flex; align-items: center; justify-content: center; }
+.no-encontrado__aro { position: absolute; border-radius: 999px; border: 1px solid var(--acento-borde); }
+.no-encontrado__aro--1 { width: 96px; height: 96px; }
+.no-encontrado__aro--2 { width: 64px; height: 64px; }
+.no-encontrado__aro--3 { width: 32px; opacity: 0; }
+.no-encontrado__nucleo { position: relative; width: 48px; height: 48px; border-radius: 999px; background: linear-gradient(135deg, var(--acento-tinte) 0%, var(--acento-borde) 100%); border: 1px solid var(--acento-borde); display: flex; align-items: center; justify-content: center; color: var(--acento-fuerte); box-shadow: 0 0 24px 4px rgba(124,58,237,.15); }
+.no-encontrado__nucleo svg { width: 20px; height: 20px; }
+.no-encontrado__badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--acento-tinte); border: 1px solid var(--acento-borde); color: var(--acento-fuerte); font-family: var(--marca); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; margin-bottom: 22px; }
+.no-encontrado__badge-punto { width: 9px; height: 9px; }
+.no-encontrado h1 { margin: 0 0 16px; color: var(--texto); font-family: var(--marca); font-size: 26px; font-weight: 700; }
+.no-encontrado p { margin: 0 auto 28px; max-width: 420px; color: var(--texto-secundario); font-size: 14px; line-height: 1.65; }
+.no-encontrado__soporte { margin-top: 20px; font-size: 11px; color: var(--texto-secundario); opacity: .7; }
+.no-encontrado__soporte a { color: var(--acento); opacity: .8; }
+
+/* --- Estado: ficha encontrada (re-skin del Figma real, 2026-09-10) ----------- */
+
+.ficha__migas { display: flex; align-items: center; gap: 8px; padding: 20px 32px 0; max-width: 1180px; margin: 0 auto; font-size: 12px; color: var(--texto-secundario); }
+.ficha__migas a { font-weight: 500; }
+.ficha__migas svg { width: 10px; height: 10px; color: var(--borde-fuerte); }
+.ficha__migas span[aria-current] { color: var(--texto); }
+
+.ficha { max-width: 1180px; margin: 0 auto; padding: 24px 32px 40px; }
+.ficha__grilla { display: grid; grid-template-columns: 420px 1fr; gap: 32px; align-items: start; }
+@media (max-width: 860px) { .ficha__grilla { grid-template-columns: 1fr; } }
+
+.ficha__media { position: sticky; top: 84px; }
+@media (max-width: 860px) { .ficha__media { position: static; } }
+
+.etiqueta-seccion { margin: 0 0 12px; color: var(--acento-fuerte); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+
+/* Portada + chips */
+.ficha__portada { position: relative; height: 320px; border-radius: var(--radio-tarjeta); overflow: hidden; background: var(--acento-tinte); display: flex; align-items: center; justify-content: center; color: var(--acento); margin-bottom: 20px; box-shadow: var(--sombra-tarjeta); }
+.ficha__portada img { width: 100%; height: 100%; object-fit: cover; }
+.ficha__portada svg { width: 40px; height: 40px; }
+
+.ficha__chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.chip-pildora { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.chip-pildora--modalidad { background: var(--info-tinte); color: var(--info); border: 1px solid var(--info-borde); }
+
+.ficha__cabecera { margin-bottom: 18px; }
+.ficha__cabecera h1 { margin: 0; color: var(--texto); font-family: var(--marca); font-size: 30px; font-weight: 700; letter-spacing: -.5px; line-height: 1.2; }
+
+.ficha__organizador { display: flex; align-items: center; gap: 10px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--borde); }
+.ficha__organizador-avatar { width: 30px; height: 30px; border-radius: 999px; flex: none; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); color: #fff; font-family: var(--marca); font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center; }
+.ficha__organizador span { font-size: 13px; color: var(--texto-secundario); }
+.ficha__organizador strong { color: var(--texto); font-weight: 600; }
+
+.ficha__seccion { margin-bottom: 28px; }
+.ficha__descripcion { font-size: 14px; line-height: 1.75; color: var(--texto-secundario); white-space: pre-line; }
+
+.galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.galeria img { width: 100%; height: 96px; object-fit: cover; border-radius: 12px; border: 1px solid var(--borde); }
+
+/* Seleccion de cronograma */
+.cronograma-lista { padding: 12px; background: var(--acento-tinte); border: 1px solid var(--acento-borde); border-radius: 16px; display: flex; flex-direction: column; gap: 8px; }
+.cronograma-fila { display: flex; align-items: center; gap: 12px; }
+.cronograma-fila__marca { width: 14px; height: 14px; flex: none; border-radius: 3px; border: 1px solid var(--acento-borde); background: var(--superficie); }
+.cronograma-fila__fecha { flex: 1 1 150px; font-size: 12.5px; color: var(--texto-secundario); }
+.cronograma-fila__hora { flex: 1 1 130px; font-size: 12.5px; font-weight: 700; color: var(--texto); }
+.cronograma-fila__extra { font-size: 12px; color: var(--texto-secundario); }
+
+/* Ubicacion completa */
+.ubicacion-tarjeta { padding: 14px; background: var(--superficie-alt); border: 1px solid var(--borde); border-radius: 16px; display: flex; flex-direction: column; gap: 8px; }
+.ubicacion-fila { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; }
+.ubicacion-fila svg { width: 13px; height: 13px; color: var(--texto-secundario); flex: none; margin-top: 2px; }
+.ubicacion-fila__label { width: 64px; flex: none; color: var(--texto-secundario); }
+.ubicacion-fila__val { color: var(--texto); }
+.ubicacion-gps { margin-top: 4px; text-align: center; }
+.ubicacion-gps span { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 10px; background: var(--superficie); border: 1px solid var(--borde); font-size: 11.5px; color: var(--texto-secundario); }
+.ubicacion-gps svg { width: 12px; height: 12px; color: var(--acento); }
+
+/* Opciones de acceso (al pie de la columna de texto, como en el Figma) */
+.tarjeta-lateral { border: 1px solid var(--borde); border-radius: 18px; background: var(--superficie); box-shadow: var(--sombra-tarjeta); padding: 20px; }
+
+.acceso-fila { padding: 12px; border-radius: 14px; background: var(--superficie-alt); border: 1px solid var(--borde); margin-bottom: 10px; }
+.acceso-fila--agotado { opacity: .65; }
+.acceso-fila__fecha { font-size: 11px; font-weight: 700; color: var(--acento-fuerte); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 8px; }
+.acceso-fila__cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.acceso-fila__nombre { font-size: 13.5px; font-weight: 700; color: var(--texto); }
+.acceso-fila__precio { font-size: 14px; font-weight: 700; color: var(--texto); text-align: right; white-space: nowrap; }
+.acceso-fila__precio small { display: block; font-size: 11px; font-weight: 500; color: var(--ok); }
+.acceso-fila__barra { margin-top: 10px; height: 6px; border-radius: 999px; background: var(--borde); overflow: hidden; }
+.acceso-fila__barra-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accion) 0%, var(--accion-hover) 100%); }
+.acceso-fila__cupos { margin-top: 6px; font-size: 11.5px; color: var(--texto-secundario); }
+.acceso-fila__cupos--agotado { color: var(--error); font-weight: 600; }
+
+.aviso-proximamente { margin-top: 4px; padding: 12px; border-radius: 12px; background: var(--info-tinte); border: 1px solid var(--info-borde); color: var(--info); font-size: 12px; text-align: center; line-height: 1.5; }
+
+/* Eventos relacionados */
+.relacionados { max-width: 1180px; margin: 0 auto; padding: 8px 32px 64px; }
+.relacionados h2 { margin: 0 0 4px; color: var(--texto); font-family: var(--marca); font-size: 22px; font-weight: 700; }
+.relacionados p { margin: 0 0 22px; font-size: 13px; color: var(--texto-secundario); }
+.relacionados__grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+
+.tarjeta-evento { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: 20px; background: var(--superficie); box-shadow: var(--sombra-tarjeta); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
+.tarjeta-evento:hover { transform: translateY(-3px); box-shadow: var(--sombra-md), var(--sombra-tarjeta); }
+.tarjeta-evento__media { position: relative; height: 150px; background: var(--acento-tinte); display: flex; align-items: center; justify-content: center; color: var(--acento); flex: none; }
+.tarjeta-evento__media img { width: 100%; height: 100%; object-fit: cover; }
+.tarjeta-evento__media svg { width: 26px; height: 26px; }
+.chip-categoria-flot { position: absolute; top: 10px; left: 10px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; backdrop-filter: blur(4px); }
+.tarjeta-evento__cuerpo { padding: 16px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+.tarjeta-evento__fecha { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--acento-fuerte); }
+.tarjeta-evento__fecha svg { width: 12px; height: 12px; flex: none; }
+.tarjeta-evento__nombre { margin: 0; font-size: 15px; font-weight: 700; color: var(--texto); line-height: 1.3; }
+.tarjeta-evento__lugar { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--texto-secundario); }
+.tarjeta-evento__lugar svg { width: 12px; height: 12px; flex: none; }
+.tarjeta-evento__pie { margin-top: auto; padding-top: 8px; display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--acento-fuerte); }
+.tarjeta-evento__pie svg { width: 12px; height: 12px; }
+
+/* --- Footer ---------------------------------------------------------------- */
+
+footer { border-top: 1px solid var(--borde); background: var(--superficie); }
+.footer__cont { max-width: 1280px; margin: 0 auto; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.footer__marca { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-secundario); }
+.footer__icono { width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); display: flex; align-items: center; justify-content: center; color: #fff; flex: none; }
+.footer__icono svg { width: 12px; height: 12px; }
+.footer__links { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.footer__links span, .footer__links a { font-size: 13px; color: var(--texto-secundario); }
+.footer__links a:hover { color: var(--acento-fuerte); }
+</style>
+</head>
+<body>
+
+<header class="navbar">
+    <a class="navbar__marca" href="index.html">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+            <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+            <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+            <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+            <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+            <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+            <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+            <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+            <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+            <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+            <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+            <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+        </svg>
+        <span>NEXIA</span>
+    </a>
+    <nav class="navbar__nav">
+        <a href="index.html">Explorar</a>
+        <a href="mailto:soporte@enexia.com.ar">Contacto</a>
+        <span title="Disponible mas adelante">Legales</span>
+    </nav>
+    <div class="navbar__acciones" id="navbarAcciones"></div>
+</header>
+
+<main id="contenido">
+    <div class="cargando-pagina">Cargando evento...</div>
+</main>
+
+<footer>
+    <div class="footer__cont">
+        <div class="footer__marca">
+            <span class="footer__icono">
+                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 8.5V3.5L6 1l4 2.5v5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M4.5 11V6.5h3V11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            </span>
+            <span>&copy; 2026 Enexia. Todos los derechos reservados.</span>
+        </div>
+        <div class="footer__links">
+            <span title="Disponible mas adelante">Política de Privacidad</span>
+            <span title="Disponible mas adelante">Términos de Servicio</span>
+            <a href="mailto:soporte@enexia.com.ar">Soporte / Contacto</a>
+        </div>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+
+<script>
+/* =====================================================================
+   Ficha tecnica de evento - GET /api/publico/eventos/{id} (RF-4.4, RF-4.5)
+   Publica: nunca redirige por falta de sesion. Si el id no existe o el
+   evento no es visible (no aprobado / no publicado), el backend responde
+   404 RECURSO_NO_ENCONTRADO y esta pagina pinta el estado de error.
+   ===================================================================== */
+(function () {
+
+    const CATEGORIA_COLOR = {
+        cultural: 'cat-cultural', educativo: 'cat-educativo', social: 'cat-social',
+        deportivo: 'cat-deportivo', deportes: 'cat-deportivo', gaming: 'cat-gaming'
+    };
+
+    function pintarNavbar() {
+        const cont = document.getElementById('navbarAcciones');
+
+        if (!Auth.autenticado()) {
+            cont.innerHTML = `
+                <a href="pages/auth/login-desktop-claro.html" style="font-size:13px;font-weight:500;color:var(--texto-secundario)">Iniciar Sesión</a>
+                <a href="pages/auth/register-paso2.html" class="boton">Registrarse</a>
+            `;
+            return;
+        }
+
+        const usuario = Auth.usuario();
+        const esOrganizador = Auth.hasRole('ORGANIZADOR');
+        const inicial = (usuario && usuario.email ? usuario.email.trim().charAt(0) : '?').toUpperCase();
+        const etiqueta = (usuario && usuario.email) || 'Mi cuenta';
+
+        const bloqueAvatar = esOrganizador
+            ? `<a class="navbar__avatar-bloque" href="pages/organizador/perfil.html">
+                    <span class="navbar__avatar">${inicial}<span class="navbar__avatar-punto"></span></span>
+                    <span class="navbar__avatar-texto">
+                        <span class="navbar__avatar-nombre">${etiqueta}</span>
+                        <span class="navbar__avatar-sub">Mi cuenta</span>
+                    </span>
+               </a>`
+            : `<span class="navbar__avatar-bloque" title="El perfil de participante todavia no esta disponible">
+                    <span class="navbar__avatar">${inicial}<span class="navbar__avatar-punto"></span></span>
+                    <span class="navbar__avatar-texto">
+                        <span class="navbar__avatar-nombre">${etiqueta}</span>
+                        <span class="navbar__avatar-sub">Participante</span>
+                    </span>
+               </span>`;
+
+        cont.innerHTML = `
+            ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">+ Crear Evento</a>' : ''}
+            <span class="navbar__divisor"></span>
+            ${bloqueAvatar}
+            <button class="navbar__salir" id="btnSalirNav" type="button">Salir</button>
+        `;
+
+        const btnSalir = document.getElementById('btnSalirNav');
+        if (btnSalir) btnSalir.addEventListener('click', () => { Auth.cerrarSesion(); window.location.reload(); });
+    }
+
+    pintarNavbar();
+
+    /* --------------------------------------------------- No encontrado --- */
+
+    function pintarNoEncontrado() {
+        document.getElementById('contenido').innerHTML = `
+            <div class="no-encontrado">
+                <div class="no-encontrado__tarjeta">
+                    <div class="no-encontrado__franja"></div>
+                    <span class="no-encontrado__badge">
+                        <svg class="no-encontrado__badge-punto" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.75 2.25 2.25 6.75M2.25 2.25l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        ENEXIA · TIERRA DEL FUEGO
+                    </span>
+                    <div class="no-encontrado__icono-aros">
+                        <span class="no-encontrado__aro no-encontrado__aro--1"></span>
+                        <span class="no-encontrado__aro no-encontrado__aro--2"></span>
+                        <span class="no-encontrado__nucleo">
+                            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 6.5v4M10 13.4h.008" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </span>
+                    </div>
+                    <h1>404 — Evento no encontrado</h1>
+                    <p>El evento que buscas no existe, ha sido cancelado por el organizador, expiró o la dirección URL ingresada es incorrecta.</p>
+                    <a class="boton" href="index.html">
+                        <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1.5 1 7.5h1.5V13h4V9.5h2V13h4V7.5H14L7.5 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                        Volver al Inicio
+                    </a>
+                    <p class="no-encontrado__soporte">
+                        ¿Necesitas ayuda? Contacta a soporte en <a href="mailto:soporte@enexia.com.ar">soporte@enexia.com.ar</a>
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+
+    /* ------------------------------------------------------ Formateo --- */
+
+    function fechaLarga(iso) {
+        if (!iso) return '';
+        const [y, m, d] = iso.split('-').map(Number);
+        const fecha = new Date(y, m - 1, d);
+        const texto = fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function horaCorta(hhmmss) {
+        return hhmmss ? hhmmss.slice(0, 5) + ' hs' : '';
+    }
+
+    function precioTexto(ticket) {
+        if (ticket.gratuito) return 'Gratis';
+        return '$' + Number(ticket.precio).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+    }
+
+    function chipCategoriaEstilo(categoria) {
+        const catVar = CATEGORIA_COLOR[(categoria || '').toLowerCase()];
+        return catVar
+            ? `background:var(--${catVar}-tinte); color:var(--${catVar});`
+            : 'background:var(--superficie-alt); color:var(--texto-secundario); border:1px solid var(--borde);';
+    }
+
+    /* --------------------------------------------------------- Ficha --- */
+    /* Re-skin del Figma real de la ficha "evento encontrado" (2026-09-10).
+       El Figma trae perfil extendido del organizador (verificado, cantidad
+       de eventos, redes) y una seccion de opiniones/valoraciones -- ninguno
+       de los dos existe en el backend (no hay endpoint de perfil publico de
+       organizador ni Modulo 5 de valoraciones expuesto en la ficha), asi que
+       se omiten en vez de inventarse. Ver docs/log/sprint_2 del dia. */
+
+    function pintarFicha(ev) {
+        const chipCategoria = chipCategoriaEstilo(ev.categoria);
+        const direccion = [ev.calle, ev.numero, ev.numeroInterior].filter(Boolean).join(' ');
+        const lugar = [ev.ciudad, ev.provincia].filter(Boolean).join(', ');
+        const inicialOrg = (ev.organizador || '?').trim().charAt(0).toUpperCase();
+
+        const cronogramaListaHtml = (ev.cronogramas || []).map(c => `
+            <div class="cronograma-fila">
+                <span class="cronograma-fila__marca"></span>
+                <span class="cronograma-fila__fecha">${fechaLarga(c.fecha)}</span>
+                <span class="cronograma-fila__hora">${horaCorta(c.horaInicio)} — ${horaCorta(c.horaFin)}</span>
+                <span class="cronograma-fila__extra">${(c.tickets || []).length} tipo${(c.tickets || []).length === 1 ? '' : 's'} de entrada</span>
+            </div>
+        `).join('') || '<p style="font-size:13px;color:var(--texto-secundario);margin:0">Este evento todavia no tiene fechas cargadas.</p>';
+
+        const galeriaHtml = (ev.imagenes || []).length
+            ? `<div class="ficha__seccion"><h2 class="etiqueta-seccion">Galería</h2><div class="galeria">
+                ${ev.imagenes.map(url => `<img src="${url}" alt="${ev.nombre}" loading="lazy">`).join('')}
+               </div></div>`
+            : '';
+
+        const ubicacionHtml = `
+            <div class="ubicacion-tarjeta">
+                ${direccion ? `<div class="ubicacion-fila"><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.67 5.83c0 3.5-4.67 7-4.67 7s-4.67-3.5-4.67-7a4.67 4.67 0 1 1 9.34 0Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="5.83" r="1.75" stroke="currentColor" stroke-width="1.2"/></svg><span class="ubicacion-fila__label">Dirección:</span><span class="ubicacion-fila__val">${direccion}</span></div>` : ''}
+                ${ev.ciudad ? `<div class="ubicacion-fila"><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5V2.5L7 0l5 3v4" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M4.5 13V7.5h5V13" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg><span class="ubicacion-fila__label">Ciudad:</span><span class="ubicacion-fila__val">${ev.ciudad}</span></div>` : ''}
+                ${ev.provincia ? `<div class="ubicacion-fila"><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/></svg><span class="ubicacion-fila__label">Provincia:</span><span class="ubicacion-fila__val">${ev.provincia}</span></div>` : ''}
+                ${ev.pais ? `<div class="ubicacion-fila"><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1.2"/><path d="M1.2 7h11.6M7 1.2c2 2 2 9.6 0 11.6M7 1.2c-2 2-2 9.6 0 11.6" stroke="currentColor" stroke-width="1.2"/></svg><span class="ubicacion-fila__label">País:</span><span class="ubicacion-fila__val">${ev.pais}</span></div>` : ''}
+                ${(ev.latitud != null && ev.longitud != null) ? `<div class="ubicacion-gps"><span><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.8" stroke="currentColor" stroke-width="1.2"/></svg>GPS: ${Number(ev.latitud).toFixed(4)}, ${Number(ev.longitud).toFixed(4)}</span></div>` : ''}
+            </div>`;
+
+        const accesoFilasHtml = (ev.cronogramas || []).flatMap(c => (c.tickets || []).map(t => {
+            const pct = t.cupoMaximo ? Math.max(0, Math.min(100, Math.round((t.cupoDisponible / t.cupoMaximo) * 100))) : 0;
+            return `
+                <div class="acceso-fila ${t.agotado ? 'acceso-fila--agotado' : ''}">
+                    <div class="acceso-fila__fecha">${fechaLarga(c.fecha)}</div>
+                    <div class="acceso-fila__cab">
+                        <span class="acceso-fila__nombre">${t.tipoTicket}</span>
+                        <span class="acceso-fila__precio">${precioTexto(t)}${t.gratuito ? '' : '<small>ARS</small>'}</span>
+                    </div>
+                    <div class="acceso-fila__barra"><div class="acceso-fila__barra-fill" style="width:${t.agotado ? 0 : pct}%"></div></div>
+                    <div class="acceso-fila__cupos ${t.agotado ? 'acceso-fila__cupos--agotado' : ''}">${t.agotado ? 'Agotado' : t.cupoDisponible + ' de ' + t.cupoMaximo + ' cupos disponibles'}</div>
+                </div>`;
+        })).join('') || '<p style="font-size:13px;color:var(--texto-secundario);margin:0 0 14px">Todavia no hay entradas cargadas para este evento.</p>';
+
+        document.getElementById('contenido').innerHTML = `
+            <div class="ficha__migas">
+                <a href="index.html">Explorar</a>
+                <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 1.5 7 5l-3.5 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                ${ev.categoria ? `<span>${ev.categoria}</span><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 1.5 7 5l-3.5 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>` : ''}
+                <span aria-current="page">${ev.nombre}</span>
+            </div>
+
+            <div class="ficha">
+                <div class="ficha__grilla">
+                    <div class="ficha__media">
+                        <div class="ficha__portada">
+                            ${ev.urlPortada
+                                ? `<img src="${ev.urlPortada}" alt="${ev.nombre}">`
+                                : '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'}
+                        </div>
+                        ${galeriaHtml}
+                    </div>
+
+                    <div>
+                        <div class="ficha__chips">
+                            ${ev.categoria ? `<span class="chip-pildora" style="${chipCategoria}">${ev.categoria}</span>` : ''}
+                            <span class="chip-pildora chip-pildora--modalidad">Presencial</span>
+                        </div>
+
+                        <div class="ficha__cabecera"><h1>${ev.nombre}</h1></div>
+
+                        <div class="ficha__organizador">
+                            <span class="ficha__organizador-avatar">${inicialOrg}</span>
+                            <span>Organizado por: <strong>${ev.organizador}</strong></span>
+                        </div>
+
+                        <div class="ficha__seccion">
+                            <h2 class="etiqueta-seccion">Descripción</h2>
+                            <p class="ficha__descripcion">${ev.descripcion || 'Este evento todavia no tiene descripcion cargada.'}</p>
+                        </div>
+
+                        <div class="ficha__seccion">
+                            <h2 class="etiqueta-seccion">Selección de cronograma</h2>
+                            <div class="cronograma-lista">${cronogramaListaHtml}</div>
+                        </div>
+
+                        <div class="ficha__seccion">
+                            <h2 class="etiqueta-seccion">Ubicación completa</h2>
+                            ${lugar ? ubicacionHtml : '<p style="font-size:13px;color:var(--texto-secundario);margin:0">Este evento todavia no tiene ubicacion cargada.</p>'}
+                        </div>
+
+                        <div class="tarjeta-lateral">
+                            <h2 class="etiqueta-seccion">Opciones de acceso</h2>
+                            ${accesoFilasHtml}
+                            <div class="aviso-proximamente">Las inscripciones online están próximamente disponibles.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section class="relacionados" id="seccionRelacionados" hidden>
+                <h2>Eventos relacionados por categoría</h2>
+                <p>Más eventos de ${ev.categoria || 'esta categoría'} en Tierra del Fuego</p>
+                <div class="relacionados__grilla" id="grillaRelacionados"></div>
+            </section>
+        `;
+
+        if (ev.idCategoria) cargarRelacionados(ev.idCategoria, ev.idEvento);
+    }
+
+    /* ------------------------------------------------ Relacionados --- */
+    /* Bonus real (no estaba en el Figma de la ficha): reusa el mismo
+       GET /api/publico/eventos?idCategoria= que ya consume index.html, en
+       vez de una franja decorativa sin datos detras. */
+
+    function fechaCorta(iso) {
+        if (!iso) return null;
+        const [y, m, d] = iso.split('-').map(Number);
+        const fecha = new Date(y, m - 1, d);
+        const texto = fecha.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function tarjetaEventoHtml(evento) {
+        const chipCategoria = chipCategoriaEstilo(evento.categoria);
+        const fecha = fechaCorta(evento.proximaFecha);
+        const lugar = [evento.ciudad, evento.provincia].filter(Boolean).join(', ');
+        return `
+            <article class="tarjeta-evento">
+                <div class="tarjeta-evento__media">
+                    ${evento.urlPortada
+                        ? `<img src="${evento.urlPortada}" alt="${evento.nombre}" loading="lazy">`
+                        : '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'}
+                    ${evento.categoria ? `<span class="chip-categoria-flot" style="${chipCategoria}">${evento.categoria}</span>` : ''}
+                </div>
+                <div class="tarjeta-evento__cuerpo">
+                    ${fecha ? `<div class="tarjeta-evento__fecha"><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.3" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 1.3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>${fecha}</div>` : ''}
+                    <h3 class="tarjeta-evento__nombre">${evento.nombre}</h3>
+                    ${lugar ? `<div class="tarjeta-evento__lugar"><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.67 5.83c0 3.5-4.67 7-4.67 7s-4.67-3.5-4.67-7a4.67 4.67 0 1 1 9.34 0Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="5.83" r="1.75" stroke="currentColor" stroke-width="1.2"/></svg>${lugar}</div>` : ''}
+                    <a class="tarjeta-evento__pie" href="evento-detalle.html?id=${evento.idEvento}">
+                        Ver detalle
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 6h7M6 2.5 9.5 6 6 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                </div>
+            </article>`;
+    }
+
+    async function cargarRelacionados(idCategoria, idEventoActual) {
+        const r = await API.publico('/api/publico/eventos?idCategoria=' + idCategoria + '&tamano=4');
+        if (!r.ok) return;
+
+        const eventos = ((r.cuerpo && r.cuerpo.content) || []).filter(e => e.idEvento !== idEventoActual).slice(0, 3);
+        if (!eventos.length) return;
+
+        document.getElementById('grillaRelacionados').innerHTML = eventos.map(tarjetaEventoHtml).join('');
+        document.getElementById('seccionRelacionados').hidden = false;
+    }
+
+    /* ---------------------------------------------------------- Carga --- */
+
+    const idEvento = new URLSearchParams(window.location.search).get('id');
+
+    if (!idEvento) {
+        pintarNoEncontrado();
+        return;
+    }
+
+    API.publico('/api/publico/eventos/' + idEvento).then(r => {
+        if (r.ok) {
+            pintarFicha(r.cuerpo);
+        } else {
+            pintarNoEncontrado();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>
