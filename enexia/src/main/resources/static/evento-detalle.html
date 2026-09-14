@@ -30,14 +30,14 @@ img { max-width: 100%; display: block; }
 
 /* --- Navbar (identico a index.html) --------------------------------------- */
 
-.navbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 32px; background: rgba(250, 248, 250, .85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--borde); }
-.navbar__marca { display: flex; align-items: center; gap: 4px; flex: none; }
+.navbar { position: sticky; top: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; padding: 16px 32px; background: rgba(250, 248, 250, .85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--borde); }
+.navbar__marca { display: flex; align-items: center; gap: 4px; justify-self: start; grid-column: 1; }
 .navbar__marca svg { display: block; width: 22px; height: 22px; }
 .navbar__marca span { font-family: var(--marca); font-size: 22px; font-weight: 700; color: var(--texto); letter-spacing: -.3px; }
-.navbar__nav { display: flex; align-items: center; gap: 28px; }
+.navbar__nav { display: flex; align-items: center; gap: 28px; justify-self: center; grid-column: 2; }
 .navbar__nav span, .navbar__nav a { font-size: 13px; font-weight: 500; color: var(--texto-secundario); }
 .navbar__nav a:hover { color: var(--texto); }
-.navbar__acciones { display: flex; align-items: center; gap: 14px; }
+.navbar__acciones { display: flex; align-items: center; gap: 14px; justify-self: end; grid-column: 3; }
 .navbar__divisor { width: 1px; height: 20px; background: var(--borde); }
 .boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 0; border-radius: 10px; background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease; white-space: nowrap; }
 .boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
@@ -47,7 +47,8 @@ img { max-width: 100%; display: block; }
 .navbar__avatar { position: relative; width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); color: #fff; font-family: var(--marca); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
 .navbar__avatar-punto { position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 999px; background: var(--ok); border: 2px solid var(--lienzo); }
 .navbar__avatar-texto { display: flex; flex-direction: column; line-height: 1.25; }
-.navbar__avatar-nombre { font-family: var(--marca); font-size: 13px; font-weight: 700; color: var(--texto); }
+.navbar__avatar-nombre { font-family: var(--marca); font-size: 13px; font-weight: 700; color: var(--texto); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 500px) { .navbar__avatar-nombre { max-width: 90px; } }
 .navbar__avatar-sub { font-size: 11px; color: var(--texto-secundario); }
 .navbar__salir { background: none; border: 0; padding: 4px; color: var(--texto-secundario); font-size: 12px; font-weight: 600; cursor: pointer; }
 .navbar__salir:hover { color: var(--error); }
@@ -102,7 +103,7 @@ img { max-width: 100%; display: block; }
 
 /* Portada + chips */
 .ficha__portada { position: relative; height: 320px; border-radius: var(--radio-tarjeta); overflow: hidden; background: var(--acento-tinte); display: flex; align-items: center; justify-content: center; color: var(--acento); margin-bottom: 20px; box-shadow: var(--sombra-tarjeta); }
-.ficha__portada img { width: 100%; height: 100%; object-fit: cover; }
+.ficha__portada img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
 .ficha__portada svg { width: 40px; height: 40px; }
 
 .ficha__chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
@@ -114,19 +115,27 @@ img { max-width: 100%; display: block; }
 
 .ficha__organizador { display: flex; align-items: center; gap: 10px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--borde); }
 .ficha__organizador-avatar { width: 30px; height: 30px; border-radius: 999px; flex: none; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); color: #fff; font-family: var(--marca); font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center; }
-.ficha__organizador span { font-size: 13px; color: var(--texto-secundario); }
+.ficha__organizador-texto { font-size: 13px; color: var(--texto-secundario); }
 .ficha__organizador strong { color: var(--texto); font-weight: 600; }
 
 .ficha__seccion { margin-bottom: 28px; }
 .ficha__descripcion { font-size: 14px; line-height: 1.75; color: var(--texto-secundario); white-space: pre-line; }
 
 .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-.galeria img { width: 100%; height: 96px; object-fit: cover; border-radius: 12px; border: 1px solid var(--borde); }
+.galeria img { width: 100%; height: 96px; object-fit: cover; border-radius: 12px; border: 1px solid var(--borde); cursor: zoom-in; }
+
+/* Lightbox de imagenes */
+.lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, .75); display: flex; align-items: center; justify-content: center; padding: 40px; }
+.lightbox[hidden] { display: none; }
+.lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+.lightbox__cerrar { position: fixed; top: 20px; right: 24px; width: 40px; height: 40px; border-radius: 999px; border: 0; background: rgba(255, 255, 255, .12); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.lightbox__cerrar:hover { background: rgba(255, 255, 255, .22); }
+.lightbox__cerrar svg { width: 18px; height: 18px; }
 
 /* Seleccion de cronograma */
 .cronograma-lista { padding: 12px; background: var(--acento-tinte); border: 1px solid var(--acento-borde); border-radius: 16px; display: flex; flex-direction: column; gap: 8px; }
 .cronograma-fila { display: flex; align-items: center; gap: 12px; }
-.cronograma-fila__marca { width: 14px; height: 14px; flex: none; border-radius: 3px; border: 1px solid var(--acento-borde); background: var(--superficie); }
+.cronograma-fila__marca { width: 15px; height: 15px; flex: none; margin: 0; accent-color: var(--acento); cursor: pointer; }
 .cronograma-fila__fecha { flex: 1 1 150px; font-size: 12.5px; color: var(--texto-secundario); }
 .cronograma-fila__hora { flex: 1 1 130px; font-size: 12.5px; font-weight: 700; color: var(--texto); }
 .cronograma-fila__extra { font-size: 12px; color: var(--texto-secundario); }
@@ -184,8 +193,8 @@ img { max-width: 100%; display: block; }
 footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 .footer__cont { max-width: 1280px; margin: 0 auto; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .footer__marca { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-secundario); }
-.footer__icono { width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); display: flex; align-items: center; justify-content: center; color: #fff; flex: none; }
-.footer__icono svg { width: 12px; height: 12px; }
+.footer__icono { display: flex; align-items: center; justify-content: center; flex: none; }
+.footer__icono svg { width: 26px; height: 26px; }
 .footer__links { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
 .footer__links span, .footer__links a { font-size: 13px; color: var(--texto-secundario); }
 .footer__links a:hover { color: var(--acento-fuerte); }
@@ -208,6 +217,9 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
             <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
             <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
             <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+            <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#faf8fa"/>
+            <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#faf8fa"/>
+            <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#faf8fa"/>
         </svg>
         <span>NEXIA</span>
     </a>
@@ -223,11 +235,34 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
     <div class="cargando-pagina">Cargando evento...</div>
 </main>
 
+<div class="lightbox" id="lightbox" hidden>
+    <button class="lightbox__cerrar" id="lightboxCerrar" type="button" aria-label="Cerrar">
+        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5l13 13M15.5 2.5l-13 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <img id="lightboxImg" src="" alt="">
+</div>
+
 <footer>
     <div class="footer__cont">
         <div class="footer__marca">
             <span class="footer__icono">
-                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 8.5V3.5L6 1l4 2.5v5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M4.5 11V6.5h3V11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                    <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                    <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                    <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                    <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                    <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                    <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                    <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                    <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                    <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                    <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                    <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                    <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#faf8fa"/>
+                    <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#faf8fa"/>
+                    <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#faf8fa"/>
+                </svg>
             </span>
             <span>&copy; 2026 Enexia. Todos los derechos reservados.</span>
         </div>
@@ -301,6 +336,42 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
     }
 
     pintarNavbar();
+
+    /* -------------------------------------------------------- Lightbox --- */
+    /* Delegado en document: la portada y la galeria se re-pintan dinamicamente
+       (innerHTML), asi que un listener puesto directo en cada <img> se perdería
+       en cada render. Delegar deja esto funcionando sin importar cuantas veces
+       se reconstruya la ficha. */
+
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+
+    function abrirLightbox(src, alt) {
+        lightboxImg.src = src;
+        lightboxImg.alt = alt || '';
+        lightbox.hidden = false;
+    }
+
+    function cerrarLightbox() {
+        lightbox.hidden = true;
+        lightboxImg.src = '';
+    }
+
+    document.addEventListener('click', (e) => {
+        const img = e.target.closest('.ficha__portada img, .galeria img');
+        if (img) abrirLightbox(img.src, img.alt);
+    });
+
+    document.getElementById('lightboxCerrar').addEventListener('click', cerrarLightbox);
+
+    // Clickear el fondo cierra; clickear la imagen (adentro) no debe propagar el cierre.
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) cerrarLightbox();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !lightbox.hidden) cerrarLightbox();
+    });
 
     /* --------------------------------------------------- No encontrado --- */
 
@@ -376,7 +447,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
         const cronogramaListaHtml = (ev.cronogramas || []).map(c => `
             <div class="cronograma-fila">
-                <span class="cronograma-fila__marca"></span>
+                <input type="checkbox" class="cronograma-fila__marca" title="Selección de fecha (la inscripción todavía no está disponible)">
                 <span class="cronograma-fila__fecha">${fechaLarga(c.fecha)}</span>
                 <span class="cronograma-fila__hora">${horaCorta(c.horaInicio)} — ${horaCorta(c.horaFin)}</span>
                 <span class="cronograma-fila__extra">${(c.tickets || []).length} tipo${(c.tickets || []).length === 1 ? '' : 's'} de entrada</span>
@@ -441,7 +512,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
                         <div class="ficha__organizador">
                             <span class="ficha__organizador-avatar">${inicialOrg}</span>
-                            <span>Organizado por: <strong>${ev.organizador}</strong></span>
+                            <span class="ficha__organizador-texto">Organizado por: <strong>${ev.organizador}</strong></span>
                         </div>
 
                         <div class="ficha__seccion">

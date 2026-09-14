@@ -1,4 +1,4 @@
-package pages;
+package com.enexia.rg.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -14,8 +14,7 @@ import com.microsoft.playwright.options.AriaRole;
  */
 public class RegisterPage {
 
-    public static final String URL =
-            "http://localhost:8080/pages/auth/register-paso2.html";
+    public static final String URL = "http://localhost:8080/pages/auth/register-paso2.html";
 
     private final Page page;
 
@@ -53,25 +52,25 @@ public class RegisterPage {
     public RegisterPage(Page page) {
         this.page = page;
 
-        this.tipoPersonaFisica    = page.locator("label[for='tipo-pf']");
-        this.tipoPersonaJuridica  = page.locator("label[for='tipo-pj']");
+        this.tipoPersonaFisica = page.locator("label[for='tipo-pf']");
+        this.tipoPersonaJuridica = page.locator("label[for='tipo-pj']");
 
-        this.perfilParticipante   = page.locator("label[for='perfil-participante']");
-        this.perfilOrganizador    = page.locator("label[for='perfil-organizador']");
+        this.perfilParticipante = page.locator("label[for='perfil-participante']");
+        this.perfilOrganizador = page.locator("label[for='perfil-organizador']");
 
-        this.nickname             = page.locator("#nickname");
-        this.email                = page.locator("#email");
-        this.password             = page.locator("#password");
+        this.nickname = page.locator("#nickname");
+        this.email = page.locator("#email");
+        this.password = page.locator("#password");
         this.passwordConfirmacion = page.locator("#passwordConfirmacion");
 
-        this.nombre               = page.locator("#nombre");
-        this.apellido             = page.locator("#apellido");
-        this.dni                  = page.locator("#dni");
-        this.fechaNacimiento      = page.locator("#fechaNacimiento");
+        this.nombre = page.locator("#nombre");
+        this.apellido = page.locator("#apellido");
+        this.dni = page.locator("#dni");
+        this.fechaNacimiento = page.locator("#fechaNacimiento");
 
-        this.botonEnviar          = page.getByRole(AriaRole.BUTTON,
+        this.botonEnviar = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Finalizar Registro"));
-        this.aviso                = page.locator("#avisoRegistro");
+        this.aviso = page.locator("#avisoRegistro");
     }
 
     /* ------------------------------------------------------ Navegacion --- */
@@ -132,14 +131,14 @@ public class RegisterPage {
     /** Mensaje de error pintado bajo un campo concreto (400 de validacion). */
     public Locator errorDeCampo(String idCampo) {
         return page.locator("#" + idCampo)
-                   .locator("xpath=ancestor::div[contains(@class,'campo')][1]")
-                   .locator(".campo__error");
+                .locator("xpath=ancestor::div[contains(@class,'campo')][1]")
+                .locator(".campo__error");
     }
 
     /** El contenedor .campo se marca con la clase de invalido. */
     public Locator contenedorDeCampo(String idCampo) {
         return page.locator("#" + idCampo)
-                   .locator("xpath=ancestor::div[contains(@class,'campo')][1]");
+                .locator("xpath=ancestor::div[contains(@class,'campo')][1]");
     }
 
     /**

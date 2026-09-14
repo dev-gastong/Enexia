@@ -1,4 +1,4 @@
-package pages;
+package com.enexia.rg.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -7,17 +7,18 @@ import com.microsoft.playwright.options.AriaRole;
 /**
  * Clase LoginPage - Implementa el patrón Page Object Model (POM)
  * Define los elementos y acciones de la página de login.
- * Esta clase encapsula los locators y métodos relacionados con el formulario de login.
+ * Esta clase encapsula los locators y métodos relacionados con el formulario de
+ * login.
  */
 public class LoginPage {
     // Referencia a la página de Playwright
     private final Page page;
 
     // Locators para los elementos del formulario
-    private final Locator email;      // Campo de entrada de usuario
-    private final Locator password;      // Campo de entrada de contraseña
-    private final Locator loginButton;   // Botón para enviar el formulario
-    private final Locator flashMessage;  // Mensaje de resultado (éxito/error)
+    private final Locator email; // Campo de entrada de usuario
+    private final Locator password; // Campo de entrada de contraseña
+    private final Locator loginButton; // Botón para enviar el formulario
+    private final Locator flashMessage; // Mensaje de resultado (éxito/error)
 
     /**
      * Constructor de LoginPage
