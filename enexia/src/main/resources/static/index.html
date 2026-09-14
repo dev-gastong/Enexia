@@ -48,7 +48,7 @@ img { max-width: 100%; display: block; }
 .navbar__acciones { display: flex; align-items: center; gap: 14px; justify-self: end; grid-column: 3; }
 .navbar__divisor { width: 1px; height: 20px; background: var(--borde); }
 
-.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 0; border-radius: 10px; background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease; white-space: nowrap; }
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 0; border-radius: var(--radio-campo); background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease; white-space: nowrap; }
 .boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
 .boton--fantasma { background: transparent; color: var(--acento-fuerte); border: 1px solid var(--acento-borde); box-shadow: none; }
 .boton--fantasma:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
@@ -83,10 +83,10 @@ img { max-width: 100%; display: block; }
 .busqueda { position: relative; width: 100%; max-width: 1024px; margin-bottom: 8px; }
 .busqueda__caja {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding: 14px;
-    border: 1px solid var(--borde); border-radius: 20px; background: var(--superficie);
+    border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie);
     box-shadow: var(--sombra-tarjeta);
 }
-.busqueda__campo { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid var(--borde-campo); border-radius: 10px; background: var(--superficie-alt); }
+.busqueda__campo { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid var(--borde-campo); border-radius: var(--radio-campo); background: var(--superficie-alt); }
 .busqueda__campo svg { width: 14px; height: 14px; color: var(--texto-secundario); flex: none; }
 .busqueda__campo input, .busqueda__campo select { border: 0; background: transparent; outline: none; color: var(--texto); font-family: inherit; font-size: 13px; min-width: 0; }
 .busqueda__texto { flex: 1 1 220px; }
@@ -108,7 +108,7 @@ img { max-width: 100%; display: block; }
 
 .grilla-eventos { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
 
-.tarjeta-evento { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: 20px; background: var(--superficie); box-shadow: var(--sombra-tarjeta); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
+.tarjeta-evento { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
 .tarjeta-evento:hover { transform: translateY(-3px); box-shadow: var(--sombra-md), var(--sombra-tarjeta); }
 
 .tarjeta-evento__media { position: relative; height: 180px; background: var(--acento-tinte); display: flex; align-items: center; justify-content: center; color: var(--acento); flex: none; }
@@ -129,7 +129,7 @@ img { max-width: 100%; display: block; }
 
 .mas-eventos { display: flex; justify-content: center; padding-top: 32px; }
 .mas-eventos[hidden] { display: none; }
-.boton-cargar-mas { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 14px; border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-tarjeta); }
+.boton-cargar-mas { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: var(--radio-campo); border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-tarjeta); }
 .boton-cargar-mas:hover { background: var(--superficie-alt); color: var(--texto); }
 .boton-cargar-mas:disabled { opacity: .5; cursor: not-allowed; }
 .boton-cargar-mas svg { width: 14px; height: 14px; }

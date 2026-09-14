@@ -39,7 +39,7 @@ img { max-width: 100%; display: block; }
 .navbar__nav a:hover { color: var(--texto); }
 .navbar__acciones { display: flex; align-items: center; gap: 14px; justify-self: end; grid-column: 3; }
 .navbar__divisor { width: 1px; height: 20px; background: var(--borde); }
-.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 0; border-radius: 10px; background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease; white-space: nowrap; }
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 0; border-radius: var(--radio-campo); background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); transition: background .15s ease; white-space: nowrap; }
 .boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
 .boton--fantasma { background: transparent; color: var(--acento-fuerte); border: 1px solid var(--acento-borde); box-shadow: none; }
 .boton--fantasma:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
@@ -67,7 +67,7 @@ img { max-width: 100%; display: block; }
 }
 .no-encontrado__tarjeta {
     position: relative; width: 100%; max-width: 580px; padding: 48px 40px;
-    border-radius: 24px; background: var(--superficie); border: 1px solid var(--borde);
+    border-radius: var(--radio-tarjeta); background: var(--superficie); border: 1px solid var(--borde);
     box-shadow: var(--sombra-tarjeta); text-align: center;
 }
 .no-encontrado__franja { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 280px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, transparent, var(--acento), var(--accion), transparent); opacity: .7; }
@@ -122,18 +122,18 @@ img { max-width: 100%; display: block; }
 .ficha__descripcion { font-size: 14px; line-height: 1.75; color: var(--texto-secundario); white-space: pre-line; }
 
 .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-.galeria img { width: 100%; height: 96px; object-fit: cover; border-radius: 12px; border: 1px solid var(--borde); cursor: zoom-in; }
+.galeria img { width: 100%; height: 96px; object-fit: cover; border-radius: var(--radio-campo); border: 1px solid var(--borde); cursor: zoom-in; }
 
 /* Lightbox de imagenes */
 .lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, .75); display: flex; align-items: center; justify-content: center; padding: 40px; }
 .lightbox[hidden] { display: none; }
-.lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+.lightbox img { max-width: 90vw; max-height: 85vh; border-radius: var(--radio-campo); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
 .lightbox__cerrar { position: fixed; top: 20px; right: 24px; width: 40px; height: 40px; border-radius: 999px; border: 0; background: rgba(255, 255, 255, .12); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .lightbox__cerrar:hover { background: rgba(255, 255, 255, .22); }
 .lightbox__cerrar svg { width: 18px; height: 18px; }
 
 /* Seleccion de cronograma */
-.cronograma-lista { padding: 12px; background: var(--acento-tinte); border: 1px solid var(--acento-borde); border-radius: 16px; display: flex; flex-direction: column; gap: 8px; }
+.cronograma-lista { padding: 12px; background: var(--acento-tinte); border: 1px solid var(--acento-borde); border-radius: var(--radio-campo); display: flex; flex-direction: column; gap: 8px; }
 .cronograma-fila { display: flex; align-items: center; gap: 12px; }
 .cronograma-fila__marca { width: 15px; height: 15px; flex: none; margin: 0; accent-color: var(--acento); cursor: pointer; }
 .cronograma-fila__fecha { flex: 1 1 150px; font-size: 12.5px; color: var(--texto-secundario); }
@@ -141,19 +141,19 @@ img { max-width: 100%; display: block; }
 .cronograma-fila__extra { font-size: 12px; color: var(--texto-secundario); }
 
 /* Ubicacion completa */
-.ubicacion-tarjeta { padding: 14px; background: var(--superficie-alt); border: 1px solid var(--borde); border-radius: 16px; display: flex; flex-direction: column; gap: 8px; }
+.ubicacion-tarjeta { padding: 14px; background: var(--superficie-alt); border: 1px solid var(--borde); border-radius: var(--radio-campo); display: flex; flex-direction: column; gap: 8px; }
 .ubicacion-fila { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; }
 .ubicacion-fila svg { width: 13px; height: 13px; color: var(--texto-secundario); flex: none; margin-top: 2px; }
 .ubicacion-fila__label { width: 64px; flex: none; color: var(--texto-secundario); }
 .ubicacion-fila__val { color: var(--texto); }
 .ubicacion-gps { margin-top: 4px; text-align: center; }
-.ubicacion-gps span { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 10px; background: var(--superficie); border: 1px solid var(--borde); font-size: 11.5px; color: var(--texto-secundario); }
+.ubicacion-gps span { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: var(--radio); background: var(--superficie); border: 1px solid var(--borde); font-size: 11.5px; color: var(--texto-secundario); }
 .ubicacion-gps svg { width: 12px; height: 12px; color: var(--acento); }
 
 /* Opciones de acceso (al pie de la columna de texto, como en el Figma) */
-.tarjeta-lateral { border: 1px solid var(--borde); border-radius: 18px; background: var(--superficie); box-shadow: var(--sombra-tarjeta); padding: 20px; }
+.tarjeta-lateral { border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); padding: 20px; }
 
-.acceso-fila { padding: 12px; border-radius: 14px; background: var(--superficie-alt); border: 1px solid var(--borde); margin-bottom: 10px; }
+.acceso-fila { padding: 12px; border-radius: var(--radio-campo); background: var(--superficie-alt); border: 1px solid var(--borde); margin-bottom: 10px; }
 .acceso-fila--agotado { opacity: .65; }
 .acceso-fila__fecha { font-size: 11px; font-weight: 700; color: var(--acento-fuerte); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 8px; }
 .acceso-fila__cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -165,7 +165,7 @@ img { max-width: 100%; display: block; }
 .acceso-fila__cupos { margin-top: 6px; font-size: 11.5px; color: var(--texto-secundario); }
 .acceso-fila__cupos--agotado { color: var(--error); font-weight: 600; }
 
-.aviso-proximamente { margin-top: 4px; padding: 12px; border-radius: 12px; background: var(--info-tinte); border: 1px solid var(--info-borde); color: var(--info); font-size: 12px; text-align: center; line-height: 1.5; }
+.aviso-proximamente { margin-top: 4px; padding: 12px; border-radius: var(--radio-campo); background: var(--info-tinte); border: 1px solid var(--info-borde); color: var(--info); font-size: 12px; text-align: center; line-height: 1.5; }
 
 /* Eventos relacionados */
 .relacionados { max-width: 1180px; margin: 0 auto; padding: 8px 32px 64px; }
@@ -173,7 +173,7 @@ img { max-width: 100%; display: block; }
 .relacionados p { margin: 0 0 22px; font-size: 13px; color: var(--texto-secundario); }
 .relacionados__grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 
-.tarjeta-evento { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: 20px; background: var(--superficie); box-shadow: var(--sombra-tarjeta); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
+.tarjeta-evento { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
 .tarjeta-evento:hover { transform: translateY(-3px); box-shadow: var(--sombra-md), var(--sombra-tarjeta); }
 .tarjeta-evento__media { position: relative; height: 150px; background: var(--acento-tinte); display: flex; align-items: center; justify-content: center; color: var(--acento); flex: none; }
 .tarjeta-evento__media img { width: 100%; height: 100%; object-fit: cover; }
