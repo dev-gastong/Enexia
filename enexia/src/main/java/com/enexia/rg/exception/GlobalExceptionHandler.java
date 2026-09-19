@@ -36,8 +36,8 @@ public class GlobalExceptionHandler {
     /**
      * RESPUESTA UNICA para todos los fallos de login (politica 2026-09-08).
      *
-     * Cubre email inexistente, contrasena incorrecta, cuenta BLOQUEADA, cuenta
-     * en cooldown, SUSPENDIDA y DE_BAJA. Las cinco salen por aca con el MISMO
+     * Cubre email inexistente, contrasena incorrecta, cuenta BLOQUEADA,
+     * SUSPENDIDA y DE_BAJA. Las cuatro salen por aca con el MISMO
      * status (401), el MISMO codigo, el MISMO texto y SIN cabeceras extra.
      *
      * Este metodo es el unico punto del sistema donde esa uniformidad se puede
@@ -47,9 +47,8 @@ public class GlobalExceptionHandler {
      * del servidor (nivel WARN, ver abajo) y en historial_interacciones.
      *
      * NOTA PARA QUIEN VENGA DESPUES: no agregar aca un @ExceptionHandler mas
-     * especifico para CuentaBloqueadaException ni para CuentaEnCooldownException.
-     * Spring elegiria el mas especifico y la respuesta volveria a delatar el
-     * estado de la cuenta.
+     * especifico para CuentaBloqueadaException. Spring elegiria el mas
+     * especifico y la respuesta volveria a delatar el estado de la cuenta.
      */
     @ExceptionHandler(AutenticacionFallidaException.class)
     public ResponseEntity<ErrorResponse> manejarFalloDeAutenticacion(AutenticacionFallidaException ex) {

@@ -53,7 +53,7 @@ El sistema debe permitir a los usuarios solicitar el restablecimiento de sus cre
     https://<dominio>/unlock-account?token=<token-de-un-solo-uso>
     ```
 
-    Al consumir ese enlace, el sistema debe: validar que el token exista, no esté vencido y no haya sido usado; **revertir `estado_usuario` a `ACTIVO`**; poner `intentos_fallidos = 0`; limpiar `fecha_desbloqueo_cooldown`; e invalidar el token. A partir de ese momento la persona vuelve a iniciar sesión **con sus credenciales habituales**, sin necesidad de cambiar la contraseña.
+    Al consumir ese enlace, el sistema debe: validar que el token exista, no esté vencido y no haya sido usado; **revertir `estado_usuario` a `ACTIVO`**; poner `intentos_fallidos = 0`; e invalidar el token. A partir de ese momento la persona vuelve a iniciar sesión **con sus credenciales habituales**, sin necesidad de cambiar la contraseña.
 
   * **La solicitud de recuperación también es opaca.** El endpoint que pide el enlace debe responder siempre lo mismo ("si el email está registrado, recibirás un correo"), exista o no la cuenta, para no convertirse en un oráculo de enumeración de usuarios que RF-1.4 justamente evita.
 

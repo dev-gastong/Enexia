@@ -169,8 +169,6 @@ const UI = {
                 return 'Email o contrasena incorrectos.';
             case 'CUENTA_BLOQUEADA':
                 return '<strong>Cuenta bloqueada.</strong> ' + (cuerpo.mensaje || '');
-            case 'CUENTA_EN_COOLDOWN':
-                return '<strong>Cuenta penalizada temporalmente.</strong> ' + (cuerpo.mensaje || '');
             case 'RATE_LIMIT_EXCEDIDO':
                 return '<strong>Demasiados intentos desde esta IP.</strong> ' + (cuerpo.mensaje || '');
             case 'RECURSO_DUPLICADO':

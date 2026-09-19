@@ -68,15 +68,11 @@ public class Usuario {
     @Column(name = "nickname")
     private String nickname;
 
-    // Campos de control de seguridad del login (RF-1.4 / DFD Login)
+    // Campo de control de seguridad del login (RF-1.4 / DFD Login).
+    // Unico contador: al 3er fallo consecutivo la cuenta pasa a BLOQUEADO
+    // (ver IntentosLoginService). No hay CAPTCHA ni cooldown intermedio.
     @Column(name = "intentos_fallidos")
     private Integer intentosFallidos;
-
-    @Column(name = "requiere_captcha")
-    private Boolean requiereCaptcha;
-
-    @Column(name = "fecha_desbloqueo_cooldown")
-    private LocalDateTime fechaDesbloqueoCooldown;
 
     @Column(name = "fecha_baja")
     private LocalDateTime fechaBaja;

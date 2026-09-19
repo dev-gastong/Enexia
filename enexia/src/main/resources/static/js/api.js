@@ -241,6 +241,23 @@ const API = {
         return this.get('/api/organizador/organizaciones');
     },
 
+    /* ===== "Mi Equipo": miembros de una organizacion ===== */
+
+    /** GET /api/organizador/organizaciones/{id}/miembros -> equipo completo */
+    listarMiembros(idPersonaJuridica) {
+        return this.get('/api/organizador/organizaciones/' + idPersonaJuridica + '/miembros');
+    },
+
+    /** POST /api/organizador/organizaciones/{id}/miembros -> agrega a un usuario existente */
+    agregarMiembro(idPersonaJuridica, datos) {
+        return this.post('/api/organizador/organizaciones/' + idPersonaJuridica + '/miembros', datos);
+    },
+
+    /** DELETE /api/organizador/organizaciones/{id}/miembros/{idUsuario} -> quita del equipo */
+    quitarMiembro(idPersonaJuridica, idUsuario) {
+        return this.delete('/api/organizador/organizaciones/' + idPersonaJuridica + '/miembros/' + idUsuario);
+    },
+
     /* ===== Catalogos publicos (sin token) ===== */
 
     async publico(ruta) {

@@ -168,12 +168,10 @@ class RecuperacionCuentaServiceTest {
     class Consumo {
 
         @Test
-        @DisplayName("Token valido: cambia la contrasena, limpia contadores y consume el token")
+        @DisplayName("Token valido: cambia la contrasena, limpia el contador y consume el token")
         void restablecimientoCorrecto() {
             Usuario usuario = usuario(EstadoUsuarioNombre.ACTIVO);
-            usuario.setIntentosFallidos(5);
-            usuario.setRequiereCaptcha(true);
-            usuario.setFechaDesbloqueoCooldown(LocalDateTime.now().plusMinutes(5));
+            usuario.setIntentosFallidos(2);
 
             PasswordResetToken token = tokenVigente(usuario);
             when(tokenRepository.buscarPorHashConUsuario(anyString())).thenReturn(Optional.of(token));
@@ -184,8 +182,6 @@ class RecuperacionCuentaServiceTest {
             // Quien acaba de probar que controla la casilla no debe arrastrar la
             // penalizacion que dejo el atacante.
             assertThat(usuario.getIntentosFallidos()).isZero();
-            assertThat(usuario.getRequiereCaptcha()).isFalse();
-            assertThat(usuario.getFechaDesbloqueoCooldown()).isNull();
             // Un solo uso: si el enlace queda en el historial del navegador o se
             // reenvia, ya no sirve.
             verify(tokenRepository).delete(token);

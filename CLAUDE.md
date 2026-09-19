@@ -299,24 +299,24 @@ Behind CGNAT or an institution's wifi, hundreds of legitimate devices share one 
 **2. Account blocking is now SILENT.**
 Every login rejection answers identically: `401`, code `CREDENCIALES_INVALIDAS`, same message, no extra headers, and the same wall-clock cost. The attacker cannot tell "email doesn't exist" from "wrong password" from "account blocked" — not by body, status, headers, or timing.
 
-- All auth failures extend `AutenticacionFallidaException`, which carries an **internal** code (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_EN_COOLDOWN`, `CUENTA_SUSPENDIDA`). That code goes to the log and `historial_interacciones` — **never** to the HTTP response.
+- All auth failures extend `AutenticacionFallidaException`, which carries an **internal** code (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_SUSPENDIDA`). That code goes to the log and `historial_interacciones` — **never** to the HTTP response.
 - `GlobalExceptionHandler` has **one** handler for the whole family. **Do not add a more specific `@ExceptionHandler`** for any subclass: Spring would pick it and the response would start leaking account state again.
 - Every rejection path pays one BCrypt comparison (decoy hash) so response time is constant.
 - The `X-Reintentar-Despues` header was removed: read from DevTools, it confirmed the account exists and is penalized.
 - **The legitimate owner is notified by email** with a single-use recovery link (`RecuperacionCuentaService`) — the one channel the attacker does not control.
 
 **3. Blocking threshold — FINAL DECISION 2026-09-09: block on the 3rd failure.**
-The former escalation ladder (3 → captcha + 5 min cooldown, 6 → 30 min cooldown, 9 → block) is **gone from the spec**. The rule is now a single step, counted **per account** (`usuario.intentos_fallidos`), never per IP:
+The former escalation ladder (3 → captcha + 5 min cooldown, 6 → 30 min cooldown, 9 → block) is gone, from both the spec and the code (aligned 2026-09-19). The rule is a single step, counted **per account** (`usuario.intentos_fallidos`), never per IP:
 
 - 3 consecutive failures → `estado_usuario = BLOQUEADO` + security email to the owner
 - Any successful login → counter back to 0
 
-The email carries a **direct unlock link** — `/unlock-account?token=XYZ`, a single-use, time-limited token. Consuming it sets `estado_usuario = ACTIVO`, `intentos_fallidos = 0`, clears `fecha_desbloqueo_cooldown`, and invalidates the token. The owner then logs in with their **usual credentials** — no password change required.
+`Usuario` no longer has `requiere_captcha` / `fecha_desbloqueo_cooldown`: those fields only existed to support the ladder's intermediate steps and were removed along with it. `IntentosLoginService` now takes a single threshold (`enexia.security.login.intentos-bloqueo=3`).
 
-This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modulo_1.md` and `docs/diagrams/login_registro/login.md` were both rewritten on 2026-09-09 and now agree. CAPTCHA and 2FA are out of scope and were removed from the login DFD.
+This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modulo_1.md` and `docs/diagrams/login_registro/login.md` were both rewritten on 2026-09-09 and now agree, and the code matches them as of 2026-09-19. CAPTCHA and 2FA are out of scope and were removed from the login DFD.
 
-> ### ⚠️ DOCS ARE AHEAD OF CODE HERE
-> The spec above (single 3-failure step + unlock endpoint) is the **target**. What `AuthService` / `IntentosLoginService` actually run today is still the old 3/6/9 ladder, and `/unlock-account` **does not exist yet** — `RecuperacionCuentaService` only issues the password-reset link. Aligning the code is pending work; until then, read the code as the old behavior and this section as the requirement.
+> ### ⚠️ Still open: no dedicated unlock endpoint
+> RF-1.5 describes an email link that reactivates the account and lets the owner log back in with their **usual credentials**, no password change required. That is **not** what exists today: the security email links to `POST /api/auth/recuperacion/confirmar`, which reactivates a `BLOQUEADO` account but *requires setting a new password* — there is no separate `/unlock-account?token=` endpoint that unlocks without touching the password. Building that endpoint is still pending work.
 - **Text Moderation**: `better-profanity` library for content filtering (Registro + Login + Events later)
 - **Input Validation**: Use `@Valid` + `@NotNull`, `@Email`, `@Pattern` on DTOs
 
@@ -389,6 +389,9 @@ POST   /api/auth/recuperacion/confirmar      público   consume el enlace y desb
 
 POST   /api/organizador/organizaciones       ORGANIZADOR   alta de organización (RF-7.2)
 GET    /api/organizador/organizaciones       ORGANIZADOR
+GET    /api/organizador/organizaciones/{id}/miembros            ORGANIZADOR   "Mi Equipo": listar (cualquier miembro)
+POST   /api/organizador/organizaciones/{id}/miembros            ORGANIZADOR   agregar miembro existente (solo ADMINISTRADOR)
+DELETE /api/organizador/organizaciones/{id}/miembros/{idUsuario} ORGANIZADOR  quitar miembro (solo ADMINISTRADOR, nunca al último)
 POST   /api/organizador/eventos              ORGANIZADOR   multipart: datos (JSON) + imagenes
 GET    /api/organizador/eventos              ORGANIZADOR   dashboard paginado (RF-2.8)
 DELETE /api/organizador/eventos/{id}         ORGANIZADOR   baja lógica (RF-2.9)
@@ -467,8 +470,8 @@ There is **no `REVISION_PENDIENTE` on alta and no deferred approval.** Verifying
 | PJ Moderation (Manual review + status tracking) | ✅ | - |
 | JWT Authentication | ✅ | - |
 | ~~Rate Limiting (IP-based)~~ | ❌ **REMOVED 2026-09-08** | see below |
-| Account Locking (silent) | ✅ *(3/6/9 ladder in code; spec is now a single 3-failure step)* | align code |
-| Cooldown (5 / 30 min penalty) | ✅ *(dropped from the spec 2026-09-09)* | remove |
+| Account Locking (silent, single 3-failure step) | ✅ **code aligned 2026-09-19** | - |
+| ~~Cooldown / CAPTCHA ladder (3/6/9)~~ | ❌ **REMOVED 2026-09-19** (code now matches spec) | - |
 | Account unlock via `/unlock-account?token=` | ❌ spec'd, not built | next |
 | Password Reset + account unlock by email (RF-1.5) | ✅ **Sprint 2** | - |
 | Text Moderation (better-profanity) | ✅ | - |
@@ -522,9 +525,7 @@ public class Usuario {
     @Enumerated(EnumType.STRING)
     private EstadoUsuario estado;     // ACTIVO, BLOQUEADO, SUSPENDIDO, DE_BAJA
     
-    private Integer intentos_fallidos;    // Reset to 0 on success, increment on failure
-    private LocalDateTime fecha_desbloqueo_cooldown; // Null = no penalty
-    private Boolean requiere_captcha;     // False initially, True after 3 attempts
+    private Integer intentos_fallidos;    // Reset to 0 on success; BLOQUEADO at 3 (ADR-13)
     
     private LocalDateTime fecha_baja;     // Soft delete field
     private LocalDateTime fecha_registro;

@@ -203,8 +203,6 @@ class AuthServiceRegistroTest {
             Usuario guardado = capturado.getValue();
 
             assertThat(guardado.getIntentosFallidos()).isZero();
-            assertThat(guardado.getRequiereCaptcha()).isFalse();
-            assertThat(guardado.getFechaDesbloqueoCooldown()).isNull();
             // fecha_baja null = cuenta vigente. El borrado es logico: nunca se
             // elimina la fila, se le pone fecha.
             assertThat(guardado.getFechaBaja()).isNull();

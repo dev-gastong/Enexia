@@ -22,7 +22,8 @@
    ALCANCE HONESTO: solo nombre/apellido/fecha de nacimiento tienen back
    de escritura (PUT /api/usuario/perfil, ver docs/log/sprint_2). La
    organizacion se muestra de solo lectura -- no existe todavia un
-   endpoint para editarla ni para gestionar miembros.
+   endpoint para editar sus datos fiscales. La gestion de miembros SI
+   existe, pero vive en equipo.html, no en esta pantalla.
    ===================================================================== */
 
 :root { --panel-ancho: 260px; --radio-tarjeta: 16px; }
@@ -405,8 +406,8 @@ a:hover { color: var(--acento-fuerte); }
                 ${campoSoloLectura('Email Corporativo', org.emailCorporativo)}
                 ${campoSoloLectura('Telefono de Contacto', org.telefonoContacto)}
                 <p class="perfil-card__nota">
-                    La edicion de organizaciones y la gestion de miembros todavia no estan
-                    disponibles desde el panel. Por ahora esta tarjeta es de solo lectura.
+                    La edicion de esta organizacion todavia no esta disponible desde el panel.
+                    Para gestionar quien la administra, anda a <a href="equipo.html">Mi Equipo</a>.
                 </p>
             </div>
         `;

@@ -11,7 +11,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -33,7 +32,6 @@ import com.enexia.rg.dto.UsuarioLoginResponse;
 import com.enexia.rg.exception.AutenticacionFallidaException;
 import com.enexia.rg.exception.CredencialesInvalidasException;
 import com.enexia.rg.exception.CuentaBloqueadaException;
-import com.enexia.rg.exception.CuentaEnCooldownException;
 import com.enexia.rg.exception.CuentaNoHabilitadaException;
 import com.enexia.rg.model.EstadoUsuarioNombre;
 import com.enexia.rg.model.Rol;
@@ -193,25 +191,7 @@ class AuthServiceLoginTest {
         }
 
         @Test
-        @DisplayName("Cooldown vigente -> mismo mensaje publico y el momento NO se publica")
-        void cuentaEnCooldown() {
-            Usuario usuario = usuarioActivo();
-            LocalDateTime finCooldown = LocalDateTime.now().plusMinutes(5);
-            usuario.setFechaDesbloqueoCooldown(finCooldown);
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
-
-            assertThatThrownBy(() -> authService.login(peticion, request))
-                    .isInstanceOf(CuentaEnCooldownException.class)
-                    .hasMessage(AutenticacionFallidaException.MENSAJE_PUBLICO)
-                    // El dato existe para el log, pero el mensaje no lo menciona:
-                    // publicarlo (como hacia la cabecera X-Reintentar-Despues)
-                    // le decia al atacante cuando reanudar el ataque.
-                    .extracting(ex -> ((CuentaEnCooldownException) ex).getDisponibleDesde())
-                    .isEqualTo(finCooldown);
-        }
-
-        @Test
-        @DisplayName("Las cinco ramas comparten la misma raiz, que el handler traduce a un unico 401")
+        @DisplayName("Las cuatro ramas comparten la misma raiz, que el handler traduce a un unico 401")
         void todasCompartenLaRaiz() {
             // Si alguien agrega manana una excepcion de login que NO herede de
             // AutenticacionFallidaException, el handler global no la va a
@@ -220,7 +200,6 @@ class AuthServiceLoginTest {
             assertThat(AutenticacionFallidaException.class)
                     .isAssignableFrom(CredencialesInvalidasException.class)
                     .isAssignableFrom(CuentaBloqueadaException.class)
-                    .isAssignableFrom(CuentaEnCooldownException.class)
                     .isAssignableFrom(CuentaNoHabilitadaException.class);
         }
     }
@@ -259,19 +238,6 @@ class AuthServiceLoginTest {
             // Esta era la fuga mas facil de dejar abierta: el rechazo por estado
             // ocurre ANTES de comparar la contrasena, asi que sin el senuelo
             // saldria mucho mas rapido que un rechazo normal.
-            verify(passwordEncoder, times(1)).matches(anyString(), anyString());
-        }
-
-        @Test
-        @DisplayName("Cooldown: paga el BCrypt aunque no compare la contrasena real")
-        void cooldownGastaBcrypt() {
-            Usuario usuario = usuarioActivo();
-            usuario.setFechaDesbloqueoCooldown(LocalDateTime.now().plusMinutes(5));
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
-
-            assertThatThrownBy(() -> authService.login(peticion, request))
-                    .isInstanceOf(CuentaEnCooldownException.class);
-
             verify(passwordEncoder, times(1)).matches(anyString(), anyString());
         }
     }

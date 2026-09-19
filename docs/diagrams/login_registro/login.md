@@ -113,7 +113,7 @@ graph TD
     P1_5_1 --> C_Token{¿Token existe,<br>vigente y sin usar?}
     C_Token -->|No| Err_Token([Error: Enlace inválido o vencido])
 
-    C_Token -->|Sí| P1_5_2["1.5.2: Reactivar Cuenta<br>estado_usuario = ACTIVO<br>intentos_fallidos = 0<br>fecha_desbloqueo_cooldown = NULL"]
+    C_Token -->|Sí| P1_5_2["1.5.2: Reactivar Cuenta<br>estado_usuario = ACTIVO<br>intentos_fallidos = 0"]
     P1_5_2 -->|Actualizar Usuario| D2_User
     P1_5_2 --> P1_5_3[1.5.3: Invalidar Token de un Solo Uso]
     P1_5_3 -->|Marcar token como consumido| D7_Tokens

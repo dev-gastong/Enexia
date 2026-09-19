@@ -20,7 +20,6 @@ import com.enexia.rg.dto.UsuarioRegistroResponse;
 import com.enexia.rg.exception.ContenidoInapropiadoException;
 import com.enexia.rg.exception.CredencialesInvalidasException;
 import com.enexia.rg.exception.CuentaBloqueadaException;
-import com.enexia.rg.exception.CuentaEnCooldownException;
 import com.enexia.rg.exception.CuentaNoHabilitadaException;
 import com.enexia.rg.exception.RecursoDuplicadoException;
 import com.enexia.rg.exception.ReglaNegocioException;
@@ -51,9 +50,9 @@ import lombok.extern.slf4j.Slf4j;
  * Implementa los DFD de docs/diagrams/login_registro/ con dos exclusiones
  * decididas el 2026-08-24, alineadas con el alcance de Sprint 1 de CLAUDE.md:
  *
- *   - CAPTCHA (paso 1.2.4A): NO se valida. El campo {@code requiere_captcha} SI
- *     se marca al tercer intento fallido, de modo que el dato queda listo y
- *     activar la validacion despues sea agregar un paso, no rehacer la logica.
+ *   - CAPTCHA (paso 1.2.4A): NO se valida. Queda diferido; no hay campo de
+ *     control reservado para el (ver ADR-13, que descarto la escalera 3/6/9
+ *     que antes lo marcaba al tercer intento).
  *   - 2FA por email (pasos 1.2.8 y 1.2.9): NO se implementa. El login exitoso
  *     emite el JWT directamente.
  *
@@ -152,12 +151,7 @@ public class AuthService {
         // --- Paso 1.2.4: el estado debe ser ACTIVO (RF-1.6).
         verificarEstadoHabilitado(usuario, peticion, request);
 
-        // --- Paso 1.2.4: cooldown vigente.
-        verificarCooldown(usuario, peticion);
-
-        // --- Paso 1.2.4A (CAPTCHA): fuera de alcance en Sprint 1.
-        // El flag requiere_captcha ya se marca en IntentosLoginService; solo
-        // falta validar el token contra el proveedor externo.
+        // --- Paso 1.2.4A (CAPTCHA): fuera de alcance, diferido (ver ADR-13).
 
         // --- Paso 1.2.5: comparar contrasena contra el hash BCrypt.
         if (!passwordEncoder.matches(peticion.getPassword(), usuario.getPassword())) {
@@ -233,21 +227,6 @@ public class AuthService {
             throw new CuentaBloqueadaException();
         }
         throw new CuentaNoHabilitadaException(nombreEstado);
-    }
-
-    /**
-     * Paso 1.2.4: rechaza si todavia corre la penalizacion temporal.
-     *
-     * No se compara la contrasena durante el cooldown (ese es justamente el
-     * sentido de la penalizacion), pero SI se paga el costo del BCrypt senuelo,
-     * para que este rechazo no llegue antes que un rechazo normal.
-     */
-    private void verificarCooldown(Usuario usuario, UsuarioLoginRequest peticion) {
-        LocalDateTime cooldown = usuario.getFechaDesbloqueoCooldown();
-        if (cooldown != null && LocalDateTime.now().isBefore(cooldown)) {
-            nivelarTiempoDeRespuesta(peticion.getPassword());
-            throw new CuentaEnCooldownException(cooldown);
-        }
     }
 
     /** Pasos 1.2.6 y 1.2.7: contabiliza el fallo, penaliza, audita y avisa. */
@@ -425,8 +404,6 @@ public class AuthService {
         usuario.setPassword(passwordHasheada);
         usuario.setEstadoUsuario(estadoActivo);
         usuario.setIntentosFallidos(0);
-        usuario.setRequiereCaptcha(false);
-        usuario.setFechaDesbloqueoCooldown(null);
         usuario.setFechaBaja(null);          // null = cuenta vigente (RF-1.6)
         usuario = usuarioRepository.save(usuario);
 

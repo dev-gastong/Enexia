@@ -189,11 +189,9 @@ public class RecuperacionCuentaService {
         Usuario usuario = registro.getUsuario();
         usuario.setPassword(passwordEncoder.encode(passwordNueva));
 
-        // Los contadores se limpian siempre: quien acaba de probar que controla
-        // la casilla no debe arrastrar la penalizacion que dejo el atacante.
+        // El contador se limpia siempre: quien acaba de probar que controla
+        // la casilla no debe arrastrar los fallos que dejo el atacante.
         usuario.setIntentosFallidos(0);
-        usuario.setRequiereCaptcha(false);
-        usuario.setFechaDesbloqueoCooldown(null);
 
         reactivarSiEstabaBloqueada(usuario);
 

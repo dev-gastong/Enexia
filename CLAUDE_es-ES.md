@@ -359,24 +359,24 @@ Detrás de un CGNAT o del wifi de una institución, cientos de dispositivos leg�
 **2. El bloqueo de cuenta pasó a ser SILENCIOSO.**
 Todos los rechazos de login responden idéntico: `401`, código `CREDENCIALES_INVALIDAS`, mismo mensaje, sin cabeceras extra y con el mismo costo en tiempo. El atacante no puede distinguir "el email no existe" de "la contraseña está mal" ni de "la cuenta está bloqueada": ni por el cuerpo, ni por el status, ni por las cabeceras, ni por el reloj.
 
-- Todos los fallos heredan de `AutenticacionFallidaException`, que lleva un código **interno** (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_EN_COOLDOWN`, `CUENTA_SUSPENDIDA`). Ese código va al log y a `historial_interacciones`, **nunca** a la respuesta HTTP.
+- Todos los fallos heredan de `AutenticacionFallidaException`, que lleva un código **interno** (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_SUSPENDIDA`). Ese código va al log y a `historial_interacciones`, **nunca** a la respuesta HTTP.
 - `GlobalExceptionHandler` tiene **un solo** handler para toda la familia. **No agregar un `@ExceptionHandler` más específico** para ninguna subclase: Spring elegiría el más específico y la respuesta volvería a delatar el estado de la cuenta.
 - Cada rama de rechazo paga una comparación BCrypt (hash señuelo) para que el tiempo de respuesta sea constante.
 - Se quitó la cabecera `X-Reintentar-Despues`: leída desde las DevTools, confirmaba que la cuenta existe y está penalizada.
 - **Al titular legítimo se le avisa por email**, con enlace de recuperación de un solo uso (`RecuperacionCuentaService`): el único canal que el atacante no controla.
 
 **3. Umbral de bloqueo — DECISIÓN FINAL 2026-09-09: bloqueo al 3° fallo.**
-La antigua escalera de penalización (3 → captcha + cooldown de 5 min, 6 → cooldown de 30 min, 9 → bloqueo) **desaparece de la especificación**. La regla es ahora un único escalón, contado **por cuenta** (`usuario.intentos_fallidos`), nunca por IP:
+La antigua escalera de penalización (3 → captcha + cooldown de 5 min, 6 → cooldown de 30 min, 9 → bloqueo) desapareció, tanto de la especificación como del código (alineado el 2026-09-19). La regla es un único escalón, contado **por cuenta** (`usuario.intentos_fallidos`), nunca por IP:
 
 - 3 fallos consecutivos → `estado_usuario = BLOQUEADO` + email de seguridad al titular
 - Cualquier login exitoso → contador a 0
 
-El correo incluye un **enlace de desbloqueo directo** — `/unlock-account?token=XYZ`, token de un solo uso y con vencimiento acotado. Al consumirlo, se pone `estado_usuario = ACTIVO`, `intentos_fallidos = 0`, se limpia `fecha_desbloqueo_cooldown` y se invalida el token. El titular vuelve a entrar con sus **credenciales habituales**, sin cambiar la contraseña.
+`Usuario` ya no tiene `requiere_captcha` / `fecha_desbloqueo_cooldown`: esos campos solo existían para los escalones intermedios de la escalera y se retiraron junto con ella. `IntentosLoginService` ahora recibe un único umbral (`enexia.security.login.intentos-bloqueo=3`).
 
-Con esto queda cerrada la divergencia de RF-1.4: `docs/requisitos/requisitos_funcionales/modulo_1.md` y `docs/diagrams/login_registro/login.md` se reescribieron el 2026-09-09 y ahora coinciden. CAPTCHA y 2FA quedan fuera de alcance y se quitaron del DFD de login.
+Con esto queda cerrada la divergencia de RF-1.4: `docs/requisitos/requisitos_funcionales/modulo_1.md` y `docs/diagrams/login_registro/login.md` se reescribieron el 2026-09-09 y ahora coinciden, y el código las alcanzó el 2026-09-19. CAPTCHA y 2FA quedan fuera de alcance y se quitaron del DFD de login.
 
-> ### ⚠️ ACÁ LA DOCUMENTACIÓN VA POR DELANTE DEL CÓDIGO
-> Lo de arriba (escalón único al 3° fallo + endpoint de desbloqueo) es el **objetivo**. Lo que hoy ejecutan `AuthService` / `IntentosLoginService` sigue siendo la escalera 3/6/9, y `/unlock-account` **todavía no existe** — `RecuperacionCuentaService` solo emite el enlace de restablecimiento de contraseña. Alinear el código es trabajo pendiente; hasta entonces, el código refleja el comportamiento viejo y esta sección refleja el requisito.
+> ### ⚠️ Sigue pendiente: no hay endpoint de desbloqueo dedicado
+> RF-1.5 describe un enlace por correo que reactiva la cuenta y deja entrar con las **credenciales habituales**, sin cambiar la contraseña. Eso **no** es lo que existe hoy: el email de seguridad enlaza a `POST /api/auth/recuperacion/confirmar`, que reactiva una cuenta `BLOQUEADA` pero *exige poner una contraseña nueva* — no hay un endpoint `/unlock-account?token=` separado que desbloquee sin tocar la contraseña. Construir ese endpoint sigue pendiente.
 
 ### Registro de Persona Jurídica: los dos caminos
 
@@ -427,6 +427,9 @@ POST   /api/auth/recuperacion/confirmar      público   consume el enlace y desb
 
 POST   /api/organizador/organizaciones       ORGANIZADOR   alta de organización (RF-7.2)
 GET    /api/organizador/organizaciones       ORGANIZADOR
+GET    /api/organizador/organizaciones/{id}/miembros            ORGANIZADOR   "Mi Equipo": listar (cualquier miembro)
+POST   /api/organizador/organizaciones/{id}/miembros            ORGANIZADOR   agregar miembro existente (solo ADMINISTRADOR)
+DELETE /api/organizador/organizaciones/{id}/miembros/{idUsuario} ORGANIZADOR  quitar miembro (solo ADMINISTRADOR, nunca al último)
 POST   /api/organizador/eventos              ORGANIZADOR   multipart: datos (JSON) + imagenes
 GET    /api/organizador/eventos              ORGANIZADOR   dashboard paginado (RF-2.8)
 DELETE /api/organizador/eventos/{id}         ORGANIZADOR   baja lógica (RF-2.9)
@@ -493,8 +496,8 @@ Sin `CLOUDINARY_CLOUD_NAME` el servicio corre en **modo simulado**: valida forma
 | Moderación de PJ (Revisión manual + seguimiento de estado) | ✅ | - |
 | Autenticación con JWT | ✅ | - |
 | ~~Rate Limiting (por IP)~~ | ❌ **ELIMINADO 2026-09-08** | ver ADR-09 |
-| Bloqueo de cuenta silencioso en 3 intentos fallidos | ✅ *(en código sigue la escalera 3/6/9; la especificación quedó en un solo escalón el 2026-09-09)* | alinear código |
-| Cooldown (penalización 5 / 30 min) | ✅ *(retirado de la especificación el 2026-09-09)* | quitar |
+| Bloqueo de cuenta silencioso, escalón único al 3° fallo | ✅ **código alineado el 2026-09-19** | - |
+| ~~Escalera de cooldown / CAPTCHA (3/6/9)~~ | ❌ **ELIMINADA 2026-09-19** (el código ya coincide con la especificación) | - |
 | Desbloqueo por enlace `/unlock-account?token=` | ❌ especificado, sin construir | siguiente |
 | Moderación de texto (better-profanity) | ✅ | - |
 | 2FA (Verificación por email) | ❌ fuera de alcance | - |
@@ -537,9 +540,7 @@ public class Usuario {
     @Enumerated(EnumType.STRING)
     private EstadoUsuario estado;     // ACTIVO, BLOQUEADO, SUSPENDIDO, DE_BAJA
     
-    private Integer intentos_fallidos;    // Reset a 0 en éxito, incrementar en fallo
-    private LocalDateTime fecha_desbloqueo_cooldown; // Null = sin penalización
-    private Boolean requiere_captcha;     // False inicialmente, True después 3 intentos
+    private Integer intentos_fallidos;    // Reset a 0 en éxito; BLOQUEADO al llegar a 3 (ADR-13)
     
     private LocalDateTime fecha_baja;     // Campo de borrado lógico
     private LocalDateTime fecha_registro;

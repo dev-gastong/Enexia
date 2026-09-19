@@ -69,6 +69,8 @@ public class AuditoriaService {
     // --- Modulo 7: organizaciones (RF-7.2)
     public static final String ACCION_ALTA_ORGANIZACION = "ALTA_ORGANIZACION";
     public static final String ACCION_ALTA_ORGANIZACION_RECHAZADA = "ALTA_ORGANIZACION_RECHAZADA";
+    public static final String ACCION_MIEMBRO_AGREGADO = "MIEMBRO_AGREGADO";
+    public static final String ACCION_MIEMBRO_ELIMINADO = "MIEMBRO_ELIMINADO";
 
     // --- Modulo 2: eventos (RF-2.2, RF-2.7, RF-2.9)
     public static final String ACCION_EVENTO_CREADO = "EVENTO_CREADO";

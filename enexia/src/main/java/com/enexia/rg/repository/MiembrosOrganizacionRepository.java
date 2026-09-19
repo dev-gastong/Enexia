@@ -1,5 +1,6 @@
 package com.enexia.rg.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,4 +40,35 @@ public interface MiembrosOrganizacionRepository
             """)
     Optional<MiembrosOrganizacion> buscarMembresia(@Param("idUsuario") Long idUsuario,
                                                    @Param("idPersonaJuridica") Long idPersonaJuridica);
+
+    /**
+     * Todos los miembros de una organizacion, con la persona humana detras de
+     * cada uno ya cargada (nombre/apellido/email para la pantalla "Mi Equipo").
+     *
+     * ADMINISTRADOR primero y despues por apellido: no hay un timestamp de
+     * incorporacion en el MER (miembros_organizacion no lo declara), asi que no
+     * hay forma de ordenar por antiguedad.
+     */
+    @Query("""
+            SELECT mo FROM MiembrosOrganizacion mo
+            JOIN FETCH mo.usuario u
+            LEFT JOIN FETCH u.personaFisica pf
+            LEFT JOIN FETCH pf.persona
+            WHERE mo.personaJuridica.idPersonaJuridica = :idPersonaJuridica
+            ORDER BY CASE WHEN mo.rolEnEmpresa = 'ADMINISTRADOR' THEN 0 ELSE 1 END, pf.apellido
+            """)
+    List<MiembrosOrganizacion> listarPorOrganizacion(@Param("idPersonaJuridica") Long idPersonaJuridica);
+
+    /**
+     * Cuenta cuantos ADMINISTRADOR tiene la organizacion.
+     *
+     * Es el control que evita dejarla sin nadie que pueda operarla: antes de
+     * borrar o degradar al ultimo administrador, el service consulta esto.
+     */
+    @Query("""
+            SELECT COUNT(mo) FROM MiembrosOrganizacion mo
+            WHERE mo.personaJuridica.idPersonaJuridica = :idPersonaJuridica
+              AND mo.rolEnEmpresa = 'ADMINISTRADOR'
+            """)
+    long contarAdministradores(@Param("idPersonaJuridica") Long idPersonaJuridica);
 }

@@ -19,20 +19,19 @@ import com.enexia.rg.repository.UsuarioRepository;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Politica de penalizacion por intentos fallidos (DFD Login 1.2.5A a 1.2.7).
+ * Politica de penalizacion por intentos fallidos (RF-1.4, DFD Login 1.2.4-1.2.5).
  *
- * ESCALA APLICADA
- *   3 fallos -> requiere_captcha = true  + cooldown de 5 minutos
- *   6 fallos -> cooldown de 30 minutos
- *   9 fallos -> estado BLOQUEADO (ya no se levanta solo; lo destraba un admin)
+ * REGLA UNICA (ADR-13, 2026-09-09)
+ *   3 fallos consecutivos -> estado_usuario = BLOQUEADO.
  *
- * Los umbrales salen de application.properties para poder endurecer o relajar
- * la politica sin recompilar.
+ * No hay CAPTCHA ni cooldown intermedio: la escalera 3/6/9 usada hasta el
+ * 2026-09-19 se descarto por decision del usuario. El bloqueo no se informa
+ * por ningun canal visible para quien esta logueandose (ver AuthService); el
+ * aviso llega solo por email, con el enlace de recuperacion que tambien
+ * reactiva la cuenta (RecuperacionCuentaService).
  *
- * DISCREPANCIA DOCUMENTADA
- * RF-1.4 dice "bloquear al tercer intento fallido". El DFD de login, posterior
- * y mas detallado, define la escala de arriba. Se implemento el DFD por
- * decision del 2026-08-24; RF-1.4 deberia actualizarse para reflejarlo.
+ * El umbral sale de application.properties para poder endurecer o relajar la
+ * politica sin recompilar.
  *
  * POR QUE ES UNA CLASE APARTE Y NO METODOS DE AuthService
  * Estos metodos necesitan {@code REQUIRES_NEW}, y las anotaciones
@@ -51,33 +50,21 @@ public class IntentosLoginService {
     private final UsuarioEstadoRepository usuarioEstadoRepository;
     private final HistorialEstadoUsuarioRepository historialEstadoRepository;
 
-    private final int umbralCaptcha;
-    private final int umbralCooldownLargo;
     private final int umbralBloqueo;
-    private final int cooldownCortoMinutos;
-    private final int cooldownLargoMinutos;
 
     public IntentosLoginService(
             UsuarioRepository usuarioRepository,
             UsuarioEstadoRepository usuarioEstadoRepository,
             HistorialEstadoUsuarioRepository historialEstadoRepository,
-            @Value("${enexia.security.login.intentos-captcha}") int umbralCaptcha,
-            @Value("${enexia.security.login.intentos-cooldown-largo}") int umbralCooldownLargo,
-            @Value("${enexia.security.login.intentos-bloqueo}") int umbralBloqueo,
-            @Value("${enexia.security.login.cooldown-corto-minutos}") int cooldownCortoMinutos,
-            @Value("${enexia.security.login.cooldown-largo-minutos}") int cooldownLargoMinutos) {
+            @Value("${enexia.security.login.intentos-bloqueo}") int umbralBloqueo) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioEstadoRepository = usuarioEstadoRepository;
         this.historialEstadoRepository = historialEstadoRepository;
-        this.umbralCaptcha = umbralCaptcha;
-        this.umbralCooldownLargo = umbralCooldownLargo;
         this.umbralBloqueo = umbralBloqueo;
-        this.cooldownCortoMinutos = cooldownCortoMinutos;
-        this.cooldownLargoMinutos = cooldownLargoMinutos;
     }
 
     /**
-     * Contabiliza un intento fallido y aplica la penalizacion que corresponda.
+     * Contabiliza un intento fallido y bloquea la cuenta si llego al umbral.
      *
      * REQUIRES_NEW es imprescindible: quien llama a este metodo va a lanzar
      * CredencialesInvalidasException inmediatamente despues. Si compartieran
@@ -94,7 +81,7 @@ public class IntentosLoginService {
         // Lectura con bloqueo de fila (SELECT ... FOR UPDATE). El contador es un
         // leer-modificar-escribir: sin el bloqueo, dos intentos simultaneos leen
         // el mismo valor y uno de los incrementos se pierde, permitiendo pasar
-        // los umbrales sin ser penalizado.
+        // el umbral sin ser penalizado.
         Optional<Usuario> encontrado = usuarioRepository.bloquearParaActualizarSeguridad(idUsuario);
         if (encontrado.isEmpty()) {
             return false;
@@ -110,17 +97,6 @@ public class IntentosLoginService {
             aplicarBloqueo(usuario);
             quedaBloqueada = true;
             log.warn("Cuenta {} BLOQUEADA tras {} intentos fallidos", idUsuario, intentos);
-
-        } else if (intentos >= umbralCooldownLargo) {
-            usuario.setFechaDesbloqueoCooldown(LocalDateTime.now().plusMinutes(cooldownLargoMinutos));
-            log.warn("Cuenta {} penalizada {} minutos ({} intentos)",
-                    idUsuario, cooldownLargoMinutos, intentos);
-
-        } else if (intentos >= umbralCaptcha) {
-            usuario.setRequiereCaptcha(true);
-            usuario.setFechaDesbloqueoCooldown(LocalDateTime.now().plusMinutes(cooldownCortoMinutos));
-            log.warn("Cuenta {} penalizada {} minutos y marcada para captcha ({} intentos)",
-                    idUsuario, cooldownCortoMinutos, intentos);
         }
 
         usuarioRepository.save(usuario);
@@ -128,9 +104,9 @@ public class IntentosLoginService {
     }
 
     /**
-     * Limpia los contadores tras un login correcto (DFD Login 1.2.5A).
+     * Limpia el contador tras un login correcto (DFD Login 1.2.5A).
      *
-     * Es tan importante como incrementarlos: sin este reseteo, los fallos se
+     * Es tan importante como incrementarlo: sin este reseteo, los fallos se
      * acumularian a lo largo de meses y un usuario legitimo terminaria bloqueado
      * por errores de tipeo ocasionales y sin relacion entre si.
      */
@@ -138,8 +114,6 @@ public class IntentosLoginService {
     public void limpiarTrasLoginExitoso(Long idUsuario) {
         usuarioRepository.bloquearParaActualizarSeguridad(idUsuario).ifPresent(usuario -> {
             usuario.setIntentosFallidos(0);
-            usuario.setRequiereCaptcha(false);
-            usuario.setFechaDesbloqueoCooldown(null);
             usuarioRepository.save(usuario);
         });
     }
@@ -151,8 +125,8 @@ public class IntentosLoginService {
 
         if (bloqueado.isEmpty()) {
             // El catalogo de estados deberia venir precargado por DatosInicialesConfig.
-            // Si falta, se avisa fuerte pero no se corta: perder la penalizacion de
-            // cooldown por un problema de datos maestros seria peor.
+            // Si falta, se avisa fuerte pero no se corta: perder el bloqueo por un
+            // problema de datos maestros seria peor.
             log.error("El catalogo usuario_estado no tiene la fila BLOQUEADO. "
                     + "No se pudo bloquear la cuenta {}.", usuario.getIdUsuario());
             return;
