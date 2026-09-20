@@ -9,24 +9,26 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.microsoft.playwright.options.WaitForSelectorState;
 
-import pages.RegisterPage;
-import pages.RegisterPage.DatosRegistro;
+import com.enexia.rg.pages.RegisterPage;
+import com.enexia.rg.pages.RegisterPage.DatosRegistro;
+
+import com.enexia.rg.pages.LoginPage;
 
 /**
  * Pruebas de extremo a extremo del registro de Persona Fisica (RF-1.1).
- *
+ * !
  * A diferencia de AuthServiceRegistroTest, que aisla el service con mocks, aca
  * corre el sistema completo: navegador real -> HTML/JS -> Spring -> MariaDB.
  * Es la unica capa capaz de detectar los errores de integracion, que son
  * justamente los que mas cuestan encontrar a mano: un name de input que no
  * coincide con el campo del DTO, un CORS mal configurado o un mensaje de error
  * que el backend manda pero la pantalla nunca pinta.
- *
+ * !
  * {@code DEFINED_PORT} levanta la aplicacion en el 8080 del
  * application.properties, que es el mismo origen desde donde Spring sirve el
  * HTML estatico. Requiere MariaDB corriendo y el puerto 8080 libre: si hay un
  * bootRun abierto, hay que cerrarlo antes.
- *
+ * !
  * Cada prueba genera su propia identidad: el alta no se puede deshacer (el
  * sistema usa borrado logico, nunca DELETE), asi que reutilizar un email haria
  * que la suite pase una sola vez.
@@ -267,7 +269,7 @@ public class RegistroTest extends BaseTest {
 
         // Cierre del circuito: si el alta guardara la clave en claro o con otro
         // algoritmo, el BCrypt.matches() del login fallaria aca.
-        pages.LoginPage login = new pages.LoginPage(page);
+        LoginPage login = new LoginPage(page);
         login.navegar();
         login.login(datos.email, datos.password);
 

@@ -2,7 +2,9 @@ package com.enexia.rg;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import pages.LoginPage;
+import com.enexia.rg.pages.LoginPage;
+
+import java.util.regex.Pattern;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,22 +32,25 @@ public class LoginTest extends BaseTest{
     }
 
     @Test
-    public void loginFallido() {
+    public void loginExitoso() {
 
-        // Navegar hacia el front e intentar iniciar sesion.
         LoginPage loginPage = new LoginPage(page);
         loginPage.navegar();
+        loginPage.login("govino.fac@gmail.com", "Contraseña1");
 
-        // Captura de argumentos por consola.
-        String email = System.getProperty("email", "ejemplo@gmail.com");
-        String password = System.getProperty("pass", "password");
-
-        loginPage.login(email, password);
-
-        // Espera automáticamente hasta 5 segundos a que la API responda y el JS pinte el mensaje
-        assertThat(loginPage.mensaje()).hasText("Credenciales inválidas");
-
+        // Las aserciones van en el test
+        assertThat(page).hasTitle(Pattern.compile("Enexia - Eventos en Tierra del Fuego"));
     }
 
+    @Test
+    public void loginFallido() {
 
+
+        LoginPage loginPage = new LoginPage(page);
+        loginPage.navegar();
+        loginPage.login("govinooo.fac@gmail.com", "Contraseña1");
+
+        // Las aserciones van en el test
+        assertThat(loginPage.mensaje()).hasText("Credenciales inválidas");
+    }
 }
