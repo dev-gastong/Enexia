@@ -373,7 +373,7 @@ This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modul
 | Module | Scope delivered |
 |---|---|
 | **M1** — Auth | Silent account blocking, per-IP rate limiting removed, password reset + unlock by email (RF-1.5) |
-| **M7** — Organizations | `Persona_Juridica` registration through both entry points, CUIT mod-11 validation (RF-7.3), `Miembros_Organizacion`. *Alta gating removed 2026-09-09 (ADR-14) — the spec now approves on the spot; the code still writes `REVISION_PENDIENTE`.* |
+| **M7** — Organizations | `Persona_Juridica` registration through both entry points, CUIT mod-11 validation (RF-7.3), `Miembros_Organizacion`. Alta gating removed 2026-09-09 (ADR-14) — an organization is `APROBADO`/`ACTIVO` and cleared to publish the instant its CUIT passes mod-11, both in the spec and in `PersonaJuridicaService.crearOrganizacion()`. |
 | **M2** — Events | Creation with async moderation pipeline (RF-2.1 to RF-2.6), Cloudinary integration (RF-2.3), organizer dashboard (RF-2.8), logical delete (RF-2.9), statistics (RF-2.10) |
 | **M4** — Public interface | Paginated catalog, text search, category/date/location filters, technical sheet, passive visit tracking (RF-4.1 to RF-4.5) |
 | **M5** — Moderation | Text phase + image phase, sequential and asynchronous (RF-5.1 to RF-5.3) |

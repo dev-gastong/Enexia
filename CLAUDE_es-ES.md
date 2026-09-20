@@ -344,7 +344,7 @@ backend/src/main/java/com/enexia/
 | Módulo | Alcance entregado |
 |---|---|
 | **M1** — Autenticación | Bloqueo silencioso de cuenta, eliminación del rate limiting por IP, recuperación de contraseña y desbloqueo por email (RF-1.5) |
-| **M7** — Organizaciones | Alta de `Persona_Juridica` por los dos caminos, validación de CUIT módulo 11 (RF-7.3), `Miembros_Organizacion`. *Control por revisión eliminado el 2026-09-09 (ADR-14) — la especificación aprueba en el acto; el código todavía escribe `REVISION_PENDIENTE`.* |
+| **M7** — Organizaciones | Alta de `Persona_Juridica` por los dos caminos, validación de CUIT módulo 11 (RF-7.3), `Miembros_Organizacion`. Control por revisión eliminado el 2026-09-09 (ADR-14) — una organización queda `APROBADO`/`ACTIVO` y habilitada para publicar apenas su CUIT pasa el módulo 11, tanto en la especificación como en `PersonaJuridicaService.crearOrganizacion()`. |
 | **M2** — Eventos | Creación con pipeline asíncrono de moderación (RF-2.1 a RF-2.6), integración Cloudinary (RF-2.3), dashboard del organizador (RF-2.8), baja lógica (RF-2.9), estadísticas (RF-2.10) |
 | **M4** — Interfaz pública | Catálogo paginado, búsqueda por texto, filtros por categoría/fecha/ubicación, ficha técnica, registro pasivo de visitas (RF-4.1 a RF-4.5) |
 | **M5** — Moderación | Fase de texto + fase de imágenes, secuencial y asíncrona (RF-5.1 a RF-5.3) |
