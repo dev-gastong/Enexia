@@ -156,20 +156,24 @@ gradle dependencies
 
 ### Frontend (HTML, CSS, JavaScript Vanilla)
 
+> ### ⚠️ NUNCA levantar un servidor estático aparte para el frontend
+> El frontend **no** se sirve desde un `http.server`/`http-server` independiente, y no existe ningún directorio `frontend/` — ese fue el plan del Sprint 0, superado en cuanto el sitio real quedó en `enexia/src/main/resources/static/`. Spring Boot lo sirve directamente como recursos estáticos, en el **mismo origen y el mismo puerto que la API** (`http://localhost:8080`), apenas `bootRun` levanta.
+>
+> **No hacer**, bajo ninguna circunstancia — ni para un chequeo rápido, ni "solo para previsualizar una página":
+> - correr `python -m http.server`, `http-server`, `live-server` u otro servidor estático contra `static/` o cualquier subcarpeta;
+> - abrir un HTML directamente desde el disco (`file://...`);
+> - usar la herramienta de navegador `preview_start` con una segunda config de dev-server para el frontend.
+>
+> Todo eso pone la página en un origen distinto de `http://localhost:8080`, y `SecurityConfig.corsConfigurationSource()` no lo permite — cada `fetch()` de `api.js` falla en silencio por CORS, lo que se ve exactamente igual a "el backend está caído" y hace perder tiempo persiguiendo el bug equivocado. La **única** forma correcta de ver o probar cualquier página es levantar el backend (`gradle bootRun` / `./gradlew bootRun`) y abrir `http://localhost:8080/<ruta>`, por ejemplo `http://localhost:8080/index.html` o `http://localhost:8080/pages/auth/login-desktop-claro.html`.
+
 ```bash
-# Navegar al directorio del frontend (cuando esté creado)
-cd frontend/
+# Levantar el backend -- es tambien la forma de servir y previsualizar el
+# frontend. Los archivos estaticos bajo src/main/resources/static/ quedan
+# expuestos automaticamente en el mismo origen: http://localhost:8080/index.html,
+# http://localhost:8080/pages/organizador/equipo.html, etc.
+gradle bootRun
 
-# Servidor de desarrollo (servidor HTTP simple)
-# Opción 1: Python 3
-python -m http.server 8000
-
-# Opción 2: Node.js (paquete http-server, opcional)
-npm install -g http-server
-http-server . -p 8000
-
-# No se requiere build step - JavaScript vanilla se ejecuta directamente en el navegador
-# Para producción, simplemente servir los archivos mediante un servidor web (nginx, Apache, etc.)
+# No existe ningun comando de frontend aparte, y no deberia agregarse ninguno.
 ```
 
 ### Base de Datos

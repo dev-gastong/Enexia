@@ -156,20 +156,24 @@ gradle dependencies
 
 ### Frontend (HTML, CSS, JavaScript Vanilla)
 
+> ### ⚠️ NEVER start a separate static server for the frontend
+> The frontend is **not** served from a standalone `http.server`/`http-server` process, and there is no `frontend/` directory — that was the Sprint 0 plan, superseded once the actual site landed in `enexia/src/main/resources/static/`. Spring Boot serves it directly as static resources, on the **same origin and the same port as the API** (`http://localhost:8080`), the moment `bootRun` is up.
+>
+> **Do not**, under any circumstance — not for a quick check, not "just to preview a page":
+> - run `python -m http.server`, `http-server`, `live-server`, or any other static file server against `static/` or any subfolder of it;
+> - open an HTML file directly from disk (`file://...`);
+> - use the `preview_start` browser tool with a second dev-server config for the frontend.
+>
+> All of those put the page on a different origin than `http://localhost:8080`, and `SecurityConfig.corsConfigurationSource()` does not allow it — every `fetch()` in `api.js` fails silently with a CORS error, which looks exactly like "the backend is down" and wastes time chasing the wrong bug. The **only** correct way to view or test any page is to start the backend (`gradle bootRun` / `./gradlew bootRun`) and open `http://localhost:8080/<path>`, e.g. `http://localhost:8080/index.html` or `http://localhost:8080/pages/auth/login-desktop-claro.html`.
+
 ```bash
-# Navigate to frontend directory (when created)
-cd frontend/
+# Run the backend — this is also how you serve and preview the frontend.
+# Static files under src/main/resources/static/ are exposed automatically
+# at the same origin: http://localhost:8080/index.html,
+# http://localhost:8080/pages/organizador/equipo.html, etc.
+gradle bootRun
 
-# Development server (simple HTTP server for testing)
-# Option 1: Python 3
-python -m http.server 8000
-
-# Option 2: Node.js (http-server package, optional)
-npm install -g http-server
-http-server . -p 8000
-
-# No build step required - vanilla JS runs directly in browser
-# For production, simply serve the files via a web server (nginx, Apache, etc.)
+# No separate frontend command exists, and none should be added.
 ```
 
 ### Database
