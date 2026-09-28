@@ -136,6 +136,12 @@ public class GlobalExceptionHandler {
         return construir("OPERACION_NO_PERMITIDA", ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    /** 402: la pasarela de pago simulada (RF-3.2) rechazo la operacion. */
+    @ExceptionHandler(PagoRechazadoException.class)
+    public ResponseEntity<ErrorResponse> manejarPagoRechazado(PagoRechazadoException ex) {
+        return construir("PAGO_RECHAZADO", ex.getMessage(), HttpStatus.PAYMENT_REQUIRED);
+    }
+
     // ---------- Validacion de DTOs ----------
 
     /**

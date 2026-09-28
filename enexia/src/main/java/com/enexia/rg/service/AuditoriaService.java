@@ -80,9 +80,18 @@ public class AuditoriaService {
     public static final String ACCION_EVENTO_DADO_DE_BAJA = "EVENTO_DADO_DE_BAJA";
     public static final String ACCION_MODERACION_ERROR = "MODERACION_ERROR";
 
+    // --- Modulo 3: participacion (RF-3.1 a RF-3.5)
+    public static final String ACCION_INSCRIPCION_CREADA = "INSCRIPCION_CREADA";
+    public static final String ACCION_INSCRIPCION_CONFIRMADA = "INSCRIPCION_CONFIRMADA";
+    public static final String ACCION_PAGO_RECHAZADO = "PAGO_RECHAZADO";
+    public static final String ACCION_INSCRIPCION_CANCELADA = "INSCRIPCION_CANCELADA";
+    public static final String ACCION_VALORACION_CREADA = "VALORACION_CREADA";
+    public static final String ACCION_VALORACION_RECHAZADA_MODERACION = "VALORACION_RECHAZADA_MODERACION";
+
     private static final String MODULO_AUTENTICACION = "AUTENTICACION";
     private static final String MODULO_EVENTOS = "EVENTOS";
     private static final String MODULO_ORGANIZACIONES = "ORGANIZACIONES";
+    private static final String MODULO_PARTICIPACION = "PARTICIPACION";
 
     /** Limite de la columna user_agent; los navegadores mandan cadenas larguisimas. */
     private static final int MAX_USER_AGENT = 255;
@@ -193,6 +202,10 @@ public class AuditoriaService {
         }
         if (accion.startsWith("ALTA_ORGANIZACION")) {
             return MODULO_ORGANIZACIONES;
+        }
+        if (accion.startsWith("INSCRIPCION_") || accion.startsWith("PAGO_")
+                || accion.startsWith("VALORACION_")) {
+            return MODULO_PARTICIPACION;
         }
         return MODULO_AUTENTICACION;
     }

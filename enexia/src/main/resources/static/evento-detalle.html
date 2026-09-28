@@ -134,8 +134,9 @@ img { max-width: 100%; display: block; }
 
 /* Seleccion de cronograma */
 .cronograma-lista { padding: 12px; background: var(--acento-tinte); border: 1px solid var(--acento-borde); border-radius: var(--radio-campo); display: flex; flex-direction: column; gap: 8px; }
-.cronograma-fila { display: flex; align-items: center; gap: 12px; }
-.cronograma-fila__marca { width: 15px; height: 15px; flex: none; margin: 0; accent-color: var(--acento); cursor: pointer; }
+.cronograma-fila { display: flex; align-items: center; gap: 12px; cursor: pointer; border-radius: var(--radio-campo); padding: 4px 6px; margin: -4px -6px; transition: background .15s ease; }
+.cronograma-fila:hover { background: var(--superficie-alt); }
+.cronograma-fila__marca { width: 8px; height: 8px; border-radius: 999px; flex: none; background: var(--acento); }
 .cronograma-fila__fecha { flex: 1 1 150px; font-size: 12.5px; color: var(--texto-secundario); }
 .cronograma-fila__hora { flex: 1 1 130px; font-size: 12.5px; font-weight: 700; color: var(--texto); }
 .cronograma-fila__extra { font-size: 12px; color: var(--texto-secundario); }
@@ -153,8 +154,9 @@ img { max-width: 100%; display: block; }
 /* Opciones de acceso (al pie de la columna de texto, como en el Figma) */
 .tarjeta-lateral { border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); padding: 20px; }
 
-.acceso-fila { padding: 12px; border-radius: var(--radio-campo); background: var(--superficie-alt); border: 1px solid var(--borde); margin-bottom: 10px; }
+.acceso-fila { padding: 12px; border-radius: var(--radio-campo); background: var(--superficie-alt); border: 1px solid var(--borde); margin-bottom: 10px; transition: border-color .2s ease, box-shadow .2s ease; }
 .acceso-fila--agotado { opacity: .65; }
+.acceso-fila--resaltada { border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento-tinte); }
 .acceso-fila__fecha { font-size: 11px; font-weight: 700; color: var(--acento-fuerte); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 8px; }
 .acceso-fila__cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .acceso-fila__nombre { font-size: 13.5px; font-weight: 700; color: var(--texto); }
@@ -165,7 +167,27 @@ img { max-width: 100%; display: block; }
 .acceso-fila__cupos { margin-top: 6px; font-size: 11.5px; color: var(--texto-secundario); }
 .acceso-fila__cupos--agotado { color: var(--error); font-weight: 600; }
 
-.aviso-proximamente { margin-top: 4px; padding: 12px; border-radius: var(--radio-campo); background: var(--info-tinte); border: 1px solid var(--info-borde); color: var(--info); font-size: 12px; text-align: center; line-height: 1.5; }
+.aviso-info { margin-top: 4px; padding: 12px; border-radius: var(--radio-campo); background: var(--info-tinte); border: 1px solid var(--info-borde); color: var(--info); font-size: 12px; text-align: center; line-height: 1.5; }
+.aviso-info a { color: inherit; font-weight: 700; text-decoration: underline; }
+
+.acceso-fila__accion { margin-top: 10px; }
+.acceso-fila__boton { width: 100%; padding: 9px 14px; border: 0; border-radius: var(--radio-campo); background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background .15s ease; }
+.acceso-fila__boton:hover { background: var(--accion-hover); }
+.acceso-fila__boton:disabled { opacity: .6; cursor: not-allowed; }
+.acceso-fila__boton--ya-inscripto { background: var(--ok-tinte); color: var(--ok); }
+
+/* --- Toast (mismo patron que equipo.html / mis-eventos.html) ------------- */
+.toast-pila { position: fixed; top: 20px; right: 20px; z-index: 80; display: flex; flex-direction: column; gap: 10px; }
+.toast { display: flex; align-items: flex-start; gap: 12px; width: 340px; padding: 16px; border: 1px solid var(--borde); border-left: 4px solid var(--ok); border-radius: var(--radio-campo); background: var(--superficie); box-shadow: var(--sombra-tarjeta); animation: entrar-toast .25s ease; }
+.toast--error { border-left-color: var(--error); }
+@keyframes entrar-toast { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.toast__icono { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ok-tinte); color: var(--ok); flex: none; }
+.toast--error .toast__icono { background: var(--error-tinte); color: var(--error); }
+.toast__icono svg { width: 15px; height: 15px; }
+.toast__titulo { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: var(--texto); }
+.toast__texto { margin: 0; font-size: 13px; color: var(--texto-secundario); }
+.toast__cerrar { margin-left: auto; background: none; border: 0; color: var(--texto-secundario); cursor: pointer; padding: 2px; }
+.toast__cerrar svg { width: 13px; height: 13px; }
 
 /* Eventos relacionados */
 .relacionados { max-width: 1180px; margin: 0 auto; padding: 8px 32px 64px; }
@@ -242,6 +264,8 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
     <img id="lightboxImg" src="" alt="">
 </div>
 
+<div class="toast-pila" id="toastPila" aria-live="polite"></div>
+
 <footer>
     <div class="footer__cont">
         <div class="footer__marca">
@@ -291,6 +315,82 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         cultural: 'cat-cultural', educativo: 'cat-educativo', social: 'cat-social',
         deportivo: 'cat-deportivo', deportes: 'cat-deportivo', gaming: 'cat-gaming'
     };
+
+    /* -------------------------------------------------------- Toast --- */
+    /* Mismo patron que pages/organizador/equipo.html: una pila fija arriba
+       a la derecha, cada aviso se agrega y se puede cerrar a mano. */
+
+    function mostrarToast(tipo, titulo, texto) {
+        const pila = document.getElementById('toastPila');
+        const el = document.createElement('div');
+        el.className = 'toast' + (tipo === 'error' ? ' toast--error' : '');
+        el.innerHTML = `
+            <span class="toast__icono">
+                ${tipo === 'error'
+                    ? '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 5.5 10.5 10.5M10.5 5.5 5.5 10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+                    : '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5 6.5 12 13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+            </span>
+            <div><p class="toast__titulo">${titulo}</p><p class="toast__texto">${texto}</p></div>
+            <button class="toast__cerrar" type="button">
+                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>`;
+        pila.appendChild(el);
+        el.querySelector('.toast__cerrar').addEventListener('click', () => el.remove());
+        setTimeout(() => el.remove(), 6000);
+    }
+
+    /* ------------------------------------------- Inscribirme (RF-3.1) --- */
+    /* Delegado en document, mismo motivo que el lightbox mas abajo: los
+       botones se re-crean cada vez que pintarFicha() reconstruye #contenido. */
+
+    document.addEventListener('click', async function (evento) {
+        const boton = evento.target.closest('.js-btn-inscribir');
+        if (!boton) return;
+
+        const idCronogramaTicket = Number(boton.dataset.idTicket);
+        const nombreTicket = boton.dataset.nombreTicket;
+        const textoOriginal = boton.textContent;
+
+        boton.disabled = true;
+        boton.textContent = 'Reservando...';
+
+        const r = await API.inscribir({ idCronogramaTicket, metodoPago: 'tarjeta' });
+
+        if (r.ok) {
+            mostrarToast('ok', 'Inscripción confirmada', `Ya tenés tu lugar en "${nombreTicket}".`);
+            cargarEvento();
+            return;
+        }
+
+        const mensaje = (r.cuerpo && r.cuerpo.mensaje) || 'No se pudo completar la inscripción.';
+        mostrarToast('error',
+            r.status === 402 ? 'Pago rechazado' : 'No se pudo inscribir',
+            r.status === 402 ? mensaje + ' Podés intentarlo de nuevo.' : mensaje);
+
+        boton.disabled = false;
+        boton.textContent = textoOriginal;
+    });
+
+    /* ------------------------------------------ Ir a un cronograma --- */
+    /* Con mas de una fecha, "Selección de cronograma" antes tenia un
+       checkbox inerte (nunca filtro nada). Ahora la fila entera es
+       clickeable y hace scroll + resalta, en "Opciones de acceso", solo
+       las entradas de esa fecha -- que es donde de verdad se elige el
+       ticket (cada boton ya manda su propio idCronogramaTicket). */
+
+    document.addEventListener('click', function (evento) {
+        const fila = evento.target.closest('.js-ir-a-tickets');
+        if (!fila) return;
+
+        const idCronograma = fila.dataset.idCronograma;
+        const filasTicket = document.querySelectorAll(
+                '.acceso-fila[data-id-cronograma="' + idCronograma + '"]');
+        if (!filasTicket.length) return;
+
+        filasTicket[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        filasTicket.forEach(f => f.classList.add('acceso-fila--resaltada'));
+        setTimeout(() => filasTicket.forEach(f => f.classList.remove('acceso-fila--resaltada')), 1800);
+    });
 
     function pintarNavbar() {
         const cont = document.getElementById('navbarAcciones');
@@ -446,8 +546,9 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         const inicialOrg = (ev.organizador || '?').trim().charAt(0).toUpperCase();
 
         const cronogramaListaHtml = (ev.cronogramas || []).map(c => `
-            <div class="cronograma-fila">
-                <input type="checkbox" class="cronograma-fila__marca" title="Selección de fecha (la inscripción todavía no está disponible)">
+            <div class="cronograma-fila js-ir-a-tickets" data-id-cronograma="${c.idCronograma}"
+                 title="Ver las entradas de esta fecha en 'Opciones de acceso'">
+                <span class="cronograma-fila__marca" aria-hidden="true"></span>
                 <span class="cronograma-fila__fecha">${fechaLarga(c.fecha)}</span>
                 <span class="cronograma-fila__hora">${horaCorta(c.horaInicio)} — ${horaCorta(c.horaFin)}</span>
                 <span class="cronograma-fila__extra">${(c.tickets || []).length} tipo${(c.tickets || []).length === 1 ? '' : 's'} de entrada</span>
@@ -469,10 +570,24 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                 ${(ev.latitud != null && ev.longitud != null) ? `<div class="ubicacion-gps"><span><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.8" stroke="currentColor" stroke-width="1.2"/></svg>GPS: ${Number(ev.latitud).toFixed(4)}, ${Number(ev.longitud).toFixed(4)}</span></div>` : ''}
             </div>`;
 
+        const puedeInscribirse = Auth.autenticado() && Auth.hasRole('PARTICIPANTE');
+
         const accesoFilasHtml = (ev.cronogramas || []).flatMap(c => (c.tickets || []).map(t => {
             const pct = t.cupoMaximo ? Math.max(0, Math.min(100, Math.round((t.cupoDisponible / t.cupoMaximo) * 100))) : 0;
+
+            const botonHtml = puedeInscribirse
+                ? `<div class="acceso-fila__accion">
+                        <button type="button" class="acceso-fila__boton js-btn-inscribir"
+                                data-id-ticket="${t.idCronogramaTicket}"
+                                data-nombre-ticket="${t.tipoTicket}"
+                                ${t.agotado ? 'disabled' : ''}>
+                            ${t.agotado ? 'Agotado' : (t.gratuito ? 'Inscribirme' : 'Inscribirme y pagar')}
+                        </button>
+                   </div>`
+                : '';
+
             return `
-                <div class="acceso-fila ${t.agotado ? 'acceso-fila--agotado' : ''}">
+                <div class="acceso-fila ${t.agotado ? 'acceso-fila--agotado' : ''}" data-id-cronograma="${c.idCronograma}">
                     <div class="acceso-fila__fecha">${fechaLarga(c.fecha)}</div>
                     <div class="acceso-fila__cab">
                         <span class="acceso-fila__nombre">${t.tipoTicket}</span>
@@ -480,8 +595,21 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                     </div>
                     <div class="acceso-fila__barra"><div class="acceso-fila__barra-fill" style="width:${t.agotado ? 0 : pct}%"></div></div>
                     <div class="acceso-fila__cupos ${t.agotado ? 'acceso-fila__cupos--agotado' : ''}">${t.agotado ? 'Agotado' : t.cupoDisponible + ' de ' + t.cupoMaximo + ' cupos disponibles'}</div>
+                    ${botonHtml}
                 </div>`;
         })).join('') || '<p style="font-size:13px;color:var(--texto-secundario);margin:0 0 14px">Todavia no hay entradas cargadas para este evento.</p>';
+
+        // Solo se muestra cuando hay algo que decir (sin sesion): con sesion de
+        // PARTICIPANTE cada ticket ya trae su propio boton, no hace falta aviso.
+        const accesoAvisoHtml = puedeInscribirse ? '' : `
+            <div class="aviso-info">
+                ${Auth.autenticado()
+                    ? 'Tu cuenta no tiene el rol de participante.'
+                    : 'Iniciá sesión para inscribirte a este evento.'}
+                ${!Auth.autenticado()
+                    ? ' <a href="pages/auth/login-desktop-claro.html">Iniciar sesión</a>'
+                    : ''}
+            </div>`;
 
         document.getElementById('contenido').innerHTML = `
             <div class="ficha__migas">
@@ -533,7 +661,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                         <div class="tarjeta-lateral">
                             <h2 class="etiqueta-seccion">Opciones de acceso</h2>
                             ${accesoFilasHtml}
-                            <div class="aviso-proximamente">Las inscripciones online están próximamente disponibles.</div>
+                            ${accesoAvisoHtml}
                         </div>
                     </div>
                 </div>
@@ -601,18 +729,22 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
     const idEvento = new URLSearchParams(window.location.search).get('id');
 
+    function cargarEvento() {
+        API.publico('/api/publico/eventos/' + idEvento).then(r => {
+            if (r.ok) {
+                pintarFicha(r.cuerpo);
+            } else {
+                pintarNoEncontrado();
+            }
+        });
+    }
+
     if (!idEvento) {
         pintarNoEncontrado();
         return;
     }
 
-    API.publico('/api/publico/eventos/' + idEvento).then(r => {
-        if (r.ok) {
-            pintarFicha(r.cuerpo);
-        } else {
-            pintarNoEncontrado();
-        }
-    });
+    cargarEvento();
 })();
 </script>
 

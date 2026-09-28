@@ -135,6 +135,11 @@ public class SecurityConfig {
                         // --- Endpoints por rol (RF-1.3)
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")
                         .requestMatchers("/api/organizador/**").hasRole("ORGANIZADOR")
+                        // Modulo 3 (RF-3.1 a RF-3.6): un ORGANIZADOR tambien
+                        // tiene el rol PARTICIPANTE (ver "Role Assignment
+                        // Strategy" en CLAUDE.md), asi que puede inscribirse
+                        // a eventos de otros sin necesitar una cuenta aparte.
+                        .requestMatchers("/api/participante/**").hasRole("PARTICIPANTE")
 
                         // --- Cierre por defecto: todo lo no listado exige token
                         // valido. Es deny-by-default: si manana se agrega un

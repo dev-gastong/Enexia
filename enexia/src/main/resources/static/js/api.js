@@ -258,6 +258,31 @@ const API = {
         return this.delete('/api/organizador/organizaciones/' + idPersonaJuridica + '/miembros/' + idUsuario);
     },
 
+    /* ===== Modulo 3: participacion ===== */
+
+    /** POST /api/participante/inscripciones -> 201 | 402 | 409 (RF-3.1, RF-3.2) */
+    inscribir(datos) {
+        return this.post('/api/participante/inscripciones', datos);
+    },
+
+    /** DELETE /api/participante/inscripciones/{id} -> 200 | 404 | 409 (RF-3.3) */
+    cancelarInscripcion(idInscripcion) {
+        return this.delete('/api/participante/inscripciones/' + idInscripcion);
+    },
+
+    /** GET /api/participante/inscripciones?... -> historial paginado (RF-3.6) */
+    historialInscripciones(parametros = {}) {
+        const query = new URLSearchParams(
+            Object.entries(parametros).filter(([, v]) => v !== null && v !== undefined && v !== '')
+        ).toString();
+        return this.get('/api/participante/inscripciones' + (query ? '?' + query : ''));
+    },
+
+    /** POST /api/participante/valoraciones -> 201 | 409 | 422 (RF-3.4, RF-3.5) */
+    valorar(datos) {
+        return this.post('/api/participante/valoraciones', datos);
+    },
+
     /* ===== Catalogos publicos (sin token) ===== */
 
     async publico(ruta) {

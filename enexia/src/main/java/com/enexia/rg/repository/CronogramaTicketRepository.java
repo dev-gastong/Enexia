@@ -1,13 +1,17 @@
 package com.enexia.rg.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.enexia.rg.model.CronogramaTicket;
+
+import jakarta.persistence.LockModeType;
 
 /** Oferta comercial de cada fecha (RF-2.5, RF-2.6). */
 @Repository
@@ -53,4 +57,19 @@ public interface CronogramaTicketRepository extends JpaRepository<CronogramaTick
               AND t.cupoActual > 0
             """)
     long contarConInscripciones(@Param("idEvento") Long idEvento);
+
+    /**
+     * Relee un ticket tomando un bloqueo de escritura sobre la fila
+     * (SELECT ... FOR UPDATE). Requiere transaccion activa.
+     *
+     * RF-3.1 exige validar {@code cupo_actual < cupo_maximo} de forma
+     * SINCRONICA antes de confirmar una inscripcion. Sin este bloqueo, dos
+     * participantes inscribiendose al mismo instante al ultimo cupo
+     * disponible leerian ambos "hay lugar" y las dos reservas pasarian,
+     * dejando el ticket sobrevendido. Mismo patron que
+     * {@code EventoRepository.bloquearParaActualizar}.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM CronogramaTicket t WHERE t.idCronogramaTicket = :id")
+    Optional<CronogramaTicket> bloquearParaActualizar(@Param("id") Long id);
 }

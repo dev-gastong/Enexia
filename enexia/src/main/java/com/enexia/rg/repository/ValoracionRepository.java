@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ValoracionRepository extends JpaRepository<Valoracion, Long> {
 
+    /** Restriccion unica compuesta (RF-3.4): maximo una valoracion por usuario y cronograma. */
+    boolean existsByUsuarioIdUsuarioAndCronogramaIdCronograma(Long idUsuario, Long idCronograma);
 }

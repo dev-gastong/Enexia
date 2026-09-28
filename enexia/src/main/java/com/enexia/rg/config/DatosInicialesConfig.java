@@ -16,7 +16,11 @@ import com.enexia.rg.model.EstadoPersonaJuridicaSistemaNombre;
 import com.enexia.rg.model.EstadoUsuarioNombre;
 import com.enexia.rg.model.EventoEstadoOrganizador;
 import com.enexia.rg.model.EventoEstadoSistema;
+import com.enexia.rg.model.InscripcionEstado;
+import com.enexia.rg.model.InscripcionEstadoNombre;
 import com.enexia.rg.model.MotivoModeracionEvento;
+import com.enexia.rg.model.PagoEstado;
+import com.enexia.rg.model.PagoEstadoNombre;
 import com.enexia.rg.model.Pais;
 import com.enexia.rg.model.PersonaJuridicaEstado;
 import com.enexia.rg.model.PersonaJuridicaEstadoSistema;
@@ -29,6 +33,8 @@ import com.enexia.rg.repository.CategoriaRepository;
 import com.enexia.rg.repository.CiudadRepository;
 import com.enexia.rg.repository.EventoEstadoOrganizadorRepository;
 import com.enexia.rg.repository.EventoEstadoSistemaRepository;
+import com.enexia.rg.repository.InscripcionEstadoRepository;
+import com.enexia.rg.repository.PagoEstadoRepository;
 import com.enexia.rg.repository.PaisRepository;
 import com.enexia.rg.repository.PersonaJuridicaEstadoRepository;
 import com.enexia.rg.repository.PersonaJuridicaEstadoSistemaRepository;
@@ -102,6 +108,8 @@ public class DatosInicialesConfig {
     private final PersonaJuridicaEstadoSistemaRepository personaJuridicaEstadoSistemaRepository;
     private final EventoEstadoSistemaRepository eventoEstadoSistemaRepository;
     private final EventoEstadoOrganizadorRepository eventoEstadoOrganizadorRepository;
+    private final InscripcionEstadoRepository inscripcionEstadoRepository;
+    private final PagoEstadoRepository pagoEstadoRepository;
     private final CategoriaRepository categoriaRepository;
     private final TipoTicketRepository tipoTicketRepository;
     private final PaisRepository paisRepository;
@@ -117,6 +125,7 @@ public class DatosInicialesConfig {
             creados += cargarEstadosDeUsuario();
             creados += cargarEstadosDeOrganizacion();
             creados += cargarEstadosDeEvento();
+            creados += cargarEstadosDeParticipacion();
             creados += cargarCategorias();
             creados += cargarTiposDeTicket();
             creados += cargarGeografia();
@@ -247,6 +256,34 @@ public class DatosInicialesConfig {
         fila.setMotivoCodigo(motivo);
         eventoEstadoSistemaRepository.save(fila);
         return 1;
+    }
+
+    // =====================================================================
+    // Modulo 3 - Participacion (RF-3.1 a RF-3.3)
+    // =====================================================================
+
+    private int cargarEstadosDeParticipacion() {
+        int creados = 0;
+
+        for (InscripcionEstadoNombre nombre : InscripcionEstadoNombre.values()) {
+            if (inscripcionEstadoRepository.findByNombreEstadoIgnoreCase(nombre.name()).isEmpty()) {
+                InscripcionEstado estado = new InscripcionEstado();
+                estado.setNombreEstado(nombre.name());
+                inscripcionEstadoRepository.save(estado);
+                creados++;
+            }
+        }
+
+        for (PagoEstadoNombre nombre : PagoEstadoNombre.values()) {
+            if (pagoEstadoRepository.findByNombreEstadoIgnoreCase(nombre.name()).isEmpty()) {
+                PagoEstado estado = new PagoEstado();
+                estado.setNombreEstado(nombre.name());
+                pagoEstadoRepository.save(estado);
+                creados++;
+            }
+        }
+
+        return creados;
     }
 
     private int cargarCategorias() {
