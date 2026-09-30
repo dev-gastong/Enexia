@@ -3,6 +3,8 @@ package com.enexia.rg.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -106,10 +108,35 @@ public class ValoracionService {
         log.info("Valoracion {} registrada por el usuario {} para el cronograma {}",
                 valoracion.getIdvaloracion(), participante.getIdUsuario(), cronograma.getIdCronograma());
 
-        return mapear(valoracion, cronograma);
+        return mapear(valoracion, cronograma, participante);
     }
 
-    private ValoracionResponse mapear(Valoracion valoracion, EventoCronograma cronograma) {
+    /**
+     * Listado publico de las valoraciones de un evento (RF-4.4), mas reciente
+     * primero y paginado.
+     *
+     * PAGINADO A PROPOSITO: un evento con cientos de reseñas no puede traerlas
+     * todas de una en la ficha -- ni por peso de la respuesta ni porque el
+     * frontend tendria que renderizar una lista sin fin. El repositorio ya
+     * resuelve usuario y cronograma con @EntityGraph, asi que mapear no
+     * dispara ninguna consulta extra por fila.
+     *
+     * @Transactional(readOnly = true) igual que CatalogoPublicoService.verFicha:
+     * aunque el @EntityGraph del repositorio ya resuelve usuario, cronograma
+     * y cronograma.evento de antemano, dejar el metodo fuera de una
+     * transaccion es fragil -- alcanza con que alguien agregue mas adelante
+     * un campo que lea otra asociacion LAZY para que vuelva a explotar con
+     * LazyInitializationException (open-in-view=false no deja sesion abierta
+     * despues de que el metodo del service termina). Ya paso una vez con
+     * {@code cronograma.getEvento().getNombre()} en {@code mapear()}.
+     */
+    @Transactional(readOnly = true)
+    public Page<ValoracionResponse> listarDeEvento(Long idEvento, Pageable pageable) {
+        return valoracionRepository.findByCronogramaEventoIdEventoOrderByFechaDesc(idEvento, pageable)
+                .map(v -> mapear(v, v.getCronograma(), v.getUsuario()));
+    }
+
+    private ValoracionResponse mapear(Valoracion valoracion, EventoCronograma cronograma, Usuario autor) {
         return ValoracionResponse.builder()
                 .idValoracion(valoracion.getIdvaloracion())
                 .idCronograma(cronograma.getIdCronograma())
@@ -117,6 +144,8 @@ public class ValoracionService {
                 .valor(valoracion.getValor())
                 .comentario(valoracion.getComentario())
                 .fecha(valoracion.getFecha())
+                .autor(autor == null ? null : autor.getNickname())
+                .cronogramaFecha(cronograma.getFecha())
                 .build();
     }
 }

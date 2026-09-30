@@ -13,6 +13,7 @@ import com.enexia.rg.exception.RecursoDuplicadoException;
 import com.enexia.rg.exception.RecursoNoEncontradoException;
 import com.enexia.rg.exception.ReglaNegocioException;
 import com.enexia.rg.model.CronogramaTicket;
+import com.enexia.rg.model.EventoCronograma;
 import com.enexia.rg.model.HistorialEstadoInscripcion;
 import com.enexia.rg.model.Inscripcion;
 import com.enexia.rg.model.InscripcionEstado;
@@ -102,6 +103,18 @@ public class RegistroInscripcionService {
         // --- Paso 3.1.1: bloqueo de fila + validacion sincronica de cupo.
         CronogramaTicket ticket = ticketRepository.bloquearParaActualizar(idCronogramaTicket)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro el ticket indicado"));
+
+        // Vigencia (RF-3.1, DFD 3.1.1): el DFD original no lo contemplaba, pero
+        // sin este chequeo se podia reservar un cupo en una funcion que ya
+        // termino -- nadie va a poder asistir a algo que ya paso. Se compara
+        // contra hora_fin y no hora_inicio: un evento en curso todavia tiene
+        // sentido dejar sumarse hasta que termina.
+        EventoCronograma cronogramaDelTicket = ticket.getCronograma();
+        LocalDateTime finDeFuncion = LocalDateTime.of(
+                cronogramaDelTicket.getFecha(), cronogramaDelTicket.getHoraFin());
+        if (finDeFuncion.isBefore(LocalDateTime.now())) {
+            throw new OperacionNoPermitidaException("Este evento ya finalizo");
+        }
 
         // Unicidad (ver javadoc de InscripcionRepository.existeActivaDeUsuarioEnCronograma):
         // sin este chequeo, repetir la peticion crea una inscripcion nueva por

@@ -47,6 +47,7 @@ import com.enexia.rg.repository.EventoEstadoSistemaRepository;
 import com.enexia.rg.repository.EventoMultimediaRepository;
 import com.enexia.rg.repository.EventoRepository;
 import com.enexia.rg.repository.HistorialEstadoEventoRepository;
+import com.enexia.rg.repository.InscripcionRepository;
 import com.enexia.rg.repository.UsuarioRepository;
 import com.enexia.rg.repository.VisitaRepository;
 
@@ -90,6 +91,7 @@ public class EventoService {
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
     private final VisitaRepository visitaRepository;
+    private final InscripcionRepository inscripcionRepository;
 
     private final PersonaJuridicaService personaJuridicaService;
     private final ApplicationEventPublisher publicadorDeEventos;
@@ -329,13 +331,30 @@ public class EventoService {
 
     /**
      * RF-2.7: el cupo maximo de un ticket existente no puede bajar del que ya
-     * tiene, y su precio no se toca si ya tiene inscripciones activas.
+     * tiene, su precio no se toca si ya tiene inscripciones activas, y no se
+     * puede quitar del formulario un sector que tenga alguna inscripcion
+     * asociada.
      *
      * La correspondencia entre un ticket del formulario y uno ya guardado se
      * hace por {@code idCronogramaTicket} (ver el javadoc de ese campo en
      * TicketRequest): si el formulario no manda ese id, o manda uno que no
      * pertenece a este evento, se trata como un sector NUEVO y no hay piso que
      * respetar.
+     *
+     * POR QUE TAMBIEN SE VALIDA LA BAJA DE UN SECTOR (agregado junto con el
+     * Modulo 3)
+     * {@code PublicacionEventoService.reemplazarContenido} reconcilia la agenda
+     * en vez de borrar-y-recrear todo: los sectores que el formulario ya no
+     * manda se BORRAN de verdad. Un ticket con alguna fila en Inscripcion (de
+     * cualquier estado, incluso CANCELADA: la fila existe igual) no se puede
+     * borrar -- la base lo rechaza por la clave foranea, y esa excepcion
+     * generica (DataIntegrityViolationException) es justo el "Ya existe una
+     * cuenta con esos datos" indescifrable que se reporto: cualquier edicion de
+     * un evento con al menos una inscripcion fallaba, no solo la que de verdad
+     * intentaba quitar algo. Rechazar aca, ANTES de moderar, da un mensaje que
+     * de verdad explica que paso. No hace falta un chequeo aparte para "quitar
+     * una fecha entera": eso implica quitar TODOS sus sectores, y ya caen bajo
+     * este mismo control.
      */
     private void validarCupoYPrecio(Long idEvento, List<CronogramaRequest> cronogramas) {
         List<EventoCronograma> cronogramasActuales =
@@ -349,11 +368,14 @@ public class EventoService {
                 .stream()
                 .collect(Collectors.toMap(CronogramaTicket::getIdCronogramaTicket, t -> t));
 
+        Set<Long> idsTicketEnviados = new HashSet<>();
+
         for (CronogramaRequest cronograma : cronogramas) {
             for (TicketRequest ticketNuevo : cronograma.getTickets()) {
                 if (ticketNuevo.getIdCronogramaTicket() == null) {
                     continue; // sector nuevo: sin piso que respetar
                 }
+                idsTicketEnviados.add(ticketNuevo.getIdCronogramaTicket());
 
                 CronogramaTicket actual = ticketsActualesPorId.get(ticketNuevo.getIdCronogramaTicket());
                 if (actual == null || !actual.getCronograma().getEvento().getIdEvento().equals(idEvento)) {
@@ -373,6 +395,16 @@ public class EventoService {
                             "No se puede cambiar el precio de '" + nombreDeTicket(actual)
                             + "': ya tiene inscripciones activas");
                 }
+            }
+        }
+
+        for (CronogramaTicket ticket : ticketsActualesPorId.values()) {
+            boolean seQuita = !idsTicketEnviados.contains(ticket.getIdCronogramaTicket());
+            if (seQuita && inscripcionRepository.existsByCronogramaTicketIdCronogramaTicket(
+                    ticket.getIdCronogramaTicket())) {
+                throw new OperacionNoPermitidaException(
+                        "No se puede quitar el sector '" + nombreDeTicket(ticket)
+                        + "': ya tiene inscripciones");
             }
         }
     }

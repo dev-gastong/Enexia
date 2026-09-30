@@ -289,6 +289,27 @@ const API = {
         return this.peticion('GET', ruta, null, false);
     },
 
+    /**
+     * Igual que {@link #publico}, pero manda el token SI hay uno guardado
+     * (participante o organizador con sesion iniciada).
+     *
+     * Sigue siendo apto para un visitante anonimo: {@code peticion()} solo
+     * agrega la cabecera cuando {@code Auth.token()} devuelve algo, y
+     * `JwtAuthenticationFilter` nunca rechaza una peticion por token ausente
+     * o invalido en una ruta {@code permitAll()} -- simplemente no autentica
+     * y la deja seguir como anonima (ver el javadoc de ese filtro). Por eso
+     * esto no puede terminar en el redirect-a-login que dispara `peticion()`
+     * ante un 401: esta ruta jamas responde 401.
+     *
+     * La ficha de evento (RF-4.4) la necesita para saber, cuando SI hay
+     * sesion, en que cronogramas el visitante ya tiene una inscripcion
+     * activa (`yaInscripto`) -- dato que la version sin token nunca puede
+     * traer porque el backend no tiene forma de saber quien pregunta.
+     */
+    async publicoConSesion(ruta) {
+        return this.peticion('GET', ruta, null, true);
+    },
+
     categorias() {
         return this.publico('/api/publico/categorias');
     },

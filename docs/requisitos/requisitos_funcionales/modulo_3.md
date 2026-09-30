@@ -3,7 +3,7 @@
 * #### **RF-3.1: Inscripción Transaccional a Cronogramas de Eventos**
 
 
-El sistema debe permitir a los usuarios con rol de *Participante* reservar un cupo en una fecha y hora específicas de la agenda mediante la selección de un `Cronograma_Ticket`. El backend debe validar síncronamente que el `cupo_actual` sea menor al `cupo_maximo` antes de confirmar la operación, creando un registro en la tabla `Inscripcion` con estado "PENDIENTE".
+El sistema debe permitir a los usuarios con rol de *Participante* reservar un cupo en una fecha y hora específicas de la agenda mediante la selección de un `Cronograma_Ticket`. El backend debe validar síncronamente que el `cupo_actual` sea menor al `cupo_maximo`, que el usuario no tenga ya una inscripción activa para ese mismo `Evento_Cronograma`, y que la fecha y hora de fin de ese cronograma todavía no hayan pasado (no se puede reservar un lugar en una función que ya finalizó), antes de confirmar la operación, creando un registro en la tabla `Inscripcion` con estado "PENDIENTE".
 * #### **RF-3.2: Simulación del Flujo de Pago**
 
 
@@ -15,7 +15,9 @@ El sistema debe permitir al participante anular una inscripción previamente adq
 * #### **RF-3.4: Sistema de Valoración Cuantitativa y Cualitativa**
 
 
-El sistema debe permitir al participante calificar su experiencia en un cronograma de evento una vez finalizado el mismo. La entidad `Valoracion` capturará un valor entero obligatorio (escala del 1 al 5) y un campo de texto para comentarios y reseñas cualitativas. El backend aplicará una restricción única compuesta para asegurar que un usuario pueda dejar un **máximo de una (1) valoración por cronograma**.
+El sistema debe permitir al participante calificar su experiencia en un cronograma de evento una vez finalizado el mismo. La entidad `Valoracion` capturará un valor entero obligatorio (escala del 1 al 5) y un campo de texto para comentarios y reseñas cualitativas. El backend aplicará una restricción única compuesta (`id_usuario`, `id_cronograma`), declarada como índice `UNIQUE` en la base y no solo verificada en el service, para asegurar que un usuario pueda dejar un **máximo de una (1) valoración por cronograma**.
+
+La ficha pública del evento (RF-4.4) debe listar sus valoraciones de forma paginada — nunca todas de una — mostrando junto a cada reseña el nombre del autor (nickname, no el nombre y apellido civiles), el puntaje, el comentario y a **qué cronograma específico** se refiere (un evento puede tener varias funciones, y cada reseña corresponde a una sola). El header de la ficha muestra además el promedio y la cantidad total de valoraciones del evento. Al participante autenticado se le indica, cronograma por cronograma, si todavía puede dejar una valoración (asistencia confirmada + cronograma finalizado + no valorado aún) para no ofrecerle un formulario que el backend va a rechazar.
 * #### **RF-3.5: Moderación Síncrona de Reseñas y Comentarios**
 
 

@@ -211,6 +211,13 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                 <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.67 5.83c0 3.5-4.67 7-4.67 7s-4.67-3.5-4.67-7a4.67 4.67 0 1 1 9.34 0Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="5.83" r="1.75" stroke="currentColor" stroke-width="1.2"/></svg>
                 <select id="filtroCiudad"><option value="">Ubicación</option></select>
             </div>
+            <div class="busqueda__campo busqueda__select">
+                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4h10M4 7h6M5.5 10h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                <select id="filtroOrden" title="Ordenar por">
+                    <option value="recientes">Más nuevos primero</option>
+                    <option value="antiguos">Más antiguos primero</option>
+                </select>
+            </div>
             <button class="boton" id="btnBuscar" type="button">Buscar</button>
         </div>
     </div>
@@ -424,7 +431,8 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
             texto: document.getElementById('filtroTexto').value.trim(),
             idCategoria: document.getElementById('filtroCategoria').value,
             idCiudad: document.getElementById('filtroCiudad').value,
-            desde: document.getElementById('filtroFecha').value
+            desde: document.getElementById('filtroFecha').value,
+            orden: document.getElementById('filtroOrden').value
         };
     }
 
@@ -478,6 +486,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
     }
 
     document.getElementById('btnBuscar').addEventListener('click', () => cargar(true));
+    document.getElementById('filtroOrden').addEventListener('change', () => cargar(true));
     document.getElementById('filtroTexto').addEventListener('keydown', e => { if (e.key === 'Enter') cargar(true); });
     document.getElementById('btnCargarMas').addEventListener('click', () => { pagina++; cargar(false); });
 

@@ -17,11 +17,15 @@ import com.enexia.rg.model.EstadoEventoOrganizadorNombre;
 import com.enexia.rg.model.Evento;
 import com.enexia.rg.model.EventoCronograma;
 import com.enexia.rg.model.EventoDetalle;
+import com.enexia.rg.model.Usuario;
 import com.enexia.rg.repository.CronogramaTicketRepository;
 import com.enexia.rg.repository.EventoCronogramaRepository;
 import com.enexia.rg.repository.EventoDetalleRepository;
 import com.enexia.rg.repository.EventoMultimediaRepository;
 import com.enexia.rg.repository.EventoRepository;
+import com.enexia.rg.repository.InscripcionRepository;
+import com.enexia.rg.repository.UsuarioRepository;
+import com.enexia.rg.repository.ValoracionRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +60,9 @@ public class CatalogoPublicoService {
     private final EventoService eventoService;
     private final VisitaService visitaService;
     private final EventoMapper eventoMapper;
+    private final UsuarioRepository usuarioRepository;
+    private final InscripcionRepository inscripcionRepository;
+    private final ValoracionRepository valoracionRepository;
 
     // =====================================================================
     // CATALOGO  (RF-4.1, RF-4.2, RF-4.3)
@@ -134,9 +141,33 @@ public class CatalogoPublicoService {
                 : ticketRepository.buscarPorCronogramas(
                         cronogramas.stream().map(EventoCronograma::getIdCronograma).toList());
 
+        // Con sesion de PARTICIPANTE, se resuelve el estado de participacion
+        // en TODOS los cronogramas de la agenda a la vez (RF-3.1, RF-3.4): es
+        // lo que le permite al frontend no ofrecer el boton "Inscribirme"
+        // donde ya tiene lugar, ni el formulario de valorar donde no asistio
+        // o donde ya opino, en vez de dejar que se detecte recien al fallar
+        // el POST.
+        EventoMapper.EstadoParticipante estadoParticipante = EventoMapper.EstadoParticipante.vacio();
+        if (emailUsuario != null && !cronogramas.isEmpty()) {
+            Usuario usuario = usuarioRepository.buscarActivoPorEmailConRoles(emailUsuario).orElse(null);
+            if (usuario != null) {
+                List<Long> idsCronograma = cronogramas.stream().map(EventoCronograma::getIdCronograma).toList();
+                estadoParticipante = new EventoMapper.EstadoParticipante(
+                        inscripcionRepository.idsDeCronogramasConInscripcionActiva(
+                                usuario.getIdUsuario(), idsCronograma),
+                        inscripcionRepository.idsDeCronogramasConfirmadosDeUsuario(
+                                usuario.getIdUsuario(), idsCronograma),
+                        valoracionRepository.idsDeCronogramasYaValoradosPorUsuario(
+                                usuario.getIdUsuario(), idsCronograma));
+            }
+        }
+
         EventoDetalleResponse ficha = eventoMapper.aFicha(
                 evento, detalle, cronogramas, tickets,
-                multimediaRepository.findByEventoIdEventoOrderByOrdenAsc(idEvento));
+                multimediaRepository.findByEventoIdEventoOrderByOrdenAsc(idEvento),
+                estadoParticipante,
+                valoracionRepository.promedioDeEvento(idEvento),
+                valoracionRepository.countByCronogramaEventoIdEvento(idEvento));
 
         // --- Paso 4.5: registro pasivo de la visita.
         //

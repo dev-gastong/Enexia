@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import com.enexia.rg.dto.ValoracionRequest;
 import com.enexia.rg.dto.ValoracionResponse;
@@ -168,5 +172,51 @@ class ValoracionServiceTest {
         verify(auditoriaService).registrarAparte(eq(participante),
                 eq(AuditoriaService.ACCION_VALORACION_RECHAZADA_MODERACION), anyString(), eq(request));
         verify(auditoriaService, never()).registrar(any(), anyString(), anyString(), any());
+    }
+
+    @Nested
+    @DisplayName("Listado publico (RF-4.4): paginado, con autor y cronograma resueltos")
+    class ListadoPublico {
+
+        @Test
+        @DisplayName("Mapea autor (nickname, no nombre civil) y la fecha del cronograma valorado")
+        void mapeaAutorYCronograma() {
+            participante.setNickname("bruno_d");
+
+            Valoracion valoracion = new Valoracion();
+            valoracion.setIdvaloracion(5L);
+            valoracion.setCronograma(cronogramaFinalizado);
+            valoracion.setUsuario(participante);
+            valoracion.setValor(4);
+            valoracion.setComentario("Muy buena organizacion");
+            valoracion.setFecha(LocalDate.now());
+
+            PageRequest paginado = PageRequest.of(0, 5);
+            when(valoracionRepository.findByCronogramaEventoIdEventoOrderByFechaDesc(20L, paginado))
+                    .thenReturn(new PageImpl<>(List.of(valoracion), paginado, 1));
+
+            Page<ValoracionResponse> pagina = servicio.listarDeEvento(20L, paginado);
+
+            assertThat(pagina.getTotalElements()).isEqualTo(1);
+            ValoracionResponse item = pagina.getContent().get(0);
+            // El autor es el nickname, no "Nombre Apellido": mismo criterio de
+            // privacidad que EventoMapper.firmaOrganizador aplica al organizador.
+            assertThat(item.getAutor()).isEqualTo("bruno_d");
+            assertThat(item.getCronogramaFecha()).isEqualTo(cronogramaFinalizado.getFecha());
+            assertThat(item.getIdCronograma()).isEqualTo(ID_CRONOGRAMA);
+        }
+
+        @Test
+        @DisplayName("Pagina vacia no explota: ni por falta de reseñas ni por autor nulo")
+        void paginaVacia() {
+            PageRequest paginado = PageRequest.of(3, 5);
+            when(valoracionRepository.findByCronogramaEventoIdEventoOrderByFechaDesc(20L, paginado))
+                    .thenReturn(new PageImpl<>(List.of(), paginado, 0));
+
+            Page<ValoracionResponse> pagina = servicio.listarDeEvento(20L, paginado);
+
+            assertThat(pagina.getContent()).isEmpty();
+            assertThat(pagina.getTotalElements()).isZero();
+        }
     }
 }

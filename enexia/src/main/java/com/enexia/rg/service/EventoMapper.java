@@ -2,9 +2,11 @@ package com.enexia.rg.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -117,12 +119,67 @@ public class EventoMapper {
                                         List<EventoCronograma> cronogramas,
                                         List<CronogramaTicket> tickets,
                                         List<EventoMultimedia> imagenes) {
+        return aFicha(evento, detalle, cronogramas, tickets, imagenes,
+                EstadoParticipante.vacio(), null, 0);
+    }
+
+    /**
+     * Cuanto sabe el backend del visitante autenticado, para las tres marcas
+     * "es prevesible que esto falle, no lo ofrezcas" de la ficha (RF-3.1,
+     * RF-3.4): inscripto activo (boton "Inscribirme"), confirmado (piso para
+     * poder valorar) y ya valorado (techo para no ofrecerlo de nuevo).
+     *
+     * Un record con los tres sets en vez de tres parametros sueltos: son datos
+     * que siempre viajan juntos (los tres se calculan en el mismo momento, a
+     * partir del mismo usuario y la misma lista de cronogramas) y crecer a un
+     * cuarto o quinto set no deberia obligar a tocar la firma de aFicha otra
+     * vez.
+     */
+    public record EstadoParticipante(
+            Set<Long> idsInscriptoActivo,
+            Set<Long> idsConfirmado,
+            Set<Long> idsYaValorado) {
+
+        public static EstadoParticipante vacio() {
+            return new EstadoParticipante(Set.of(), Set.of(), Set.of());
+        }
+    }
+
+    /**
+     * Ficha tecnica completa, con el estado de participacion del visitante
+     * (RF-3.1, RF-3.4) y las estadisticas de valoracion del evento.
+     *
+     * @param estadoParticipante ver {@link EstadoParticipante}; vacio para un
+     *                           visitante anonimo o para el propio organizador
+     *                           editando su evento
+     * @param promedioValoracion null si el evento todavia no tiene ninguna
+     *                           valoracion (distinto de "0 estrellas")
+     * @param cantidadValoraciones total de valoraciones del evento, para el
+     *                             "N opiniones" del header
+     */
+    public EventoDetalleResponse aFicha(Evento evento,
+                                        EventoDetalle detalle,
+                                        List<EventoCronograma> cronogramas,
+                                        List<CronogramaTicket> tickets,
+                                        List<EventoMultimedia> imagenes,
+                                        EstadoParticipante estadoParticipante,
+                                        Double promedioValoracion,
+                                        long cantidadValoraciones) {
 
         Map<Long, List<CronogramaTicket>> ticketsPorCronograma = tickets.stream()
                 .collect(Collectors.groupingBy(t -> t.getCronograma().getIdCronograma()));
 
+        LocalDateTime ahora = LocalDateTime.now();
+
         List<EventoCronogramaResponse> agenda = new ArrayList<>();
         for (EventoCronograma cronograma : cronogramas) {
+            boolean finalizado = LocalDateTime.of(cronograma.getFecha(), cronograma.getHoraFin())
+                    .isBefore(ahora);
+
+            boolean puedeValorar = finalizado
+                    && estadoParticipante.idsConfirmado().contains(cronograma.getIdCronograma())
+                    && !estadoParticipante.idsYaValorado().contains(cronograma.getIdCronograma());
+
             agenda.add(EventoCronogramaResponse.builder()
                     .idCronograma(cronograma.getIdCronograma())
                     .fecha(cronograma.getFecha())
@@ -133,6 +190,9 @@ public class EventoMapper {
                             .stream()
                             .map(this::aTicket)
                             .toList())
+                    .finalizado(finalizado)
+                    .yaInscripto(estadoParticipante.idsInscriptoActivo().contains(cronograma.getIdCronograma()))
+                    .puedeValorar(puedeValorar)
                     .build());
         }
 
@@ -167,6 +227,8 @@ public class EventoMapper {
                 .imagenes(imagenes.stream().map(EventoMultimedia::getUrlArchivo).toList())
                 .cronogramas(agenda)
                 .fechaCreacion(evento.getFechaCreacion())
+                .promedioValoracion(promedioValoracion)
+                .cantidadValoraciones(cantidadValoraciones)
                 .build();
     }
 

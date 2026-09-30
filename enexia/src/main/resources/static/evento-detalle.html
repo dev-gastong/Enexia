@@ -176,6 +176,58 @@ img { max-width: 100%; display: block; }
 .acceso-fila__boton:disabled { opacity: .6; cursor: not-allowed; }
 .acceso-fila__boton--ya-inscripto { background: var(--ok-tinte); color: var(--ok); }
 
+/* Promedio de valoracion junto al titulo (RF-3.4) */
+.ficha__promedio { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 13px; color: var(--texto-secundario); }
+.ficha__promedio strong { color: var(--texto); font-weight: 700; }
+.ficha__promedio svg { width: 14px; height: 14px; color: var(--alerta); flex: none; }
+
+/* --- Opiniones de la comunidad (RF-3.4, RF-3.5) --------------------------- */
+
+.opiniones { margin-top: 28px; padding: 24px; border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); }
+.opiniones__cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.opiniones__cabecera h2 { margin: 0; color: var(--acento-fuerte); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.opiniones__contador { font-size: 12px; color: var(--texto-secundario); }
+
+/* Formulario para dejar una opinion */
+.opiniones__form { padding: 14px; margin-bottom: 18px; border: 1px solid var(--borde); border-radius: var(--radio-campo); background: var(--superficie-alt); display: flex; flex-direction: column; gap: 10px; }
+.opiniones__form-fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.opiniones__form select { padding: 6px 10px; border: 1px solid var(--borde-campo); border-radius: var(--radio); background: var(--superficie); color: var(--texto); font-family: inherit; font-size: 12.5px; }
+.opiniones__form textarea { width: 100%; min-height: 64px; padding: 10px 12px; border: 1px solid var(--borde-campo); border-radius: var(--radio-campo); background: var(--superficie); color: var(--texto); font-family: inherit; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
+.opiniones__form textarea:focus, .opiniones__form select:focus { outline: none; border-color: var(--acento); box-shadow: var(--foco-accion); }
+
+.selector-estrellas { display: inline-flex; align-items: center; gap: 3px; }
+.selector-estrellas button { padding: 2px; border: 0; background: none; cursor: pointer; color: var(--borde-fuerte); line-height: 0; }
+.selector-estrellas button svg { width: 20px; height: 20px; }
+.selector-estrellas button.activa { color: var(--alerta); }
+.selector-estrellas button:hover ~ button:not(.activa) { color: var(--borde-fuerte); }
+
+.opiniones__form-pie { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.opiniones__form-pie .boton { padding: 8px 18px; font-size: 12.5px; }
+.opiniones__form-pie .boton:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Lista: scroll PROPIO, para que muchas opiniones no estiren la pagina entera */
+.opiniones__lista { display: flex; flex-direction: column; gap: 14px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.opiniones__lista:empty { display: none; }
+
+.opinion-item { display: flex; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--borde); }
+.opinion-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.opinion-item__avatar { width: 32px; height: 32px; flex: none; border-radius: 999px; background: linear-gradient(135deg, var(--acento) 0%, var(--acento-fuerte) 100%); color: #fff; font-family: var(--marca); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.opinion-item__cuerpo { flex: 1 1 0; min-width: 0; }
+.opinion-item__cabecera { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 4px; }
+.opinion-item__autor { font-size: 13px; font-weight: 700; color: var(--texto); }
+.opinion-item__estrellas { display: inline-flex; align-items: center; gap: 1px; color: var(--alerta); }
+.opinion-item__estrellas svg { width: 12px; height: 12px; }
+.opinion-item__estrellas svg.vacia { color: var(--borde); }
+.opinion-item__meta { margin-left: auto; font-size: 11px; color: var(--texto-secundario); white-space: nowrap; }
+.opinion-item__cronograma { display: block; margin-bottom: 4px; font-size: 11.5px; color: var(--acento-fuerte); font-weight: 600; }
+.opinion-item__texto { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--texto-secundario); white-space: pre-line; }
+
+.opiniones__cargar-mas { display: block; margin: 14px auto 0; padding: 8px 18px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); color: var(--acento-fuerte); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.opiniones__cargar-mas:hover { background: var(--acento-tinte); }
+.opiniones__cargar-mas[hidden] { display: none; }
+
+.opiniones__vacio { font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 12px 0; }
+
 /* --- Toast (mismo patron que equipo.html / mis-eventos.html) ------------- */
 .toast-pila { position: fixed; top: 20px; right: 20px; z-index: 80; display: flex; flex-direction: column; gap: 10px; }
 .toast { display: flex; align-items: flex-start; gap: 12px; width: 340px; padding: 16px; border: 1px solid var(--borde); border-left: 4px solid var(--ok); border-radius: var(--radio-campo); background: var(--superficie); box-shadow: var(--sombra-tarjeta); animation: entrar-toast .25s ease; }
@@ -575,19 +627,32 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         const accesoFilasHtml = (ev.cronogramas || []).flatMap(c => (c.tickets || []).map(t => {
             const pct = t.cupoMaximo ? Math.max(0, Math.min(100, Math.round((t.cupoDisponible / t.cupoMaximo) * 100))) : 0;
 
+            // Orden de prioridad: un cronograma finalizado o donde ya hay
+            // inscripcion activa gana sobre "agotado" (RF-3.1). El backend ya
+            // rechaza estos tres casos igual (RegistroInscripcionService), esto
+            // es solo para no ofrecer un boton que se sabe de antemano que va
+            // a fallar -- el mensaje de error del backend sigue intacto por si
+            // alguien fuerza el POST desde las herramientas de desarrollador.
+            const deshabilitado = c.finalizado || c.yaInscripto || t.agotado;
+            let textoBoton;
+            if (c.finalizado) textoBoton = 'Evento finalizado';
+            else if (c.yaInscripto) textoBoton = 'Ya estás inscripto';
+            else if (t.agotado) textoBoton = 'Agotado';
+            else textoBoton = t.gratuito ? 'Inscribirme' : 'Inscribirme y pagar';
+
             const botonHtml = puedeInscribirse
                 ? `<div class="acceso-fila__accion">
-                        <button type="button" class="acceso-fila__boton js-btn-inscribir"
+                        <button type="button" class="acceso-fila__boton js-btn-inscribir${c.yaInscripto ? ' acceso-fila__boton--ya-inscripto' : ''}"
                                 data-id-ticket="${t.idCronogramaTicket}"
                                 data-nombre-ticket="${t.tipoTicket}"
-                                ${t.agotado ? 'disabled' : ''}>
-                            ${t.agotado ? 'Agotado' : (t.gratuito ? 'Inscribirme' : 'Inscribirme y pagar')}
+                                ${deshabilitado ? 'disabled' : ''}>
+                            ${textoBoton}
                         </button>
                    </div>`
                 : '';
 
             return `
-                <div class="acceso-fila ${t.agotado ? 'acceso-fila--agotado' : ''}" data-id-cronograma="${c.idCronograma}">
+                <div class="acceso-fila ${deshabilitado ? 'acceso-fila--agotado' : ''}" data-id-cronograma="${c.idCronograma}">
                     <div class="acceso-fila__fecha">${fechaLarga(c.fecha)}</div>
                     <div class="acceso-fila__cab">
                         <span class="acceso-fila__nombre">${t.tipoTicket}</span>
@@ -598,6 +663,45 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                     ${botonHtml}
                 </div>`;
         })).join('') || '<p style="font-size:13px;color:var(--texto-secundario);margin:0 0 14px">Todavia no hay entradas cargadas para este evento.</p>';
+
+        // --- Formulario para dejar una opinion (RF-3.4). Elegibilidad
+        // calculada en el backend por cronograma (puedeValorar): ver el
+        // javadoc de EventoMapper.EstadoParticipante. Con mas de un
+        // cronograma elegible se ofrece un selector; con exactamente uno,
+        // una etiqueta fija alcanza (menos ruido en el formulario).
+        const cronogramasElegibles = (ev.cronogramas || []).filter(c => c.puedeValorar);
+        let formularioOpinionHtml = '';
+        if (puedeInscribirse && cronogramasElegibles.length) {
+            const selectorCronogramaHtml = cronogramasElegibles.length > 1
+                ? `<select id="valorarCronograma">
+                        ${cronogramasElegibles.map(c =>
+                            `<option value="${c.idCronograma}">${fechaLarga(c.fecha)}</option>`).join('')}
+                   </select>`
+                : `<input type="hidden" id="valorarCronograma" value="${cronogramasElegibles[0].idCronograma}">
+                   <span style="font-size:12.5px;color:var(--texto-secundario)">Sobre: <strong style="color:var(--texto)">${fechaLarga(cronogramasElegibles[0].fecha)}</strong></span>`;
+
+            formularioOpinionHtml = `
+                <div class="opiniones__form">
+                    <div class="opiniones__form-fila">
+                        ${selectorCronogramaHtml}
+                        <div class="selector-estrellas" id="valorarEstrellas" data-valor="0">
+                            ${[1, 2, 3, 4, 5].map(n => `
+                                <button type="button" data-valor="${n}" aria-label="${n} estrella${n > 1 ? 's' : ''}">
+                                    <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5l1.98 4.24 4.52.53-3.37 3.19.9 4.54L8 11.8l-4.03 2.2.9-4.54L1.5 6.27l4.52-.53L8 1.5Z"/></svg>
+                                </button>`).join('')}
+                        </div>
+                    </div>
+                    <textarea id="valorarComentario" maxlength="1000" placeholder="Escribí tu opinión sobre este evento... (opcional)"></textarea>
+                    <div class="opiniones__form-pie">
+                        <button type="button" class="boton" id="btnPublicarOpinion">Publicar</button>
+                    </div>
+                </div>`;
+        } else if (puedeInscribirse) {
+            formularioOpinionHtml = `<p class="opiniones__vacio" style="margin-bottom:18px">
+                Podés dejar tu opinión sobre una función a la que asististe (inscripción confirmada)
+                una vez que haya finalizado, y solo una vez.
+            </p>`;
+        }
 
         // Solo se muestra cuando hay algo que decir (sin sesion): con sesion de
         // PARTICIPANTE cada ticket ya trae su propio boton, no hace falta aviso.
@@ -636,7 +740,15 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                             <span class="chip-pildora chip-pildora--modalidad">Presencial</span>
                         </div>
 
-                        <div class="ficha__cabecera"><h1>${ev.nombre}</h1></div>
+                        <div class="ficha__cabecera">
+                            <h1>${ev.nombre}</h1>
+                            ${ev.cantidadValoraciones > 0 ? `
+                                <div class="ficha__promedio">
+                                    <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5l1.98 4.24 4.52.53-3.37 3.19.9 4.54L8 11.8l-4.03 2.2.9-4.54L1.5 6.27l4.52-.53L8 1.5Z"/></svg>
+                                    <strong>${Number(ev.promedioValoracion).toFixed(1)}</strong>
+                                    (${ev.cantidadValoraciones} ${ev.cantidadValoraciones === 1 ? 'opinión' : 'opiniones'})
+                                </div>` : ''}
+                        </div>
 
                         <div class="ficha__organizador">
                             <span class="ficha__organizador-avatar">${inicialOrg}</span>
@@ -665,6 +777,16 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                         </div>
                     </div>
                 </div>
+
+                <section class="opiniones">
+                    <div class="opiniones__cabecera">
+                        <h2>Opiniones de la Comunidad</h2>
+                        <span class="opiniones__contador" id="opinionesContador"></span>
+                    </div>
+                    ${formularioOpinionHtml}
+                    <div class="opiniones__lista" id="opinionesLista"></div>
+                    <button type="button" class="opiniones__cargar-mas" id="btnCargarMasOpiniones" hidden>Cargar más opiniones</button>
+                </section>
             </div>
 
             <section class="relacionados" id="seccionRelacionados" hidden>
@@ -675,6 +797,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         `;
 
         if (ev.idCategoria) cargarRelacionados(ev.idCategoria, ev.idEvento);
+        cargarOpiniones(ev.idEvento, true);
     }
 
     /* ------------------------------------------------ Relacionados --- */
@@ -725,12 +848,149 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         document.getElementById('seccionRelacionados').hidden = false;
     }
 
+    /* ------------------------------------------------- Opiniones --- */
+    /* RF-3.4/3.5. Listado paginado (GET .../valoraciones) separado de la
+       ficha: un evento popular puede tener cientos de reseñas, y la lista
+       vive en un contenedor con scroll propio (.opiniones__lista) para no
+       estirar la pagina entera -- "cargar mas" agrega adentro de esa caja,
+       no hace crecer el documento. */
+
+    let opinionesPagina = 0;
+    let opinionesTotalPaginas = 1;
+    const OPINIONES_TAMANO = 5;
+
+    function estrellasSvg(valor) {
+        return [1, 2, 3, 4, 5].map(n => `
+            <svg class="${n <= valor ? '' : 'vacia'}" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5l1.98 4.24 4.52.53-3.37 3.19.9 4.54L8 11.8l-4.03 2.2.9-4.54L1.5 6.27l4.52-.53L8 1.5Z"/></svg>`).join('');
+    }
+
+    function tiempoRelativo(iso) {
+        if (!iso) return '';
+        const [y, m, d] = iso.split('-').map(Number);
+        const dias = Math.floor((Date.now() - new Date(y, m - 1, d).getTime()) / 86400000);
+        if (dias <= 0) return 'Hoy';
+        if (dias === 1) return 'Ayer';
+        if (dias < 7) return `Hace ${dias} días`;
+        if (dias < 30) { const s = Math.floor(dias / 7); return `Hace ${s} semana${s > 1 ? 's' : ''}`; }
+        if (dias < 365) { const me = Math.floor(dias / 30); return `Hace ${me} mes${me > 1 ? 'es' : ''}`; }
+        const a = Math.floor(dias / 365);
+        return `Hace ${a} año${a > 1 ? 's' : ''}`;
+    }
+
+    function opinionItemHtml(op) {
+        const inicial = (op.autor || '?').trim().charAt(0).toUpperCase();
+        return `
+            <div class="opinion-item">
+                <span class="opinion-item__avatar">${inicial}</span>
+                <div class="opinion-item__cuerpo">
+                    <div class="opinion-item__cabecera">
+                        <span class="opinion-item__autor">${op.autor || 'Participante'}</span>
+                        <span class="opinion-item__estrellas">${estrellasSvg(op.valor)}</span>
+                        <span class="opinion-item__meta">${tiempoRelativo(op.fecha)}</span>
+                    </div>
+                    <span class="opinion-item__cronograma">Sobre la función del ${fechaLarga(op.cronogramaFecha)}</span>
+                    ${op.comentario ? `<p class="opinion-item__texto">${op.comentario}</p>` : ''}
+                </div>
+            </div>`;
+    }
+
+    async function cargarOpiniones(idEventoFicha, reiniciar) {
+        const lista = document.getElementById('opinionesLista');
+        const btnMas = document.getElementById('btnCargarMasOpiniones');
+        const contador = document.getElementById('opinionesContador');
+        if (!lista) return;
+
+        if (reiniciar) opinionesPagina = 0;
+
+        const r = await API.publico(
+            `/api/publico/eventos/${idEventoFicha}/valoraciones?pagina=${opinionesPagina}&tamano=${OPINIONES_TAMANO}`);
+        if (!r.ok) return;
+
+        const items = (r.cuerpo && r.cuerpo.content) || [];
+        const total = r.cuerpo.totalElements != null ? r.cuerpo.totalElements : items.length;
+        opinionesTotalPaginas = r.cuerpo.totalPages != null ? r.cuerpo.totalPages : 1;
+
+        if (reiniciar) lista.innerHTML = '';
+
+        if (reiniciar && !items.length) {
+            lista.innerHTML = '<p class="opiniones__vacio">Todavía no hay opiniones para este evento. ¡Sé el primero en dejar la tuya!</p>';
+        } else {
+            items.forEach(op => lista.insertAdjacentHTML('beforeend', opinionItemHtml(op)));
+        }
+
+        if (contador) contador.textContent = total + (total === 1 ? ' opinión' : ' opiniones');
+        if (btnMas) btnMas.hidden = (opinionesPagina + 1) >= opinionesTotalPaginas;
+    }
+
+    document.addEventListener('click', function (evento) {
+        const estrella = evento.target.closest('#valorarEstrellas button');
+        if (estrella) {
+            const grupo = document.getElementById('valorarEstrellas');
+            const valor = Number(estrella.dataset.valor);
+            grupo.dataset.valor = valor;
+            grupo.querySelectorAll('button').forEach(b => b.classList.toggle('activa', Number(b.dataset.valor) <= valor));
+            return;
+        }
+
+        if (evento.target.closest('#btnCargarMasOpiniones')) {
+            opinionesPagina++;
+            cargarOpiniones(idEvento, false);
+            return;
+        }
+
+        if (evento.target.closest('#btnPublicarOpinion')) {
+            enviarOpinion();
+        }
+    });
+
+    async function enviarOpinion() {
+        const grupo = document.getElementById('valorarEstrellas');
+        const campoCronograma = document.getElementById('valorarCronograma');
+        const campoComentario = document.getElementById('valorarComentario');
+        const btn = document.getElementById('btnPublicarOpinion');
+        if (!grupo || !campoCronograma || !btn) return;
+
+        const valor = Number(grupo.dataset.valor || 0);
+        if (!valor) {
+            mostrarToast('error', 'Elegí un puntaje', 'Seleccioná entre 1 y 5 estrellas antes de publicar.');
+            return;
+        }
+
+        const textoOriginal = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Publicando...';
+
+        const comentario = campoComentario.value.trim();
+        const r = await API.valorar({
+            idCronograma: Number(campoCronograma.value),
+            valor,
+            comentario: comentario || null
+        });
+
+        if (r.ok) {
+            mostrarToast('ok', 'Opinión publicada', 'Gracias por contarnos tu experiencia.');
+            // Re-pinta la ficha entera: saca el formulario para ese cronograma
+            // (ya no aplica puedeValorar) y refresca promedio, cantidad y lista.
+            cargarEvento();
+            return;
+        }
+
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
+
+        const mensaje = (r.cuerpo && r.cuerpo.mensaje) || 'No se pudo publicar la opinión.';
+        mostrarToast('error', r.status === 422 ? 'Comentario rechazado' : 'No se pudo publicar', mensaje);
+    }
+
     /* ---------------------------------------------------------- Carga --- */
 
     const idEvento = new URLSearchParams(window.location.search).get('id');
 
     function cargarEvento() {
-        API.publico('/api/publico/eventos/' + idEvento).then(r => {
+        // Con token si hay sesion: es lo que le permite al backend resolver
+        // "yaInscripto" por cronograma (ver el javadoc de API.publicoConSesion).
+        // Sin sesion, se comporta identico a API.publico.
+        API.publicoConSesion('/api/publico/eventos/' + idEvento).then(r => {
             if (r.ok) {
                 pintarFicha(r.cuerpo);
             } else {

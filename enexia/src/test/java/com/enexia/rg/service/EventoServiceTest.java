@@ -38,12 +38,15 @@ import com.enexia.rg.event.EventoCreadoEvent;
 import com.enexia.rg.exception.OperacionNoPermitidaException;
 import com.enexia.rg.exception.RecursoNoEncontradoException;
 import com.enexia.rg.exception.ReglaNegocioException;
+import com.enexia.rg.model.CronogramaTicket;
 import com.enexia.rg.model.EstadoEventoOrganizadorNombre;
 import com.enexia.rg.model.EstadoEventoSistemaNombre;
 import com.enexia.rg.model.Evento;
+import com.enexia.rg.model.EventoCronograma;
 import com.enexia.rg.model.EventoEstadoOrganizador;
 import com.enexia.rg.model.EventoEstadoSistema;
 import com.enexia.rg.model.Rol;
+import com.enexia.rg.model.TipoTicket;
 import com.enexia.rg.model.Usuario;
 import com.enexia.rg.model.UsuarioRol;
 import com.enexia.rg.repository.CategoriaRepository;
@@ -54,6 +57,7 @@ import com.enexia.rg.repository.EventoEstadoOrganizadorRepository;
 import com.enexia.rg.repository.EventoEstadoSistemaRepository;
 import com.enexia.rg.repository.EventoRepository;
 import com.enexia.rg.repository.HistorialEstadoEventoRepository;
+import com.enexia.rg.repository.InscripcionRepository;
 import com.enexia.rg.repository.UsuarioRepository;
 import com.enexia.rg.repository.VisitaRepository;
 
@@ -89,6 +93,7 @@ class EventoServiceTest {
     @Mock private CategoriaRepository categoriaRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private VisitaRepository visitaRepository;
+    @Mock private InscripcionRepository inscripcionRepository;
 
     @Mock private PersonaJuridicaService personaJuridicaService;
     @Mock private ApplicationEventPublisher publicadorDeEventos;
@@ -285,6 +290,81 @@ class EventoServiceTest {
             assertThatThrownBy(() -> servicio.crear(EMAIL, datos, imagenes, request))
                     .isInstanceOf(OperacionNoPermitidaException.class)
                     .hasMessageContaining("limite");
+        }
+    }
+
+    // =====================================================================
+    // Edicion (RF-2.7): no se puede quitar del formulario un sector -- ni la
+    // fecha que lo contiene -- si tiene alguna inscripcion asociada.
+    // =====================================================================
+
+    @Nested
+    @DisplayName("Edicion: no se puede quitar un sector con inscripciones (RF-2.7 + Modulo 3)")
+    class EdicionConInscripciones {
+
+        private static final Long ID_CRONOGRAMA_EXISTENTE = 50L;
+        private static final Long ID_TICKET_EXISTENTE = 500L;
+
+        @BeforeEach
+        void prepararEventoExistente() {
+            Evento evento = eventoPropio();
+            when(eventoRepository.buscarConAsociaciones(99L)).thenReturn(Optional.of(evento));
+            when(eventoRepository.bloquearParaActualizar(99L)).thenReturn(Optional.of(evento));
+
+            EventoCronograma cronogramaExistente = new EventoCronograma();
+            cronogramaExistente.setIdCronograma(ID_CRONOGRAMA_EXISTENTE);
+            cronogramaExistente.setEvento(evento);
+            cronogramaExistente.setFecha(LocalDate.now().plusDays(10));
+            cronogramaExistente.setHoraInicio(LocalTime.of(18, 0));
+            cronogramaExistente.setHoraFin(LocalTime.of(20, 0));
+            when(cronogramaRepository.findByEventoIdEventoOrderByFechaAscHoraInicioAsc(99L))
+                    .thenReturn(List.of(cronogramaExistente));
+
+            TipoTicket tipoTicket = new TipoTicket();
+            tipoTicket.setNombre("General");
+
+            CronogramaTicket ticketExistente = new CronogramaTicket();
+            ticketExistente.setIdCronogramaTicket(ID_TICKET_EXISTENTE);
+            ticketExistente.setCronograma(cronogramaExistente);
+            ticketExistente.setTipoTicket(tipoTicket);
+            ticketExistente.setPrecio(BigDecimal.ZERO);
+            ticketExistente.setCupoMaximo(100);
+            ticketExistente.setCupoActual(3);
+            when(ticketRepository.buscarPorCronogramas(List.of(ID_CRONOGRAMA_EXISTENTE)))
+                    .thenReturn(List.of(ticketExistente));
+
+            when(inscripcionRepository.existsByCronogramaTicketIdCronogramaTicket(ID_TICKET_EXISTENTE))
+                    .thenReturn(true);
+        }
+
+        @Test
+        @DisplayName("Quitar el sector (misma fecha, sin ese ticket) -> 409 y no un 500 de FK")
+        void rechazaQuitarSectorConInscripciones() {
+            // Misma fecha (mismo idCronograma), pero el ticket que ya tiene
+            // inscripciones no viaja mas: es justo lo que hacia el formulario
+            // cuando el organizador borraba un sector con gente ya anotada.
+            CronogramaRequest cronogramaSinElTicket =
+                    cronograma(LocalDate.now().plusDays(10), LocalTime.of(18, 0));
+            cronogramaSinElTicket.setIdCronograma(ID_CRONOGRAMA_EXISTENTE);
+            datos.setCronogramas(List.of(cronogramaSinElTicket));
+
+            assertThatThrownBy(() -> servicio.editar(EMAIL, 99L, datos, imagenes, request))
+                    .isInstanceOf(OperacionNoPermitidaException.class)
+                    .hasMessageContaining("inscripciones");
+        }
+
+        @Test
+        @DisplayName("Quitar la fecha entera (implica quitar su sector) -> 409 y no un 500 de FK")
+        void rechazaQuitarFechaConInscripciones() {
+            // La fecha existente ni aparece: el formulario manda una fecha
+            // nueva en su lugar. Antes de la reconciliacion, esto borraba y
+            // recreaba la agenda entera y chocaba con la FK de Inscripcion.
+            datos.setCronogramas(List.of(
+                    cronograma(LocalDate.now().plusDays(40), LocalTime.of(18, 0))));
+
+            assertThatThrownBy(() -> servicio.editar(EMAIL, 99L, datos, imagenes, request))
+                    .isInstanceOf(OperacionNoPermitidaException.class)
+                    .hasMessageContaining("inscripciones");
         }
     }
 

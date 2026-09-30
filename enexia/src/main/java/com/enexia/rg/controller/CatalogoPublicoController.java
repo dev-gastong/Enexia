@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.enexia.rg.dto.EventoDetalleResponse;
 import com.enexia.rg.dto.EventoResponse;
+import com.enexia.rg.dto.ValoracionResponse;
 import com.enexia.rg.repository.CategoriaRepository;
 import com.enexia.rg.repository.CiudadRepository;
 import com.enexia.rg.repository.ProvinciaRepository;
 import com.enexia.rg.service.CatalogoPublicoService;
+import com.enexia.rg.service.ValoracionService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,7 +51,12 @@ public class CatalogoPublicoController {
     private static final int TAMANO_PAGINA_DEFECTO = 12;
     private static final int TAMANO_PAGINA_MAXIMO = 50;
 
+    /** Bloque compacto embebido en la ficha (RF-3.4): no necesita el mismo tamano que la grilla. */
+    private static final int TAMANO_PAGINA_VALORACIONES_DEFECTO = 5;
+    private static final int TAMANO_PAGINA_VALORACIONES_MAXIMO = 20;
+
     private final CatalogoPublicoService catalogoService;
+    private final ValoracionService valoracionService;
     private final CategoriaRepository categoriaRepository;
     private final ProvinciaRepository provinciaRepository;
     private final CiudadRepository ciudadRepository;
@@ -60,11 +67,16 @@ public class CatalogoPublicoController {
      * Todos los parametros son opcionales: sin ninguno devuelve la primera
      * pagina del catalogo completo.
      *
-     * El orden por defecto es {@code fechaCreacion} descendente y no por fecha
-     * del evento, porque la fecha del evento vive en evento_cronograma y
-     * ordenar por una tabla hija exigiria un JOIN con agregacion que rompe la
-     * paginacion. La proxima fecha SI viaja en cada tarjeta, asi que el frontend
-     * puede reordenar la pagina si le conviene.
+     * El orden por defecto es {@code fechaCreacion} descendente ("recientes") y
+     * no por fecha del evento, porque la fecha del evento vive en
+     * evento_cronograma y ordenar por una tabla hija exigiria un JOIN con
+     * agregacion que rompe la paginacion. La proxima fecha SI viaja en cada
+     * tarjeta, asi que el frontend puede reordenar la pagina si le conviene.
+     *
+     * {@code orden} agrega el sentido contrario ("antiguos") sobre la MISMA
+     * columna: es el unico cambio barato (no exige tocar la consulta ni el
+     * indice) y alcanza para navegar catalogos grandes de punta a punta sin
+     * ir pagina por pagina.
      */
     @GetMapping("/eventos")
     public ResponseEntity<Page<EventoResponse>> buscar(
@@ -76,8 +88,13 @@ public class CatalogoPublicoController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(defaultValue = "recientes") String orden,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "" + TAMANO_PAGINA_DEFECTO) int tamano) {
+
+        Sort.Direction direccion = "antiguos".equalsIgnoreCase(orden)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
 
         PageRequest paginado = PageRequest.of(
                 Math.max(0, pagina),
@@ -85,7 +102,7 @@ public class CatalogoPublicoController {
                 // memoria: una denegacion de servicio de un solo parametro sobre
                 // el endpoint mas expuesto del sistema.
                 Math.min(Math.max(1, tamano), TAMANO_PAGINA_MAXIMO),
-                Sort.by(Sort.Direction.DESC, "fechaCreacion"));
+                Sort.by(direccion, "fechaCreacion"));
 
         return ResponseEntity.ok(catalogoService.buscar(
                 texto, idCategoria, idProvincia, idCiudad, desde, hasta, paginado));
@@ -104,6 +121,29 @@ public class CatalogoPublicoController {
 
         String email = principal == null ? null : principal.getName();
         return ResponseEntity.ok(catalogoService.verFicha(idEvento, email));
+    }
+
+    /**
+     * Valoraciones de un evento, paginadas y mas recientes primero (RF-3.4,
+     * RF-4.4).
+     *
+     * Endpoint APARTE de la ficha y no un campo mas en {@code EventoDetalleResponse}:
+     * un evento con cientos de reseñas no puede traerlas todas en la misma
+     * respuesta que ya carga agenda, tickets e imagenes. El promedio y la
+     * cantidad SI viajan en la ficha (son dos numeros, no una lista) para que
+     * el header de la pantalla no tenga que esperar a esta llamada.
+     */
+    @GetMapping("/eventos/{idEvento}/valoraciones")
+    public ResponseEntity<Page<ValoracionResponse>> valoraciones(
+            @PathVariable Long idEvento,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "" + TAMANO_PAGINA_VALORACIONES_DEFECTO) int tamano) {
+
+        PageRequest paginado = PageRequest.of(
+                Math.max(0, pagina),
+                Math.min(Math.max(1, tamano), TAMANO_PAGINA_VALORACIONES_MAXIMO));
+
+        return ResponseEntity.ok(valoracionService.listarDeEvento(idEvento, paginado));
     }
 
     /**

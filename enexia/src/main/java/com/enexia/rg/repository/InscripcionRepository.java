@@ -1,6 +1,8 @@
 package com.enexia.rg.repository;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +51,24 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
                                                    @Param("idCronograma") Long idCronograma);
 
     /**
+     * Version en lote de {@link #existeConfirmadaDeUsuarioEnCronograma}: la
+     * ficha publica (RF-4.4) la cruza con
+     * {@code ValoracionRepository.idsDeCronogramasYaValoradosPorUsuario} y con
+     * "finalizado" para decidir en que cronogramas ofrecer el formulario de
+     * valorar (RF-3.4). Mismo motivo que
+     * {@code idsDeCronogramasConInscripcionActiva}: una consulta por fecha
+     * seria el N+1 de siempre.
+     */
+    @Query("""
+            SELECT DISTINCT i.cronogramaTicket.cronograma.idCronograma FROM Inscripcion i
+            WHERE i.usuario.idUsuario = :idUsuario
+              AND i.cronogramaTicket.cronograma.idCronograma IN :idsCronograma
+              AND i.estadoInscripcion.nombreEstado = 'CONFIRMADA'
+            """)
+    Set<Long> idsDeCronogramasConfirmadosDeUsuario(@Param("idUsuario") Long idUsuario,
+                                                    @Param("idsCronograma") List<Long> idsCronograma);
+
+    /**
      * Restriccion de unicidad de la inscripcion (no declarada en el MER, a
      * diferencia del UNIQUE compuesto que RF-3.4 SI exige para Valoracion):
      * un usuario no puede tener mas de una inscripcion VIVA para el mismo
@@ -66,4 +86,34 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
             """)
     boolean existeActivaDeUsuarioEnCronograma(@Param("idUsuario") Long idUsuario,
                                               @Param("idCronograma") Long idCronograma);
+
+    /**
+     * Version en lote de {@link #existeActivaDeUsuarioEnCronograma}: la ficha
+     * publica de un evento (RF-4.4) necesita saber, para TODOS los cronogramas
+     * de la agenda a la vez, en cuales ya esta inscripto el visitante -- para
+     * no mostrarle el boton "Inscribirme" donde ya tiene lugar (ver el bug de
+     * doble inscripcion que esto reemplaza en evento-detalle.html). Una
+     * consulta por cronograma seria el N+1 de siempre.
+     */
+    @Query("""
+            SELECT DISTINCT i.cronogramaTicket.cronograma.idCronograma FROM Inscripcion i
+            WHERE i.usuario.idUsuario = :idUsuario
+              AND i.cronogramaTicket.cronograma.idCronograma IN :idsCronograma
+              AND i.estadoInscripcion.nombreEstado <> 'CANCELADA'
+            """)
+    Set<Long> idsDeCronogramasConInscripcionActiva(@Param("idUsuario") Long idUsuario,
+                                                    @Param("idsCronograma") List<Long> idsCronograma);
+
+    /**
+     * Existe AL MENOS UNA fila de Inscripcion para ese ticket, sin importar el
+     * estado (incluida CANCELADA).
+     *
+     * Distinto a proposito de {@code existeActivaDeUsuarioEnCronograma}: aca no
+     * importa si la inscripcion sigue "viva" para el negocio, importa si existe
+     * la FILA -- porque eso es lo que determina si un DELETE fisico del ticket
+     * (por ejemplo al reemplazar la agenda en una edicion, RF-2.7) viola la
+     * clave foranea. Una inscripcion CANCELADA sigue bloqueando ese DELETE
+     * igual que una CONFIRMADA.
+     */
+    boolean existsByCronogramaTicketIdCronogramaTicket(Long idCronogramaTicket);
 }

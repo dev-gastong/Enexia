@@ -1,7 +1,12 @@
 package com.enexia.rg.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -169,13 +174,16 @@ public class PublicacionEventoService {
      * aprobarYPersistir siempre parte de un evento sin detalle (nada se persiste
      * hasta la primera aprobacion), pero aca el detalle ya existe.
      *
-     * Cronograma, tickets y multimedia se BORRAN y se vuelven a crear en vez de
-     * actualizarse fila por fila. Es seguro solo porque el Modulo 3
-     * (Inscripcion) todavia no existe: nada en la base referencia estas filas
-     * todavia. El dia que exista, este reemplazo tiene que dejar de borrar los
-     * tickets con inscripciones activas -- EventoService.validarCupoYPrecio ya
-     * bloquea esa edicion antes de llegar aca, pero el borrado en si necesitara
-     * revisarse igual.
+     * Multimedia SI se borra y se vuelve a crear entera: nada la referencia por
+     * clave foranea. Cronograma y tickets, en cambio, se RECONCILIAN fila por
+     * fila (ver {@link #reconciliarAgenda}) desde que existe el Modulo 3: una
+     * vez que hay inscripciones, un ticket referenciado por Inscripcion no se
+     * puede borrar-y-recrear con un id nuevo, porque el DELETE de la fila vieja
+     * viola la clave foranea. Eso era exactamente el bug reportado: CUALQUIER
+     * edicion de un evento con al menos una inscripcion, tocara o no esa fecha,
+     * tiraba un 409 "Ya existe una cuenta con esos datos" -- el mensaje
+     * generico de DataIntegrityViolationException, que no tiene nada que ver
+     * con lo que en verdad paso.
      */
     public void reemplazarContenido(Evento evento, EventoCrearRequest datos, List<String> urlsAprobadas) {
         Long idEvento = evento.getIdEvento();
@@ -200,15 +208,7 @@ public class PublicacionEventoService {
             ubicacionRepository.delete(ubicacionAnterior);
         }
 
-        List<EventoCronograma> cronogramasAnteriores =
-                cronogramaRepository.findByEventoIdEventoOrderByFechaAscHoraInicioAsc(idEvento);
-        if (!cronogramasAnteriores.isEmpty()) {
-            List<Long> idsAnteriores = cronogramasAnteriores.stream()
-                    .map(EventoCronograma::getIdCronograma).toList();
-            ticketRepository.deleteAll(ticketRepository.buscarPorCronogramas(idsAnteriores));
-            cronogramaRepository.deleteAll(cronogramasAnteriores);
-        }
-        persistirAgenda(evento, datos.getCronogramas());
+        reconciliarAgenda(evento, datos.getCronogramas());
 
         multimediaRepository.deleteAll(multimediaRepository.findByEventoIdEventoOrderByOrdenAsc(idEvento));
         int orden = 1;
@@ -307,6 +307,87 @@ public class PublicacionEventoService {
         ubicacion.setLongitud(peticion.getLongitud());
 
         return ubicacionRepository.save(ubicacion);
+    }
+
+    /**
+     * Reconcilia cronograma y tickets contra lo que manda el formulario de
+     * edicion, en vez de borrar todo y recrearlo (RF-2.7, ver el javadoc de
+     * {@link #reemplazarContenido}).
+     *
+     * Tres casos por fila, distinguidos por el id que manda el formulario
+     * ({@code idCronograma} / {@code idCronogramaTicket}; ver el javadoc de
+     * esos campos en los DTO):
+     *   - Id que coincide con una fila existente: se ACTUALIZA en el lugar, sin
+     *     tocar su identidad (una Inscripcion que la referencia por FK la sigue
+     *     encontrando).
+     *   - Id nulo, o que no coincide con nada de este evento: es una fila
+     *     NUEVA.
+     *   - Fila existente cuyo id el formulario ya no manda: se BORRA de
+     *     verdad. Es seguro porque {@code EventoService.validarCupoYPrecio} ya
+     *     rechazo la edicion mas arriba, antes de moderar, si esa fila tenia
+     *     alguna inscripcion asociada.
+     */
+    private void reconciliarAgenda(Evento evento, List<CronogramaRequest> cronogramasNuevos) {
+        Long idEvento = evento.getIdEvento();
+
+        Map<Long, EventoCronograma> cronogramasActuales =
+                cronogramaRepository.findByEventoIdEventoOrderByFechaAscHoraInicioAsc(idEvento).stream()
+                        .collect(Collectors.toMap(EventoCronograma::getIdCronograma, c -> c));
+
+        Map<Long, CronogramaTicket> ticketsActuales = cronogramasActuales.isEmpty()
+                ? Map.of()
+                : ticketRepository.buscarPorCronogramas(new ArrayList<>(cronogramasActuales.keySet())).stream()
+                        .collect(Collectors.toMap(CronogramaTicket::getIdCronogramaTicket, t -> t));
+
+        Set<Long> cronogramasConservados = new HashSet<>();
+        Set<Long> ticketsConservados = new HashSet<>();
+
+        for (CronogramaRequest peticion : cronogramasNuevos) {
+            EventoCronograma cronograma = peticion.getIdCronograma() != null
+                    ? cronogramasActuales.get(peticion.getIdCronograma())
+                    : null;
+
+            if (cronograma == null) {
+                cronograma = new EventoCronograma();
+                cronograma.setEvento(evento);
+            }
+            cronograma.setFecha(peticion.getFecha());
+            cronograma.setHoraInicio(peticion.getHoraInicio());
+            cronograma.setHoraFin(peticion.getHoraFin());
+            cronograma = cronogramaRepository.save(cronograma);
+            cronogramasConservados.add(cronograma.getIdCronograma());
+
+            for (TicketRequest ticketPeticion : peticion.getTickets()) {
+                CronogramaTicket ticket = ticketPeticion.getIdCronogramaTicket() != null
+                        ? ticketsActuales.get(ticketPeticion.getIdCronogramaTicket())
+                        : null;
+
+                if (ticket == null) {
+                    ticket = new CronogramaTicket();
+                    // RF-2.6: el cupo ocupado arranca en cero y lo mueven las
+                    // inscripciones (Modulo 3).
+                    ticket.setCupoActual(0);
+                }
+                ticket.setCronograma(cronograma);
+                ticket.setTipoTicket(resolverTipoTicket(ticketPeticion.getTipoTicket()));
+                ticket.setPrecio(ticketPeticion.getPrecio());
+                ticket.setCupoMaximo(ticketPeticion.getCupoMaximo());
+                ticket = ticketRepository.save(ticket);
+                ticketsConservados.add(ticket.getIdCronogramaTicket());
+            }
+        }
+
+        // Lo que ya no aparece en el formulario se borra de verdad. Los
+        // tickets primero: son los que llevan la FK hacia evento_cronograma.
+        List<CronogramaTicket> ticketsABorrar = ticketsActuales.values().stream()
+                .filter(t -> !ticketsConservados.contains(t.getIdCronogramaTicket()))
+                .toList();
+        ticketRepository.deleteAll(ticketsABorrar);
+
+        List<EventoCronograma> cronogramasABorrar = cronogramasActuales.values().stream()
+                .filter(c -> !cronogramasConservados.contains(c.getIdCronograma()))
+                .toList();
+        cronogramaRepository.deleteAll(cronogramasABorrar);
     }
 
     private void persistirAgenda(Evento evento, List<CronogramaRequest> cronogramas) {

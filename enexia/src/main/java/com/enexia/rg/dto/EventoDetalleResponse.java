@@ -57,4 +57,15 @@ public class EventoDetalleResponse {
     private List<EventoCronogramaResponse> cronogramas;
 
     private LocalDateTime fechaCreacion;
+
+    /**
+     * Promedio de estrellas del evento (RF-3.4), null si todavia no tiene
+     * ninguna valoracion. Null y no 0: un evento sin calificar no es lo mismo
+     * que uno con "cero estrellas" en promedio, y el frontend necesita poder
+     * distinguirlo para no pintar "0.0 ★".
+     */
+    private Double promedioValoracion;
+
+    /** Cantidad total de valoraciones del evento (para el "N opiniones" del header). */
+    private long cantidadValoraciones;
 }

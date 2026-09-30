@@ -118,6 +118,7 @@ public class GlobalExceptionHandler {
             if (d.contains("uk_usuario_nickname"))   return "Ese nickname ya esta en uso";
             if (d.contains("uk_persona_fisica_dni")) return "Ya existe una cuenta registrada con ese DNI";
             if (d.contains("uk_persona_juridica_cuit")) return "Ya existe una organizacion registrada con ese CUIT";
+            if (d.contains("uk_valoracion_usuario_cronograma")) return "Ya valoraste este cronograma";
         }
         return "Ya existe una cuenta con esos datos";
     }

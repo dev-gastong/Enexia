@@ -12,6 +12,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -157,6 +159,21 @@ class RegistroInscripcionServiceTest {
             // El cupo tampoco se toca: el rechazo es antes de cualquier escritura.
             assertThat(ticket.getCupoActual()).isEqualTo(3);
         }
+
+        @Test
+        @DisplayName("El cronograma ya finalizo: rechaza antes de crear la inscripcion")
+        void rechazaEventoFinalizado() {
+            CronogramaTicket ticket = ticket(BigDecimal.ZERO, 10, 3);
+            ticket.getCronograma().setFecha(LocalDate.now().minusDays(1));
+            ticket.getCronograma().setHoraFin(LocalTime.of(20, 0));
+            when(ticketRepository.bloquearParaActualizar(ID_TICKET)).thenReturn(Optional.of(ticket));
+
+            assertThatThrownBy(() -> servicio.registrar(participante, ID_TICKET, null, request))
+                    .isInstanceOf(OperacionNoPermitidaException.class);
+
+            verify(inscripcionRepository, never()).save(any());
+            assertThat(ticket.getCupoActual()).isEqualTo(3);
+        }
     }
 
     @Nested
@@ -212,6 +229,10 @@ class RegistroInscripcionServiceTest {
     private CronogramaTicket ticket(BigDecimal precio, int cupoMaximo, int cupoActual) {
         com.enexia.rg.model.EventoCronograma cronograma = new com.enexia.rg.model.EventoCronograma();
         cronograma.setIdCronograma(ID_CRONOGRAMA);
+        // Vigente por defecto: la mayoria de los tests no le interesa la fecha,
+        // solo al de rechazaEventoFinalizado, que la pisa explicitamente.
+        cronograma.setFecha(LocalDate.now().plusDays(1));
+        cronograma.setHoraFin(LocalTime.of(23, 0));
 
         CronogramaTicket ticket = new CronogramaTicket();
         ticket.setIdCronogramaTicket(ID_TICKET);
