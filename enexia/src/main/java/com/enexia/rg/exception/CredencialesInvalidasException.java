@@ -1,7 +1,7 @@
 package com.enexia.rg.exception;
 
 /**
- * El email no existe o la contrasena no coincide (DFD Login, Err_Gen1/Err_Gen2).
+ * El nickname no existe o la contrasena no coincide (DFD Login, Err_Gen1/Err_Gen2).
  *
  * Es el caso "base" de {@link AutenticacionFallidaException}: el resto de los
  * rechazos existen para poder auditarlos por separado, pero se responden
@@ -9,7 +9,7 @@ package com.enexia.rg.exception;
  */
 public class CredencialesInvalidasException extends AutenticacionFallidaException {
 
-    public static final String CODIGO_EMAIL_INEXISTENTE = "EMAIL_INEXISTENTE";
+    public static final String CODIGO_NICKNAME_INEXISTENTE = "NICKNAME_INEXISTENTE";
     public static final String CODIGO_PASSWORD_INCORRECTA = "PASSWORD_INCORRECTA";
 
     public CredencialesInvalidasException() {

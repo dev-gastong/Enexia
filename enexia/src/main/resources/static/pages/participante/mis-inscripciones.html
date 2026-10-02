@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis Inscripciones - Enexia</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Mis Inscripciones del Participante (RF-3.3, RF-3.4, RF-3.6)
+   Paleta clara "Atardecer Fueguino". Los bordes salen directo de
+   tokens.css (--radio-tarjeta: 6px, --radio-campo: 4px -- los mismos
+   valores que ya usaban login y registro), sin overrides locales.
+
+   REGLA DE CANCELACION REAL (no "24hs antes"): InscripcionService.cancelar
+   solo bloquea la cancelacion cuando el cronograma YA COMENZO (o ya
+   finalizo). No existe una ventana de 24hs en el backend, asi que el
+   modal de bloqueo muestra el motivo real que devuelve el 409
+   (OPERACION_NO_PERMITIDA), no un texto inventado.
+   ===================================================================== */
+
+:root { --panel-ancho: 260px; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: var(--sans); background: var(--lienzo); color: var(--texto-secundario); -webkit-font-smoothing: antialiased; }
+a { color: var(--acento); text-decoration: none; }
+a:hover { color: var(--acento-fuerte); }
+.app { display: flex; min-height: 100vh; }
+
+/* --- Sidebar (identico a perfil.html) ----------------------------------- */
+
+.sidebar { display: flex; flex-direction: column; flex: none; width: var(--panel-ancho); min-height: 100vh; border-right: 1px solid var(--borde); background: var(--superficie); }
+.sidebar__logo { display: flex; flex-direction: column; gap: 2px; padding: 26px 24px 18px; }
+.sidebar__marca { display: flex; align-items: center; gap: 4px; }
+.sidebar__marca svg { display: block; width: 22px; height: 22px; }
+.sidebar__marca span { font-family: var(--marca); font-size: 22px; font-weight: 700; color: var(--texto); letter-spacing: -.3px; }
+.sidebar__rol { font-size: 11px; color: var(--texto-secundario); padding-left: 2px; }
+.sidebar__separador { margin: 4px 24px 12px; border: 0; border-top: 1px solid var(--borde); }
+.sidebar__nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; flex: 1; }
+.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
+.sidebar__item svg { display: block; width: 17px; height: 17px; flex: none; }
+.sidebar__item:hover { background: var(--superficie-alt); color: var(--texto); }
+.sidebar__item--activo { background: var(--acento-tinte); border-left-color: var(--acento); color: var(--acento-fuerte); }
+.sidebar__item--activo:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
+.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 4px 16px 20px; padding: 11px 14px; border-radius: var(--radio); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
+.sidebar__salir:hover { background: var(--error-tinte); }
+.sidebar__salir svg { width: 16px; height: 16px; flex: none; }
+
+/* --- Contenido ----------------------------------------------------------- */
+
+.contenido { flex: 1; min-width: 0; padding: 28px 32px 60px; }
+
+.cabecera { margin-bottom: 22px; }
+.cabecera h1 { margin: 0 0 6px; color: var(--texto); font-family: var(--marca); font-size: 28px; font-weight: 700; letter-spacing: -.5px; }
+.cabecera p { margin: 0; font-size: 14px; color: var(--texto-secundario); }
+
+/* --- Estadisticas ---------------------------------------------------------- */
+
+.stats { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+.stat { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border: 1px solid var(--borde); border-radius: var(--radio-campo); background: var(--superficie); }
+.stat__numero { font-family: var(--marca); font-size: 22px; font-weight: 700; color: var(--acento-fuerte); }
+.stat__etiqueta { font-size: 13px; color: var(--texto-secundario); }
+
+/* --- Secciones --------------------------------------------------------- */
+
+.seccion { margin-bottom: 28px; }
+.seccion__titulo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.seccion__barra { width: 4px; height: 20px; border-radius: 2px; background: var(--acento); flex: none; }
+.seccion__barra--neutra { background: var(--borde-fuerte); }
+.seccion__titulo h2 { margin: 0; color: var(--texto); font-family: var(--marca); font-size: 17px; font-weight: 700; }
+
+.lista { display: flex; flex-direction: column; gap: 12px; }
+
+.tarjeta-insc { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border: 1px solid var(--borde); border-radius: var(--radio-campo); background: var(--superficie); box-shadow: var(--sombra); flex-wrap: wrap; }
+.tarjeta-insc__info { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.tarjeta-insc__icono { width: 44px; height: 44px; border-radius: var(--radio); flex: none; display: flex; align-items: center; justify-content: center; background: var(--acento-tinte); color: var(--acento-fuerte); }
+.tarjeta-insc__icono--neutro { background: var(--superficie-alt); color: var(--texto-secundario); }
+.tarjeta-insc__icono svg { width: 19px; height: 19px; }
+.tarjeta-insc__texto { min-width: 0; }
+.tarjeta-insc__nombre { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--texto); overflow-wrap: anywhere; }
+.tarjeta-insc__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 12.5px; color: var(--texto-secundario); }
+.tarjeta-insc__meta span { display: inline-flex; align-items: center; gap: 5px; }
+.tarjeta-insc__meta svg { width: 13px; height: 13px; flex: none; }
+
+.tarjeta-insc__acciones { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.chip-estado { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.chip-estado--ok { background: var(--ok-tinte); color: var(--ok); }
+.chip-estado--alerta { background: var(--alerta-tinte); color: var(--alerta); }
+.chip-estado--error { background: var(--error-tinte); color: var(--error); }
+.chip-estado--neutro { background: var(--superficie-alt); color: var(--texto-secundario); }
+
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 18px; border: 0; border-radius: var(--radio); background: var(--accion); color: var(--sobre-accion); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-accion); white-space: nowrap; transition: background .15s ease; }
+.boton:hover { background: var(--accion-hover); color: var(--sobre-accion); }
+.boton--fantasma { background: transparent; color: var(--acento-fuerte); border: 1px solid var(--acento-borde); box-shadow: none; }
+.boton--fantasma:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
+
+.enlace-accion { background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.enlace-accion--cancelar { color: var(--error); }
+.enlace-accion--cancelar:hover { color: var(--error-hover); }
+.enlace-accion--valorar { color: var(--alerta); }
+.enlace-accion--valorar:hover { color: #7a5206; }
+.texto-mutado { font-size: 12.5px; color: var(--texto-secundario); }
+
+.vacio { padding: 28px 22px; text-align: center; color: var(--texto-secundario); font-size: 13px; border: 1.5px dashed var(--borde-fuerte); border-radius: var(--radio-campo); background: var(--superficie-alt); }
+.cargando { padding: 40px 22px; text-align: center; color: var(--texto-secundario); font-size: 13px; }
+
+.mas { display: flex; justify-content: center; margin-top: 8px; }
+
+/* --- Modales --------------------------------------------------------------- */
+
+.overlay { position: fixed; inset: 0; z-index: 90; background: rgba(31, 26, 46, .45); display: none; align-items: center; justify-content: center; padding: 20px; }
+.overlay--visible { display: flex; }
+.modal { width: 100%; max-width: 440px; background: var(--superficie); border-radius: var(--radio-tarjeta); border: 1px solid var(--borde); box-shadow: var(--sombra-tarjeta); padding: 32px; }
+.modal--ancho { max-width: 500px; }
+.modal__cabecera { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; margin-bottom: 20px; }
+.modal__icono { width: 56px; height: 56px; border-radius: var(--radio-campo); display: flex; align-items: center; justify-content: center; flex: none; }
+.modal__icono--alerta { background: var(--alerta-tinte); color: var(--alerta); }
+.modal__icono--error { background: var(--error-tinte); color: var(--error); }
+.modal__icono svg { width: 26px; height: 26px; }
+.modal h3 { margin: 0; color: var(--texto); font-family: var(--marca); font-size: 19px; font-weight: 700; }
+.modal p.modal__texto { margin: 0; color: var(--texto-secundario); font-size: 13.5px; line-height: 1.6; text-align: center; }
+
+.modal__resumen { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--borde); border-radius: var(--radio-campo); background: var(--superficie-alt); margin-bottom: 18px; }
+.modal__resumen-icono { width: 32px; height: 32px; border-radius: var(--radio-sm); background: var(--superficie); border: 1px solid var(--borde); display: flex; align-items: center; justify-content: center; flex: none; color: var(--texto-secundario); }
+.modal__resumen-icono svg { width: 14px; height: 14px; }
+.modal__resumen-texto { min-width: 0; }
+.modal__resumen-nombre { margin: 0; font-size: 13px; font-weight: 600; color: var(--texto); overflow-wrap: anywhere; }
+.modal__resumen-fecha { margin: 2px 0 0; font-size: 11.5px; color: var(--texto-secundario); }
+
+.modal__nota { display: flex; gap: 8px; padding: 10px 12px; border-radius: var(--radio-sm); background: var(--error-tinte); border: 1px solid var(--error-borde); color: var(--error); font-size: 12px; line-height: 1.5; margin-bottom: 18px; }
+.modal__nota svg { width: 14px; height: 14px; flex: none; margin-top: 1px; }
+
+.modal__botones { display: flex; gap: 10px; }
+.modal__botones .boton { flex: 1; }
+.boton--outline { background: transparent; color: var(--texto-secundario); border: 1px solid var(--borde-campo); box-shadow: none; }
+.boton--outline:hover { background: var(--superficie-alt); color: var(--texto); }
+.boton--peligro { background: var(--error); box-shadow: 0 2px 10px rgba(153,27,27,.25); }
+.boton--peligro:hover { background: var(--error-hover); }
+.boton--ancho { width: 100%; }
+
+.aviso-modal { margin: 0 0 16px; padding: 12px 14px; border: 1px solid transparent; border-radius: var(--radio-sm); font-size: 12.5px; line-height: 1.5; display: none; }
+.aviso-modal--visible { display: block; }
+.aviso-modal--error { background: var(--error-tinte); border-color: var(--error-borde); color: var(--error); }
+
+/* Selector de estrellas */
+.estrellas { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
+.estrella { background: none; border: 0; padding: 2px; cursor: pointer; color: var(--borde-fuerte); }
+.estrella svg { width: 32px; height: 32px; }
+.estrella--activa { color: #fbbf24; }
+.estrellas-leyenda { text-align: center; font-size: 12.5px; color: var(--texto-secundario); margin-bottom: 20px; min-height: 17px; }
+
+.campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.campo__etiqueta { font-size: 13px; font-weight: 600; color: var(--texto); }
+.campo textarea { width: 100%; min-height: 96px; padding: 12px 14px; border: 1px solid var(--borde-campo); border-radius: var(--radio-campo); background: var(--superficie); color: var(--texto); font-family: inherit; font-size: 13.5px; line-height: 1.6; resize: vertical; }
+.campo textarea:focus { outline: none; border-color: var(--acento); box-shadow: var(--foco-accion); }
+
+.aviso-info { display: flex; gap: 8px; padding: 10px 12px; border-radius: var(--radio-sm); background: var(--info-tinte); border: 1px solid var(--info-borde); color: var(--info); font-size: 11.5px; line-height: 1.5; margin-bottom: 20px; }
+.aviso-info svg { width: 13px; height: 13px; flex: none; margin-top: 1px; }
+
+/* --- Toast --------------------------------------------------------------- */
+
+.toast-pila { position: fixed; top: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
+.toast { display: flex; align-items: flex-start; gap: 12px; width: 340px; padding: 16px; border: 1px solid var(--borde); border-left: 4px solid var(--ok); border-radius: var(--radio-campo); background: var(--superficie); box-shadow: var(--sombra-tarjeta); animation: entrar-toast .25s ease; }
+.toast--error { border-left-color: var(--error); }
+@keyframes entrar-toast { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.toast__icono { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ok-tinte); color: var(--ok); flex: none; }
+.toast--error .toast__icono { background: var(--error-tinte); color: var(--error); }
+.toast__icono svg { width: 15px; height: 15px; }
+.toast__titulo { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: var(--texto); }
+.toast__texto { margin: 0; font-size: 13px; color: var(--texto-secundario); }
+.toast__cerrar { margin-left: auto; background: none; border: 0; color: var(--texto-secundario); cursor: pointer; padding: 2px; }
+.toast__cerrar svg { width: 13px; height: 13px; }
+
+@media (max-width: 900px) {
+    .sidebar { display: none; }
+    .contenido { padding: 20px 16px 60px; }
+}
+@media (max-width: 560px) {
+    .tarjeta-insc { flex-direction: column; align-items: flex-start; }
+    .tarjeta-insc__acciones { width: 100%; justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="sidebar__logo">
+            <a class="sidebar__marca" href="../../index.html">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                    <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                    <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                    <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                    <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                    <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                    <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                    <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                    <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                    <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                    <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                    <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                    <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#faf8fa"/>
+                    <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#faf8fa"/>
+                    <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#faf8fa"/>
+                </svg>
+                <span>NEXIA</span>
+            </a>
+            <span class="sidebar__rol">Participante</span>
+        </div>
+        <hr class="sidebar__separador">
+        <nav class="sidebar__nav">
+            <a class="sidebar__item" href="../../index.html">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5.8" stroke="currentColor" stroke-width="1.4"/><path d="M9.95 4.75l-1.1 3.35-3.35 1.1 1.1-3.35 3.35-1.1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                Explorar Catalogo
+            </a>
+            <a class="sidebar__item sidebar__item--activo" href="mis-inscripciones.html">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 3v1.3M8 11v1.3M8 7v1.3M1.3 6a2 2 0 0 1 0 4v1.3c0 .35.14.7.4.95.26.26.6.4.95.4h10.7c.35 0 .7-.14.95-.4.26-.26.4-.6.4-.95V10a2 2 0 0 1 0-4V4.7c0-.35-.14-.7-.4-.95a1.3 1.3 0 0 0-.95-.4H2.65c-.35 0-.7.14-.95.4-.26.26-.4.6-.4.95V6Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Mis Inscripciones
+            </a>
+            <a class="sidebar__item" href="perfil.html">
+                <svg viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8.5" cy="5.5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M2.83 14.5c0-3.13 2.54-5.5 5.67-5.5s5.67 2.37 5.67 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                Mi Perfil
+            </a>
+        </nav>
+        <button class="sidebar__salir" id="btnCerrarSesion" type="button">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 14H3.33C2.6 14 2 13.4 2 12.67V3.33C2 2.6 2.6 2 3.33 2H6M10.67 11.33L14 8L10.67 4.67M14 8H6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Cerrar Sesion
+        </button>
+    </aside>
+
+    <main class="contenido">
+
+        <div class="cabecera">
+            <h1>Mis Actividades</h1>
+            <p>Gestiona tus asistencias y reservas en Tierra del Fuego.</p>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="seccion">
+            <div class="seccion__titulo">
+                <span class="seccion__barra"></span>
+                <h2>Proximos Eventos</h2>
+            </div>
+            <div class="lista" id="listaProximos"><div class="cargando">Cargando...</div></div>
+        </div>
+
+        <div class="seccion">
+            <div class="seccion__titulo">
+                <span class="seccion__barra seccion__barra--neutra"></span>
+                <h2>Eventos Pasados</h2>
+            </div>
+            <div class="lista" id="listaPasados"></div>
+        </div>
+
+        <div class="mas" id="masContenedor" style="display:none">
+            <button class="boton boton--fantasma" id="btnMas" type="button">Cargar mas</button>
+        </div>
+
+    </main>
+</div>
+
+<!-- Modal: confirmar cancelacion -->
+<div class="overlay" id="overlayCancelar">
+    <div class="modal">
+        <div class="modal__cabecera">
+            <div class="modal__icono modal__icono--alerta">
+                <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 10.5v4.67M14 19.83h.01M24.65 20.42 16.02 5.25a2.1 2.1 0 0 0-3.64 0L3.75 20.42a2.1 2.1 0 0 0 1.82 3.15h16.9a2.1 2.1 0 0 0 1.82-3.15Z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Confirmar cancelacion</h3>
+            <p class="modal__texto">Tu cupo se liberara de inmediato para otro participante. Esta accion no se puede deshacer, pero podras volver a inscribirte si quedan cupos.</p>
+        </div>
+        <div class="modal__resumen">
+            <span class="modal__resumen-icono">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 1.5v2M11 1.5v2M11.5 2.5H4.5A1.5 1.5 0 0 0 3 4v8a1.5 1.5 0 0 0 1.5 1.5h7A1.5 1.5 0 0 0 13 12V4a1.5 1.5 0 0 0-1.5-1.5Z" stroke="currentColor" stroke-width="1.3"/><path d="M3 6h10" stroke="currentColor" stroke-width="1.3"/></svg>
+            </span>
+            <div class="modal__resumen-texto">
+                <p class="modal__resumen-nombre" id="cancelarNombreEvento">-</p>
+                <p class="modal__resumen-fecha" id="cancelarFechaEvento">-</p>
+            </div>
+        </div>
+        <div class="modal__botones">
+            <button class="boton boton--outline" id="btnCancelarVolver" type="button">Volver</button>
+            <button class="boton boton--peligro" id="btnCancelarConfirmar" type="button">Confirmar Cancelacion</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: cancelacion no permitida (409 real del backend) -->
+<div class="overlay" id="overlayNoCancelar">
+    <div class="modal">
+        <div class="modal__cabecera">
+            <div class="modal__icono modal__icono--error">
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.6 5.64 20.19 19.16M21.67 14.08c0 5.42-3.79 8.13-8.3 9.7a1.6 1.6 0 0 1-1.06 0c-4.52-1.57-8.3-4.28-8.3-9.7V6.5c0-.29.1-.56.3-.77.2-.2.47-.32.76-.32 2.17 0 4.87-1.3 6.76-2.95a1.6 1.6 0 0 1 2 0c1.9 1.66 4.6 2.95 6.76 2.95.29 0 .56.12.77.32.2.2.31.48.31.77v7.59Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>No es posible cancelar</h3>
+            <p class="modal__texto" id="noCancelarMotivo">El evento ya comenzo o finalizo: no se puede cancelar la inscripcion.</p>
+        </div>
+        <div class="modal__nota">
+            <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 10V7.5M7.5 5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span>Volve a revisar el estado de tu inscripcion antes de reintentar.</span>
+        </div>
+        <button class="boton boton--outline boton--ancho" id="btnNoCancelarCerrar" type="button">Entendido</button>
+    </div>
+</div>
+
+<!-- Modal: dejar valoracion -->
+<div class="overlay" id="overlayValorar">
+    <div class="modal modal--ancho">
+        <h3 style="margin:0 0 4px">Dejar Valoracion y Resena</h3>
+        <p style="margin:0 0 20px;font-size:13px;font-weight:600;color:var(--acento-fuerte)" id="valorarNombreEvento">-</p>
+
+        <div class="aviso-modal" id="avisoValorar"></div>
+
+        <p style="text-align:center;font-size:11.5px;font-weight:600;color:var(--texto-secundario);text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px">Tu puntuacion</p>
+        <div class="estrellas" id="estrellas">
+            <button class="estrella" type="button" data-valor="1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 6.2 6.7.5-5.1 4.4 1.6 6.5L12 16.2 6.2 19.6l1.6-6.5-5.1-4.4 6.7-.5L12 2Z"/></svg></button>
+            <button class="estrella" type="button" data-valor="2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 6.2 6.7.5-5.1 4.4 1.6 6.5L12 16.2 6.2 19.6l1.6-6.5-5.1-4.4 6.7-.5L12 2Z"/></svg></button>
+            <button class="estrella" type="button" data-valor="3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 6.2 6.7.5-5.1 4.4 1.6 6.5L12 16.2 6.2 19.6l1.6-6.5-5.1-4.4 6.7-.5L12 2Z"/></svg></button>
+            <button class="estrella" type="button" data-valor="4"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 6.2 6.7.5-5.1 4.4 1.6 6.5L12 16.2 6.2 19.6l1.6-6.5-5.1-4.4 6.7-.5L12 2Z"/></svg></button>
+            <button class="estrella" type="button" data-valor="5"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 6.2 6.7.5-5.1 4.4 1.6 6.5L12 16.2 6.2 19.6l1.6-6.5-5.1-4.4 6.7-.5L12 2Z"/></svg></button>
+        </div>
+        <p class="estrellas-leyenda" id="estrellasLeyenda">Toca una estrella para calificar</p>
+
+        <div class="campo">
+            <label class="campo__etiqueta" for="valorarComentario">Tu comentario (opcional)</label>
+            <textarea id="valorarComentario" maxlength="1000" placeholder="Contanos tu experiencia en el evento... (el contenido pasa por moderacion automatica)."></textarea>
+        </div>
+
+        <div class="aviso-info">
+            <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 8.12v2.5c0 3.13-2.19 4.69-4.79 5.6a1 1 0 0 1-.63 0C4.5 15.31 2.5 13.75 2.5 10.62v-5c0-.33.26-.6.58-.6 1.25 0 2.81-.75 3.9-1.7a.78.78 0 0 1 .95 0c1.09.95 2.64 1.69 3.9 1.69.32 0 .58.26.58.6v2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Tu resena pasara por un proceso de moderacion antes de publicarse.</span>
+        </div>
+
+        <div class="modal__botones">
+            <button class="boton boton--outline" id="btnValorarCancelar" type="button">Cancelar</button>
+            <button class="boton" id="btnValorarEnviar" type="button">
+                <span class="boton__spinner" style="display:none;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:girar .7s linear infinite"></span>
+                <span>Enviar Valoracion</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-pila" id="toastPila" aria-live="polite"></div>
+
+<script src="../../js/api.js"></script>
+<script src="../../js/auth.js"></script>
+<script src="../../js/utils.js"></script>
+
+<script>
+/* =====================================================================
+   Mis Inscripciones - GET /api/participante/inscripciones (RF-3.6),
+   DELETE /api/participante/inscripciones/{id} (RF-3.3) y
+   POST /api/participante/valoraciones (RF-3.4, RF-3.5).
+   ===================================================================== */
+(function () {
+
+    if (!Auth.exigirSesion('../auth/login-desktop-claro.html')) return;
+
+    document.getElementById('btnCerrarSesion').addEventListener('click', function () {
+        Auth.cerrarSesion();
+        window.location.href = '../auth/login-desktop-claro.html';
+    });
+
+    const TAMANO_PAGINA = 50;
+    let paginaActual = 0;
+    let todas = [];
+
+    /* ----------------------------------------------------------- Toast --- */
+
+    function mostrarToast(tipo, titulo, texto) {
+        const pila = document.getElementById('toastPila');
+        const el = document.createElement('div');
+        el.className = 'toast' + (tipo === 'error' ? ' toast--error' : '');
+        el.innerHTML = `
+            <span class="toast__icono">
+                ${tipo === 'error'
+                    ? '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 5.5 10.5 10.5M10.5 5.5 5.5 10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+                    : '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5 6.5 12 13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+            </span>
+            <div><p class="toast__titulo">${titulo}</p><p class="toast__texto">${texto}</p></div>
+            <button class="toast__cerrar" type="button">
+                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>`;
+        pila.appendChild(el);
+        el.querySelector('.toast__cerrar').addEventListener('click', () => el.remove());
+        setTimeout(() => el.remove(), 6000);
+    }
+
+    /* --------------------------------------------------------- Fechas --- */
+
+    function horaCorta(hora) {
+        return hora ? hora.slice(0, 5) : '';
+    }
+
+    function fechaLegible(fechaIso) {
+        if (!fechaIso) return '-';
+        const [y, m, d] = fechaIso.split('-');
+        const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        return `${d} ${meses[parseInt(m, 10) - 1]} ${y}`;
+    }
+
+    function instante(fechaIso, horaStr) {
+        if (!fechaIso) return null;
+        return new Date(`${fechaIso}T${horaStr || '00:00:00'}`);
+    }
+
+    /* ------------------------------------------------------ Clasificar --- */
+
+    function chipEstado(estado) {
+        const mapa = {
+            CONFIRMADA: { texto: 'Inscripto', clase: 'ok' },
+            PENDIENTE: { texto: 'Pendiente', clase: 'alerta' },
+            PENDIENTE_PAGO: { texto: 'Pago Pendiente', clase: 'alerta' },
+            CANCELADA: { texto: 'Cancelada', clase: 'error' }
+        };
+        return mapa[estado] || { texto: estado || '-', clase: 'neutro' };
+    }
+
+    function esFuturo(item) {
+        const inicio = instante(item.fechaCronograma, item.horaInicio);
+        return inicio !== null && inicio.getTime() > Date.now();
+    }
+
+    function yaFinalizo(item) {
+        const fin = instante(item.fechaCronograma, item.horaFin || item.horaInicio);
+        return fin !== null && fin.getTime() <= Date.now();
+    }
+
+    /* --------------------------------------------------------- Render --- */
+
+    function iconoCalendario() {
+        return '<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.67 1.67v3.33M13.33 1.67v3.33M3.33 7.5h13.34M4.17 3.33h11.66c.92 0 1.67.75 1.67 1.67v10c0 .92-.75 1.67-1.67 1.67H4.17c-.92 0-1.67-.75-1.67-1.67V5c0-.92.75-1.67 1.67-1.67Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    function iconoHistoria() {
+        return '<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 10a7.5 7.5 0 1 0 2.2-5.3L2.5 6.67" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 2.5v4.17h4.17M10 5.83V10l3.33 1.67" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+
+    function tarjetaProximo(item) {
+        const estado = chipEstado(item.estado);
+        const div = document.createElement('div');
+        div.className = 'tarjeta-insc';
+        div.innerHTML = `
+            <div class="tarjeta-insc__info">
+                <span class="tarjeta-insc__icono">${iconoCalendario()}</span>
+                <div class="tarjeta-insc__texto">
+                    <p class="tarjeta-insc__nombre">${item.eventoNombre || 'Evento'}</p>
+                    <div class="tarjeta-insc__meta">
+                        <span>${fechaLegible(item.fechaCronograma)} &middot; ${horaCorta(item.horaInicio)} hs</span>
+                        <span class="chip-estado chip-estado--${estado.clase}">${estado.texto}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tarjeta-insc__acciones">
+                <a class="boton boton--fantasma" href="../../evento-detalle.html?id=${item.idEvento}">Ver Detalle</a>
+                ${item.estado !== 'CANCELADA'
+                    ? `<button class="enlace-accion enlace-accion--cancelar" data-accion="cancelar" data-id="${item.idInscripcion}">Cancelar Inscripcion</button>`
+                    : ''}
+            </div>
+        `;
+        return div;
+    }
+
+    function tarjetaPasado(item) {
+        const estado = chipEstado(item.estado);
+        const puedeValorar = item.estado === 'CONFIRMADA' && !item.yaValorado;
+
+        const div = document.createElement('div');
+        div.className = 'tarjeta-insc';
+        div.innerHTML = `
+            <div class="tarjeta-insc__info">
+                <span class="tarjeta-insc__icono tarjeta-insc__icono--neutro">${iconoHistoria()}</span>
+                <div class="tarjeta-insc__texto">
+                    <p class="tarjeta-insc__nombre">${item.eventoNombre || 'Evento'}</p>
+                    <div class="tarjeta-insc__meta">
+                        <span>${fechaLegible(item.fechaCronograma)} &middot; ${horaCorta(item.horaInicio)} hs</span>
+                        <span class="chip-estado chip-estado--${estado.clase}">${estado.texto}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tarjeta-insc__acciones">
+                <a class="boton boton--fantasma" href="../../evento-detalle.html?id=${item.idEvento}">Ver Detalle</a>
+                ${puedeValorar
+                    ? `<button class="enlace-accion enlace-accion--valorar" data-accion="valorar" data-id-cronograma="${item.idCronograma}" data-nombre="${(item.eventoNombre || '').replace(/"/g, '&quot;')}">&#11088; Dejar Puntuacion y Resena</button>`
+                    : (item.estado === 'CONFIRMADA' && item.yaValorado
+                        ? '<span class="texto-mutado">Ya valoraste este evento</span>'
+                        : '')}
+            </div>
+        `;
+        return div;
+    }
+
+    function pintarListas() {
+        const proximos = [];
+        const pasados = [];
+
+        todas.forEach(item => {
+            if (item.estado !== 'CANCELADA' && esFuturo(item)) {
+                proximos.push(item);
+            } else {
+                pasados.push(item);
+            }
+        });
+
+        const contProximos = document.getElementById('listaProximos');
+        const contPasados = document.getElementById('listaPasados');
+
+        contProximos.innerHTML = '';
+        if (proximos.length === 0) {
+            contProximos.innerHTML = '<div class="vacio">No tenes inscripciones para eventos proximos.</div>';
+        } else {
+            proximos.forEach(item => contProximos.appendChild(tarjetaProximo(item)));
+        }
+
+        contPasados.innerHTML = '';
+        if (pasados.length === 0) {
+            contPasados.innerHTML = '<div class="vacio">Todavia no asististe a ningun evento.</div>';
+        } else {
+            pasados.forEach(item => contPasados.appendChild(tarjetaPasado(item)));
+        }
+
+        const activas = proximos.filter(i => i.estado !== 'CANCELADA').length;
+        const asistidos = todas.filter(i => i.estado === 'CONFIRMADA' && yaFinalizo(i)).length;
+
+        document.getElementById('stats').innerHTML = `
+            <div class="stat"><span class="stat__numero">${activas}</span><span class="stat__etiqueta">Inscripciones Activas</span></div>
+            <div class="stat"><span class="stat__numero">${asistidos}</span><span class="stat__etiqueta">Eventos Asistidos</span></div>
+        `;
+
+        document.querySelectorAll('[data-accion="cancelar"]').forEach(btn => {
+            btn.addEventListener('click', () => abrirCancelar(parseInt(btn.dataset.id, 10)));
+        });
+        document.querySelectorAll('[data-accion="valorar"]').forEach(btn => {
+            btn.addEventListener('click', () => abrirValorar(parseInt(btn.dataset.idCronograma, 10), btn.dataset.nombre));
+        });
+    }
+
+    /* ---------------------------------------------------------- Carga --- */
+
+    async function cargar(pagina = 0) {
+        if (pagina === 0) {
+            document.getElementById('listaProximos').innerHTML = '<div class="cargando">Cargando...</div>';
+            document.getElementById('listaPasados').innerHTML = '';
+            todas = [];
+        }
+
+        const r = await API.historialInscripciones({ pagina, tamano: TAMANO_PAGINA });
+        if (!r.ok || !r.cuerpo) {
+            document.getElementById('listaProximos').innerHTML = '<div class="vacio">No se pudo cargar tu historial.</div>';
+            return;
+        }
+
+        paginaActual = pagina;
+        todas = todas.concat(r.cuerpo.content || []);
+        pintarListas();
+
+        const masContenedor = document.getElementById('masContenedor');
+        masContenedor.style.display = r.cuerpo.last === false ? 'flex' : 'none';
+    }
+
+    document.getElementById('btnMas').addEventListener('click', () => cargar(paginaActual + 1));
+
+    /* ---------------------------------------------- Modal: cancelar --- */
+
+    let idACancelar = null;
+
+    function abrirCancelar(idInscripcion) {
+        const item = todas.find(i => i.idInscripcion === idInscripcion);
+        if (!item) return;
+        idACancelar = idInscripcion;
+        document.getElementById('cancelarNombreEvento').textContent = item.eventoNombre || 'Evento';
+        document.getElementById('cancelarFechaEvento').textContent =
+            `${fechaLegible(item.fechaCronograma)} ${horaCorta(item.horaInicio)} hs`;
+        document.getElementById('overlayCancelar').classList.add('overlay--visible');
+    }
+
+    function cerrarCancelar() {
+        document.getElementById('overlayCancelar').classList.remove('overlay--visible');
+        idACancelar = null;
+    }
+
+    document.getElementById('btnCancelarVolver').addEventListener('click', cerrarCancelar);
+
+    document.getElementById('btnCancelarConfirmar').addEventListener('click', async function () {
+        if (idACancelar === null) return;
+        const btn = this;
+        btn.disabled = true;
+
+        const r = await API.cancelarInscripcion(idACancelar);
+
+        btn.disabled = false;
+        cerrarCancelar();
+
+        if (r.ok) {
+            mostrarToast('ok', 'Inscripcion cancelada', 'Se cancelo tu inscripcion correctamente.');
+            cargar(0);
+        } else if (r.status === 409) {
+            document.getElementById('noCancelarMotivo').textContent =
+                (r.cuerpo && r.cuerpo.mensaje) || 'El evento ya comenzo o finalizo: no se puede cancelar la inscripcion.';
+            document.getElementById('overlayNoCancelar').classList.add('overlay--visible');
+        } else {
+            mostrarToast('error', 'No se pudo cancelar', UI.mensajeDeError(r).replace(/<[^>]+>/g, ''));
+        }
+    });
+
+    document.getElementById('btnNoCancelarCerrar').addEventListener('click', function () {
+        document.getElementById('overlayNoCancelar').classList.remove('overlay--visible');
+    });
+
+    /* ---------------------------------------------- Modal: valorar --- */
+
+    let idCronogramaAValorar = null;
+    let puntajeElegido = 0;
+    const LEYENDAS = { 1: 'Muy malo', 2: 'Malo', 3: 'Regular', 4: 'Muy bueno', 5: 'Excelente' };
+
+    function pintarEstrellas() {
+        document.querySelectorAll('.estrella').forEach(btn => {
+            const valor = parseInt(btn.dataset.valor, 10);
+            btn.classList.toggle('estrella--activa', valor <= puntajeElegido);
+        });
+        document.getElementById('estrellasLeyenda').textContent = puntajeElegido
+            ? `${puntajeElegido} / 5 - ${LEYENDAS[puntajeElegido]}`
+            : 'Toca una estrella para calificar';
+    }
+
+    document.querySelectorAll('.estrella').forEach(btn => {
+        btn.addEventListener('click', () => {
+            puntajeElegido = parseInt(btn.dataset.valor, 10);
+            pintarEstrellas();
+        });
+    });
+
+    function abrirValorar(idCronograma, nombreEvento) {
+        idCronogramaAValorar = idCronograma;
+        puntajeElegido = 0;
+        pintarEstrellas();
+        document.getElementById('valorarNombreEvento').textContent = nombreEvento || 'Evento';
+        document.getElementById('valorarComentario').value = '';
+        document.getElementById('avisoValorar').className = 'aviso-modal';
+        document.getElementById('overlayValorar').classList.add('overlay--visible');
+    }
+
+    function cerrarValorar() {
+        document.getElementById('overlayValorar').classList.remove('overlay--visible');
+        idCronogramaAValorar = null;
+    }
+
+    document.getElementById('btnValorarCancelar').addEventListener('click', cerrarValorar);
+
+    document.getElementById('btnValorarEnviar').addEventListener('click', async function () {
+        const aviso = document.getElementById('avisoValorar');
+        aviso.className = 'aviso-modal';
+
+        if (idCronogramaAValorar === null) return;
+        if (puntajeElegido < 1) {
+            aviso.className = 'aviso-modal aviso-modal--visible aviso-modal--error';
+            aviso.textContent = 'Elegi una puntuacion de 1 a 5 estrellas.';
+            return;
+        }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.classList.add('boton--cargando');
+        btn.querySelector('.boton__spinner').style.display = 'inline-block';
+
+        const comentario = document.getElementById('valorarComentario').value.trim();
+        const r = await API.valorar({
+            idCronograma: idCronogramaAValorar,
+            valor: puntajeElegido,
+            comentario: comentario || null
+        });
+
+        btn.disabled = false;
+        btn.querySelector('.boton__spinner').style.display = 'none';
+
+        if (r.ok) {
+            cerrarValorar();
+            mostrarToast('ok', 'Gracias por tu opinion', 'Tu resena quedo pendiente de moderacion antes de publicarse.');
+            cargar(0);
+        } else {
+            aviso.className = 'aviso-modal aviso-modal--visible aviso-modal--error';
+            aviso.textContent = UI.mensajeDeError(r).replace(/<[^>]+>/g, '');
+        }
+    });
+
+    cargar(0);
+})();
+</script>
+
+</body>
+</html>

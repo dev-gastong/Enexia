@@ -7,7 +7,7 @@ import lombok.Getter;
  *
  * POR QUE UNA JERARQUIA CON UN SOLO MENSAJE PUBLICO
  * Decision de seguridad del 2026-09-08. El login tiene varias razones posibles
- * de rechazo -- email inexistente, contrasena incorrecta, cuenta BLOQUEADA,
+ * de rechazo -- nickname inexistente, contrasena incorrecta, cuenta BLOQUEADA,
  * cuenta en cooldown, cuenta SUSPENDIDA o DE_BAJA -- pero hacia afuera todas
  * son indistinguibles: mismo status HTTP, mismo codigo, mismo texto, mismas
  * cabeceras y (ver AuthService) el mismo costo en tiempo.
@@ -18,19 +18,21 @@ import lombok.Getter;
  * QUE ATAQUE EVITA
  * Si el 401 de "contrasena incorrecta" y el 403 de "cuenta bloqueada" fueran
  * distinguibles, un atacante obtendria dos regalos:
- *   1. Enumeracion: sabria que ese email existe en la plataforma.
+ *   1. Enumeracion: sabria que ese nickname existe en la plataforma.
  *   2. Confirmacion de exito parcial: sabria que su ataque de fuerza bruta
  *      efectivamente disparo el bloqueo, y por lo tanto que la cuenta es real
  *      y vale la pena insistir por otro canal (phishing, credential stuffing).
  * Con la respuesta uniforme, el atacante no puede distinguir "no existe" de
  * "existe y la acabo de bloquear". El unico que se entera del bloqueo es el
- * dueno legitimo, por email (ver RecuperacionCuentaService).
+ * dueno legitimo, por email (ver RecuperacionCuentaService): el email sigue
+ * siendo el canal de contacto de la cuenta aunque desde 2026-09-30 el login
+ * se identifique por nickname.
  */
 @Getter
 public abstract class AutenticacionFallidaException extends RuntimeException {
 
     /** Texto unico que ve el cliente, sea cual sea el motivo real. */
-    public static final String MENSAJE_PUBLICO = "Email o contrasena incorrectos";
+    public static final String MENSAJE_PUBLICO = "Usuario o contrasena incorrectos";
 
     /** Codigo unico que ve el cliente, sea cual sea el motivo real. */
     public static final String CODIGO_PUBLICO = "CREDENCIALES_INVALIDAS";

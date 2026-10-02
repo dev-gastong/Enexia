@@ -468,15 +468,16 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                         <span class="navbar__avatar-sub">Mi cuenta</span>
                     </span>
                </a>`
-            : `<span class="navbar__avatar-bloque" title="El perfil de participante todavia no esta disponible">
+            : `<a class="navbar__avatar-bloque" href="pages/participante/perfil.html">
                     <span class="navbar__avatar">${inicial}<span class="navbar__avatar-punto"></span></span>
                     <span class="navbar__avatar-texto">
                         <span class="navbar__avatar-nombre">${etiqueta}</span>
                         <span class="navbar__avatar-sub">Participante</span>
                     </span>
-               </span>`;
+               </a>`;
 
         cont.innerHTML = `
+            ${!esOrganizador ? '<a href="pages/participante/mis-inscripciones.html" style="font-size:13px;font-weight:500;color:var(--texto-secundario)">Mis Inscripciones</a>' : ''}
             ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">+ Crear Evento</a>' : ''}
             <span class="navbar__divisor"></span>
             ${bloqueAvatar}
@@ -627,15 +628,17 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         const accesoFilasHtml = (ev.cronogramas || []).flatMap(c => (c.tickets || []).map(t => {
             const pct = t.cupoMaximo ? Math.max(0, Math.min(100, Math.round((t.cupoDisponible / t.cupoMaximo) * 100))) : 0;
 
-            // Orden de prioridad: un cronograma finalizado o donde ya hay
-            // inscripcion activa gana sobre "agotado" (RF-3.1). El backend ya
-            // rechaza estos tres casos igual (RegistroInscripcionService), esto
-            // es solo para no ofrecer un boton que se sabe de antemano que va
-            // a fallar -- el mensaje de error del backend sigue intacto por si
-            // alguien fuerza el POST desde las herramientas de desarrollador.
-            const deshabilitado = c.finalizado || c.yaInscripto || t.agotado;
+            // Orden de prioridad: un cronograma finalizado, uno que ya arranco
+            // (iniciado) o donde ya hay inscripcion activa gana sobre
+            // "agotado" (RF-3.1). El backend ya rechaza estos cuatro casos
+            // igual (RegistroInscripcionService), esto es solo para no
+            // ofrecer un boton que se sabe de antemano que va a fallar -- el
+            // mensaje de error del backend sigue intacto por si alguien
+            // fuerza el POST desde las herramientas de desarrollador.
+            const deshabilitado = c.finalizado || c.iniciado || c.yaInscripto || t.agotado;
             let textoBoton;
             if (c.finalizado) textoBoton = 'Evento finalizado';
+            else if (c.iniciado) textoBoton = 'Inscripciones cerradas';
             else if (c.yaInscripto) textoBoton = 'Ya estás inscripto';
             else if (t.agotado) textoBoton = 'Agotado';
             else textoBoton = t.gratuito ? 'Inscribirme' : 'Inscribirme y pagar';

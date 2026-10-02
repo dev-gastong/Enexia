@@ -25,7 +25,11 @@ import jakarta.persistence.LockModeType;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     /**
-     * Carga el usuario para el flujo de login (DFD Login 1.2.4).
+     * Carga el usuario autenticado (JWT ya validado: filtro de seguridad,
+     * servicios de Modulo 2 a 5 reconstruyendo el principal a partir del
+     * subject del token). El subject sigue siendo el EMAIL -- es un
+     * identificador interno estable, nunca lo escribe un usuario -- y nada de
+     * esto cambia con el login por nickname (ver {@link #buscarActivoPorNicknameConRoles}).
      *
      * Trae en UNA sola consulta el usuario, sus roles y su estado. Sin los
      * JOIN FETCH esto provocaria N+1: la coleccion usuarioRoles es EAGER pero
@@ -54,6 +58,28 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
               AND u.fechaBaja IS NULL
             """)
     Optional<Usuario> buscarActivoPorEmailConRoles(@Param("email") String email);
+
+    /**
+     * Carga el usuario para el PASO DE LOGIN (DFD Login 1.2.2), que identifica
+     * la cuenta por NICKNAME y no por email (decision 2026-09-30): el email
+     * queda como dato de contacto (recuperacion de cuenta, avisos de
+     * seguridad), separado de la credencial que se escribe para entrar.
+     *
+     * Mismos JOIN FETCH que {@link #buscarActivoPorEmailConRoles} y por el
+     * mismo motivo: evitar el N+1 de roles y dejar el Usuario completo listo
+     * para emitir el JWT sin una segunda consulta.
+     */
+    @Query("""
+            SELECT u FROM Usuario u
+            LEFT JOIN FETCH u.usuarioRoles ur
+            LEFT JOIN FETCH ur.rol
+            LEFT JOIN FETCH u.estadoUsuario
+            LEFT JOIN FETCH u.personaFisica pf
+            LEFT JOIN FETCH pf.persona
+            WHERE LOWER(u.nickname) = LOWER(:nickname)
+              AND u.fechaBaja IS NULL
+            """)
+    Optional<Usuario> buscarActivoPorNicknameConRoles(@Param("nickname") String nickname);
 
     /**
      * Relee el usuario tomando un bloqueo de escritura sobre la fila.

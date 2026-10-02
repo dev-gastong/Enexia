@@ -26,8 +26,10 @@ public class InscripcionResponse {
     private Long idEvento;
     private String eventoNombre;
     private String tipoTicket;
+    private Long idCronograma;
     private LocalDate fechaCronograma;
     private LocalTime horaInicio;
+    private LocalTime horaFin;
     /** PENDIENTE, PENDIENTE_PAGO, CONFIRMADA o CANCELADA. */
     private String estado;
     private LocalDate fechaInscripcion;
@@ -38,6 +40,14 @@ public class InscripcionResponse {
      * CONFIRMADA: una inscripcion cancelada o pendiente no habilita el acceso.
      */
     private String codigoQr;
+
+    /**
+     * Si el usuario ya valoro este cronograma (RF-3.4). El historial la
+     * necesita para decidir si ofrece "Dejar valoracion" o no -- sin esto,
+     * el frontend solo se enteraria de la duplicada cuando el POST a
+     * /api/participante/valoraciones ya rechazo con 409.
+     */
+    private boolean yaValorado;
 
     private List<HistorialEstadoItem> historial;
 }

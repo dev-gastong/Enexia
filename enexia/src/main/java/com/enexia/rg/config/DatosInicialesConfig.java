@@ -19,6 +19,7 @@ import com.enexia.rg.model.EventoEstadoSistema;
 import com.enexia.rg.model.InscripcionEstado;
 import com.enexia.rg.model.InscripcionEstadoNombre;
 import com.enexia.rg.model.MotivoModeracionEvento;
+import com.enexia.rg.model.MotivoSuspensionAdmin;
 import com.enexia.rg.model.PagoEstado;
 import com.enexia.rg.model.PagoEstadoNombre;
 import com.enexia.rg.model.Pais;
@@ -232,6 +233,15 @@ public class DatosInicialesConfig {
         for (MotivoModeracionEvento motivo : MotivoModeracionEvento.values()) {
             creados += crearEstadoSistemaSiFalta(
                     EstadoEventoSistemaNombre.RECHAZADO_SISTEMA.name(), motivo.name());
+        }
+
+        // Una fila extra por cada motivo de suspension disciplinaria (RF-6.1b):
+        // un administrador retira del catalogo un evento que ya estaba
+        // aprobado. Van contra RECHAZADO_MANUAL, no RECHAZADO_SISTEMA: el
+        // sistema automatico nunca decide esto, solo un administrador.
+        for (MotivoSuspensionAdmin motivo : MotivoSuspensionAdmin.values()) {
+            creados += crearEstadoSistemaSiFalta(
+                    EstadoEventoSistemaNombre.RECHAZADO_MANUAL.name(), motivo.name());
         }
 
         for (EstadoEventoOrganizadorNombre nombre : EstadoEventoOrganizadorNombre.values()) {

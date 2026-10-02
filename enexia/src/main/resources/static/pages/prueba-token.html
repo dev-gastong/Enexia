@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Token - Enexia</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .log { font-family: monospace; white-space: pre-wrap; word-break: break-word; padding: 12px; border-radius: 6px; background: #1e1e1e; color: #00ff00; margin: 10px 0; }
+        body.validando { visibility: hidden; }
+    </style>
+    <script>
+        document.body.classList.add('validando');
+    </script>
+</head>
+<body>
+
+<header class="barra">
+    <a class="barra__marca" href="../frontend/index.html">Enex<span>ia</span></a>
+    <nav class="barra__nav">
+        <span class="barra__link" id="barraUsuario"></span>
+        <button class="btn btn--secundario" id="btnSalir" style="padding:6px 14px;font-size:13px">
+            Cerrar sesion
+        </button>
+    </nav>
+</header>
+
+<main class="contenedor">
+    <h1 class="titulo-pagina">Prueba de Inyección de Token</h1>
+    <p class="bajada">
+        Esta página demuestra cómo el token se inyecta automáticamente en las requests
+        después del login usando los nuevos métodos de API.
+    </p>
+
+    <div class="tarjeta" style="margin: 20px 0;">
+        <div class="tarjeta__cabecera">
+            <h2 class="tarjeta__titulo">Estado del Token</h2>
+        </div>
+        <div class="tarjeta__cuerpo">
+            <div class="datos" id="estadoToken"></div>
+        </div>
+    </div>
+
+    <div class="tarjeta" style="margin: 20px 0;">
+        <div class="tarjeta__cabecera">
+            <h2 class="tarjeta__titulo">Log de Requests</h2>
+        </div>
+        <div class="tarjeta__cuerpo">
+            <button class="btn" id="btnProbar" style="margin-bottom: 12px;">
+                Hacer una Request de Prueba (GET /api/auth/me)
+            </button>
+            <div class="log" id="logRequests">Aquí aparecerán los detalles de las requests...</div>
+        </div>
+    </div>
+
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+
+// Verificar sesión
+if (!Auth.exigirSesion('/pages/auth/login-desktop-claro.html')) {
+    throw new Error('Sin sesion');
+}
+
+const usuario = Auth.usuario();
+document.getElementById('barraUsuario').textContent = usuario.email;
+
+// Mostrar estado del token
+function mostrarEstadoToken() {
+    const token = Auth.token();
+    const payload = Auth.payload();
+    const restantes = Auth.segundosRestantes();
+
+    document.getElementById('estadoToken').innerHTML = `
+        <div class="dato">
+            <span class="dato__clave">Email</span>
+            <span class="dato__valor">${usuario.email}</span>
+        </div>
+        <div class="dato">
+            <span class="dato__clave">Roles</span>
+            <span class="dato__valor">${payload?.roles?.join(', ') || 'N/A'}</span>
+        </div>
+        <div class="dato">
+            <span class="dato__clave">Token activo</span>
+            <span class="dato__valor">${token ? '✓ Sí' : '✗ No'}</span>
+        </div>
+        <div class="dato">
+            <span class="dato__clave">Vence en</span>
+            <span class="dato__valor">${restantes}s</span>
+        </div>
+        <div class="dato">
+            <span class="dato__clave">Primer header del token</span>
+            <span class="dato__valor">${token?.substring(0, 50)}...</span>
+        </div>
+    `;
+}
+
+// Log de requests
+function log(titulo, datos) {
+    const logBox = document.getElementById('logRequests');
+    const timestamp = new Date().toLocaleTimeString();
+    const contenido = logBox.textContent;
+    const nuevo = `[${timestamp}] ${titulo}\n${JSON.stringify(datos, null, 2)}\n\n---\n\n`;
+    logBox.textContent = nuevo + contenido;
+}
+
+// Hacer una request de prueba
+document.getElementById('btnProbar').addEventListener('click', async () => {
+    log('🔵 REQUEST INICIADA', {
+        metodo: 'GET',
+        ruta: '/api/auth/me',
+        conToken: true,
+        tokenPrimeros50Caracteres: Auth.token()?.substring(0, 50)
+    });
+
+    // Usar el nuevo método API.get() que AUTOMÁTICAMENTE inyecta el token
+    const resultado = await API.get('/api/auth/me');
+
+    log('🟢 RESPUESTA RECIBIDA', resultado);
+
+    if (resultado.ok) {
+        log('✓ EXITO', {
+            status: resultado.status,
+            usuarioDelBackend: resultado.cuerpo,
+            tiempoDeRespuesta: `${resultado.ms}ms`
+        });
+    } else {
+        log('✗ ERROR', {
+            status: resultado.status,
+            mensaje: resultado.cuerpo?.mensaje || resultado.cuerpo,
+            errorDeRed: resultado.errorRed
+        });
+    }
+});
+
+// Cerrar sesión
+document.getElementById('btnSalir').addEventListener('click', () => {
+    Auth.cerrarSesion();
+    window.location.href = '/pages/auth/login-desktop-claro.html';
+});
+
+mostrarEstadoToken();
+
+/* ✓ Autenticación validada, mostrar página */
+document.body.classList.remove('validando');
+</script>
+
+</body>
+</html>

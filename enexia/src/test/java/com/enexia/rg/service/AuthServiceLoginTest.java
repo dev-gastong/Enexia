@@ -93,6 +93,7 @@ class AuthServiceLoginTest {
 
     @InjectMocks private AuthService authService;
 
+    private static final String NICKNAME = "ana_test";
     private static final String EMAIL = "ana@enexia.test";
     private static final String PASSWORD = "Segura123";
     private static final String HASH = "$2a$12$hashDePruebaNoEsUnBCryptReal";
@@ -108,8 +109,10 @@ class AuthServiceLoginTest {
         when(passwordEncoder.encode(anyString())).thenReturn(HASH);
         authService.prepararHashSenuelo();
 
+        // El login se identifica por NICKNAME; EMAIL queda como identidad
+        // interna del Usuario (subject del JWT, ver AuthService.login).
         peticion = new UsuarioLoginRequest();
-        peticion.setEmail(EMAIL);
+        peticion.setNickname(NICKNAME);
         peticion.setPassword(PASSWORD);
     }
 
@@ -121,7 +124,7 @@ class AuthServiceLoginTest {
     @DisplayName("Credenciales correctas: emite JWT con los roles y limpia contadores")
     void loginExitoso() {
         Usuario usuario = usuarioActivo();
-        when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches(PASSWORD, HASH)).thenReturn(true);
         when(jwtService.generarToken(eq(EMAIL), any())).thenReturn("token.jwt.firmado");
 
@@ -143,9 +146,9 @@ class AuthServiceLoginTest {
     class RespuestaUniforme {
 
         @Test
-        @DisplayName("Email inexistente -> excepcion de la familia, motivo interno EMAIL_INEXISTENTE")
-        void emailInexistente() {
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.empty());
+        @DisplayName("Nickname inexistente -> excepcion de la familia, motivo interno NICKNAME_INEXISTENTE")
+        void nicknameInexistente() {
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> authService.login(peticion, request))
                     .isInstanceOf(CredencialesInvalidasException.class)
@@ -156,7 +159,7 @@ class AuthServiceLoginTest {
         @DisplayName("Contrasena incorrecta -> mismo mensaje publico")
         void passwordIncorrecta() {
             Usuario usuario = usuarioActivo();
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.of(usuario));
             when(passwordEncoder.matches(PASSWORD, HASH)).thenReturn(false);
             when(intentosLoginService.registrarFallo(1L)).thenReturn(false);
 
@@ -169,13 +172,13 @@ class AuthServiceLoginTest {
         @DisplayName("Cuenta BLOQUEADA -> mismo mensaje publico, NO 'cuenta bloqueada'")
         void cuentaBloqueada() {
             Usuario usuario = usuarioConEstado(EstadoUsuarioNombre.BLOQUEADO);
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.of(usuario));
 
             assertThatThrownBy(() -> authService.login(peticion, request))
                     .isInstanceOf(CuentaBloqueadaException.class)
                     // La clase concreta es distinta -- hace falta para auditar --
                     // pero el TEXTO que ve el atacante es identico al de un
-                    // email inexistente. Ese es todo el punto de la politica.
+                    // nickname inexistente. Ese es todo el punto de la politica.
                     .hasMessage(AutenticacionFallidaException.MENSAJE_PUBLICO);
         }
 
@@ -183,7 +186,7 @@ class AuthServiceLoginTest {
         @DisplayName("Cuenta SUSPENDIDA -> mismo mensaje publico")
         void cuentaSuspendida() {
             Usuario usuario = usuarioConEstado(EstadoUsuarioNombre.SUSPENDIDO);
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.of(usuario));
 
             assertThatThrownBy(() -> authService.login(peticion, request))
                     .isInstanceOf(CuentaNoHabilitadaException.class)
@@ -213,16 +216,16 @@ class AuthServiceLoginTest {
     class TiempoConstante {
 
         @Test
-        @DisplayName("Email inexistente: se compara igual contra el hash senuelo")
-        void emailInexistenteGastaBcrypt() {
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.empty());
+        @DisplayName("Nickname inexistente: se compara igual contra el hash senuelo")
+        void nicknameInexistenteGastaBcrypt() {
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> authService.login(peticion, request))
                     .isInstanceOf(CredencialesInvalidasException.class);
 
             // Sin esta comparacion, la respuesta llegaria en ~1ms contra los
-            // ~250ms de un email existente, y midiendo el tiempo se podria
-            // enumerar que correos estan registrados.
+            // ~250ms de un nickname existente, y midiendo el tiempo se podria
+            // enumerar que cuentas estan registradas.
             verify(passwordEncoder, times(1)).matches(PASSWORD, HASH);
         }
 
@@ -230,7 +233,7 @@ class AuthServiceLoginTest {
         @DisplayName("Cuenta BLOQUEADA: tambien paga el BCrypt antes de rechazar")
         void bloqueadaGastaBcrypt() {
             Usuario usuario = usuarioConEstado(EstadoUsuarioNombre.BLOQUEADO);
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.of(usuario));
 
             assertThatThrownBy(() -> authService.login(peticion, request))
                     .isInstanceOf(CuentaBloqueadaException.class);
@@ -254,7 +257,7 @@ class AuthServiceLoginTest {
         @DisplayName("Al dispararse el bloqueo se emite el enlace de recuperacion")
         void avisaAlBloquear() {
             Usuario usuario = usuarioActivo();
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.of(usuario));
             when(passwordEncoder.matches(PASSWORD, HASH)).thenReturn(false);
             // El intento que cruza el umbral.
             when(intentosLoginService.registrarFallo(1L)).thenReturn(true);
@@ -274,7 +277,7 @@ class AuthServiceLoginTest {
         @DisplayName("Un fallo que NO bloquea no manda ningun correo")
         void noAvisaSiNoBloquea() {
             Usuario usuario = usuarioActivo();
-            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.buscarActivoPorNicknameConRoles(NICKNAME)).thenReturn(Optional.of(usuario));
             when(passwordEncoder.matches(PASSWORD, HASH)).thenReturn(false);
             when(intentosLoginService.registrarFallo(1L)).thenReturn(false);
 
@@ -305,6 +308,7 @@ class AuthServiceLoginTest {
 
         Usuario usuario = new Usuario();
         usuario.setIdUsuario(1L);
+        usuario.setNickname(NICKNAME);
         usuario.setEmail(EMAIL);
         usuario.setPassword(HASH);
         usuario.setEstadoUsuario(estado);

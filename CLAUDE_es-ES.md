@@ -352,18 +352,21 @@ backend/src/main/java/com/enexia/
 | **M2** — Eventos | Creación con pipeline asíncrono de moderación (RF-2.1 a RF-2.6), integración Cloudinary (RF-2.3), dashboard del organizador (RF-2.8), baja lógica (RF-2.9), estadísticas (RF-2.10) |
 | **M4** — Interfaz pública | Catálogo paginado, búsqueda por texto, filtros por categoría/fecha/ubicación, ficha técnica, registro pasivo de visitas (RF-4.1 a RF-4.5) |
 | **M5** — Moderación | Fase de texto + fase de imágenes, secuencial y asíncrona (RF-5.1 a RF-5.3) |
+| **M6** — Panel de administración | Arrancado el 2026-10-01: moderación administrativa general de eventos (RF-6.1) — `AdminEventoService`/`EventoAdminController`, suspensión disciplinaria reversible de eventos ya aprobados, además de la revisión de 2.ª instancia que ya existía. Primera pantalla admin (`pages/admin/moderacion-eventos.html`). **Todavía sin construir:** ninguna forma de otorgar el rol `ADMINISTRADOR` (RF-6.2 a RF-6.4 — usuarios, categorías, suscripciones — siguen como ítems inertes del sidebar). |
 
 ### ⚠️ Cambio de política de fallos de login (2026-09-08, decisión del usuario)
+
+> **El identificador de login cambió el 2026-09-30:** el campo de usuario ahora es el **nickname**, no el email. El email sigue siendo el canal de contacto de la cuenta (enlace de recuperación, aviso de bloqueo) pero dejó de ser lo que se escribe para entrar. Ver `UsuarioLoginRequest`, `AuthService.login`, `UsuarioRepository.buscarActivoPorNicknameConRoles`.
 
 **1. Se ELIMINÓ el rate limiting por IP.**
 Detrás de un CGNAT o del wifi de una institución, cientos de dispositivos legítimos comparten una única IP pública. Bloquear esa IP dejaba sin servicio a toda una zona por culpa de un solo atacante: una denegación de servicio que el propio atacante podía provocar a voluntad.
 
-> **Riesgo abierto y asumido:** sin control por IP, el *password spraying* (una contraseña común contra miles de emails) ya no tiene freno propio, porque ninguna cuenta acumula fallos. **Resuelto el 2026-09-09 (ADR-13):** el bloqueo al 3° fallo por cuenta, junto con un rechazo indistinguible en cuerpo, cabeceras y tiempo — y un endpoint de recuperación igual de opaco — le quita al atacante tanto el margen de intentos como la señal de enumeración que necesita. Alertar por volumen anómalo en `historial_interacciones`, **sin** rechazar peticiones, queda como mejora deseable.
+> **Riesgo abierto y asumido:** sin control por IP, el *password spraying* (una contraseña común contra miles de nicknames) ya no tiene freno propio, porque ninguna cuenta acumula fallos. **Resuelto el 2026-09-09 (ADR-13):** el bloqueo al 3° fallo por cuenta, junto con un rechazo indistinguible en cuerpo, cabeceras y tiempo — y un endpoint de recuperación igual de opaco — le quita al atacante tanto el margen de intentos como la señal de enumeración que necesita. Alertar por volumen anómalo en `historial_interacciones`, **sin** rechazar peticiones, queda como mejora deseable.
 
 **2. El bloqueo de cuenta pasó a ser SILENCIOSO.**
-Todos los rechazos de login responden idéntico: `401`, código `CREDENCIALES_INVALIDAS`, mismo mensaje, sin cabeceras extra y con el mismo costo en tiempo. El atacante no puede distinguir "el email no existe" de "la contraseña está mal" ni de "la cuenta está bloqueada": ni por el cuerpo, ni por el status, ni por las cabeceras, ni por el reloj.
+Todos los rechazos de login responden idéntico: `401`, código `CREDENCIALES_INVALIDAS`, mismo mensaje, sin cabeceras extra y con el mismo costo en tiempo. El atacante no puede distinguir "el nickname no existe" de "la contraseña está mal" ni de "la cuenta está bloqueada": ni por el cuerpo, ni por el status, ni por las cabeceras, ni por el reloj.
 
-- Todos los fallos heredan de `AutenticacionFallidaException`, que lleva un código **interno** (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_SUSPENDIDA`). Ese código va al log y a `historial_interacciones`, **nunca** a la respuesta HTTP.
+- Todos los fallos heredan de `AutenticacionFallidaException`, que lleva un código **interno** (`NICKNAME_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_SUSPENDIDA`). Ese código va al log y a `historial_interacciones`, **nunca** a la respuesta HTTP.
 - `GlobalExceptionHandler` tiene **un solo** handler para toda la familia. **No agregar un `@ExceptionHandler` más específico** para ninguna subclase: Spring elegiría el más específico y la respuesta volvería a delatar el estado de la cuenta.
 - Cada rama de rechazo paga una comparación BCrypt (hash señuelo) para que el tiempo de respuesta sea constante.
 - Se quitó la cabecera `X-Reintentar-Despues`: leída desde las DevTools, confirmaba que la cuenta existe y está penalizada.
@@ -407,13 +410,17 @@ El alta se resuelve **de forma inmediata, en la misma petición**:
 
 > `REVISION_PENDIENTE` y `RECHAZADO` **se conservan** en el catálogo y en el historial (el MER los declara). No se usan en el alta, pero hacen falta para la suspensión por parte de un administrador en el Módulo 6.
 
-### ⚠️ `ddl-auto=update` NO PUEDE AGREGAR COLUMNAS EN ESTE ENTORNO
+### ✅ Bug de `ddl-auto=update` con columnas — RESUELTO 2026-09-09 (upgrade a MariaDB 11.8.9)
 
-Detectado el 2026-09-08. Hibernate genera `ALTER TABLE IF EXISTS <t> ADD COLUMN ...`, y la MariaDB que trae XAMPP (**10.4.32**) no soporta `IF EXISTS` en un `ALTER TABLE`: responde **error 1064, de sintaxis**. Hibernate registra el fallo pero **no detiene el arranque**, así que la aplicación levanta con normalidad y la columna simplemente no existe. El síntoma aparece después, en tiempo de ejecución, como `Unknown column '...' in 'field list'`.
+**Causa raíz (detectada el 2026-09-08):** Hibernate 7 (Spring Boot 4.1) dejó de soportar MariaDB por debajo de **10.6** y sigue generando `ALTER TABLE IF EXISTS <t> ADD COLUMN ...`. La MariaDB que trae cualquier XAMPP actual (PHP 8.0/8.1/8.2) es **10.4.32**, que rechaza el `IF EXISTS` en un `ALTER TABLE` con **error 1064, de sintaxis**. Hibernate registra el fallo pero **no detiene el arranque**, así que la aplicación levanta con normalidad y la columna simplemente no existe — el síntoma aparece después, en tiempo de ejecución, como `Unknown column '...' in 'field list'`. Venía roto en silencio desde Sprint 1: cuatro columnas de `persona_juridica` declaradas en la entidad desde el 2026-07-26 nunca existieron en la base, sin que nadie lo notara hasta que el catálogo público consultó esa tabla.
 
-Venía roto en silencio desde Sprint 1: cuatro columnas de `persona_juridica` declaradas en la entidad desde el 2026-07-26 nunca existieron en la base. Nadie lo notó porque ninguna consulta tocaba esa tabla hasta que lo hizo el catálogo público.
+**Solución aplicada:** se instaló **MariaDB 11.8 LTS como servicio de Windows standalone** (fuera de XAMPP, mismo puerto 3306, sin cambios en `application.properties`), se restauraron los datos, y se confirmó que `ddl-auto=update` ya agrega/recrea columnas sin errores `1064` ni avisos `HHH000511`. XAMPP-Lite con su 11.4.10 también supera el piso de 10.6, pero cambia Apache/PHP también — el servicio standalone fue más simple. XAMPP queda intacto pero **no debe tener su servicio de MySQL corriendo** (pelea por el puerto 3306). Detalle completo: [docs/log/sprint_2/2026-09-09_upgrade_mariadb.md](./docs/log/sprint_2/2026-09-09_upgrade_mariadb.md).
 
-**Regla para el equipo:** toda columna que se agregue a una `@Entity` de ahora en más tiene que ir también a un script de migración en `docs/diseño_bd/migraciones/`. El arreglo de fondo es actualizar MariaDB a **10.6+** (el mínimo que soporta Hibernate 7) o pasar a Flyway/Liquibase con `ddl-auto=validate`, que es lo que corresponde antes de producción.
+**Requisito del entorno de desarrollo:** MariaDB **10.6+** (el proyecto corre 11.8.9 LTS). En una máquina nueva que solo tenga el XAMPP por defecto, este bug va a reaparecer — hay que instalar una instancia standalone 10.6+ en su lugar.
+
+**Efecto colateral importante:** al superar la 10.4 aparecieron dos bugs de concurrencia reales que la versión vieja, con su bloqueo más conservador, venía ocultando — una pérdida de actualización sobre `Evento` (corregida con `@DynamicUpdate`) y un abort por snapshot isolation en escrituras concurrentes (corregido con bloqueo pesimista + `READ_COMMITTED` en esas transacciones). Ver el detalle si aparece `Record has changed since last read` en algún lado.
+
+**Regla para el equipo, sin cambios:** toda columna que se agregue a una `@Entity` sigue yendo también a un script de migración en `docs/diseño_bd/migraciones/` — que `ddl-auto=update` vuelva a funcionar no reemplaza las migraciones, sobre todo porque producción va a correr con `ddl-auto=validate` (Flyway/Liquibase) sin importar la versión de MariaDB de desarrollo.
 
 ```bash
 # Aplicar la migración pendiente (NO es opcional)
@@ -444,6 +451,9 @@ GET    /api/publico/eventos/{id}             anónimo   ficha técnica + registr
 GET    /api/publico/categorias               anónimo
 GET    /api/publico/provincias               anónimo
 GET    /api/publico/provincias/{id}/ciudades anónimo
+
+GET    /api/admin/eventos                    ADMINISTRADOR cola de moderación (todos los organizadores, RF-6.1)
+PATCH  /api/admin/eventos/{id}                ADMINISTRADOR decisión: aprobar/ratificar/suspender/revertir (RF-6.1)
 ```
 
 ### Máquina de estados del evento

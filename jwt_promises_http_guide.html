@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT, Promesas y HTTP - Guía Completa</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+        }
+        .contenedor {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        header h1 { margin: 0; font-size: 2.5em; }
+        header p { margin: 10px 0 0 0; opacity: 0.95; }
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            background: #f5f5f5;
+            border-bottom: 2px solid #667eea;
+        }
+        .nav-item {
+            flex: 1;
+            padding: 15px 20px;
+            cursor: pointer;
+            text-align: center;
+            border-right: 1px solid #ddd;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .nav-item:hover { background: #eee; }
+        .nav-item.active { background: #667eea; color: white; border-right: none; }
+        .nav-item:last-child { border-right: none; }
+        main {
+            padding: 40px;
+            min-height: 600px;
+        }
+        .seccion { display: none; }
+        .seccion.activa { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .contenido {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .contenido.full { grid-template-columns: 1fr; }
+
+        .bloque {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .bloque h3 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 1.3em;
+        }
+        .bloque p { margin: 10px 0; }
+
+        .codigo {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+        .codigo-comentario { color: #6a9955; }
+        .codigo-string { color: #ce9178; }
+        .codigo-palabra-clave { color: #569cd6; }
+        .codigo-funcion { color: #dcdcaa; }
+
+        .diagrama {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 15px 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        .ejemplo-interactivo {
+            background: #f0f4ff;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .ejemplo-interactivo input,
+        .ejemplo-interactivo button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        .ejemplo-interactivo button {
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .ejemplo-interactivo button:hover { background: #764ba2; }
+        .resultado {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #43a047;
+        }
+        .error { border-left-color: #e53935; color: #e53935; }
+
+        .paso {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        .paso-numero {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .paso-contenido { flex: 1; }
+
+        .tabla {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+        }
+        .tabla th, .tabla td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .tabla th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        .tabla tr:hover { background: #f5f5f5; }
+
+        .icono { font-size: 1.5em; margin-right: 10px; }
+
+        .nota {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        .nota::before { content: '⚠️ '; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .contenido { grid-template-columns: 1fr; }
+            nav { flex-direction: column; }
+            .nav-item { border-right: none; border-bottom: 1px solid #ddd; }
+            main { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="contenedor">
+    <header>
+        <h1>🔐 JWT, Promesas y Peticiones HTTP</h1>
+        <p>Guía teórico-práctica completa desde cero • Enexia Sprint 1</p>
+    </header>
+
+    <nav>
+        <div class="nav-item active" onclick="mostrarSeccion(0)">🔐 JWT Básico</div>
+        <div class="nav-item" onclick="mostrarSeccion(1)">⏳ Promesas</div>
+        <div class="nav-item" onclick="mostrarSeccion(2)">🌐 Fetch API</div>
+        <div class="nav-item" onclick="mostrarSeccion(3)">🎯 Headers & Auth</div>
+        <div class="nav-item" onclick="mostrarSeccion(4)">⚙️ En Enexia</div>
+        <div class="nav-item" onclick="mostrarSeccion(5)">🧪 Ejercicios</div>
+        <div class="nav-item" onclick="mostrarSeccion(6)">🍪 HttpOnly Cookies</div>
+    </nav>
+
+    <main>
+        <!-- SECCIÓN 1: JWT BÁSICO -->
+        <div class="seccion activa">
+            <h2>🔐 JSON Web Token (JWT): Conceptos Fundamentales</h2>
+
+            <div class="contenido full">
+                <div class="bloque">
+                    <h3>¿Qué es un JWT?</h3>
+                    <p>Un <strong>JSON Web Token</strong> es una forma de enviar información segura entre dos partes (cliente ↔ servidor). Es un token codificado en Base64 que contiene tres partes separadas por puntos:</p>
+                    <div class="diagrama">
+header.payload.firma
+                    </div>
+                    <p><strong>Ejemplo real de Enexia:</strong></p>
+                    <div class="diagrama" style="font-size: 0.7em; word-break: break-all;">
+eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJob2xhQGhvbGEuY29tIiwicm9sZXMiOlsiUEFSVElDSVBBTlRFIl0sImlzcyI6ImVuZXhpYSIsImlhdCI6MTc4ODQ3NzI0OCwiZXhwIjoxNzg4NTYzNjQ4fQ.ueZPyvl6IWkEeSuo3VgBkIGDcOVSN_ISCCRsWeTU-O4APKnpwkoho-RHKbG6f0Ax
+                    </div>
+                </div>
+            </div>
+
+            <div class="contenido">
+                <div class="bloque">
+                    <h3>1️⃣ Header (Cabecera)</h3>
+                    <p>Especifica el tipo de token y el algoritmo de firma:</p>
+                    <div class="codigo">
+<span class="codigo-comentario">// Decodificado</span>
+{
+  <span class="codigo-string">"alg"</span>: <span class="codigo-string">"HS384"</span>,
+  <span class="codigo-string">"typ"</span>: <span class="codigo-string">"JWT"</span>
+}
+                    </div>
+                    <p><strong>Significado:</strong></p>
+                    <ul>
+                        <li><code>alg</code>: Algoritmo HMAC SHA-384</li>
+                        <li><code>typ</code>: Es un JSON Web Token</li>
+                    </ul>
+                </div>
+
+                <div class="bloque">
+                    <h3>2️⃣ Payload (Carga)</h3>
+                    <p>Contiene la información del usuario (NO está cifrada, solo codificada):</p>
+                    <div class="codigo">
+<span class="codigo-comentario">// Decodificado</span>
+{
+  <span class="codigo-string">"sub"</span>: <span class="codigo-string">"hola@hola.com"</span>,
+  <span class="codigo-string">"roles"</span>: [<span class="codigo-string">"PARTICIPANTE"</span>],
+  <span class="codigo-string">"iss"</span>: <span class="codigo-string">"enexia"</span>,
+  <span class="codigo-string">"iat"</span>: 1788477248,
+  <span class="codigo-string">"exp"</span>: 1788563648
+}
+                    </div>
+                    <p><strong>Claims (Reclamaciones):</strong></p>
+                    <ul>
+                        <li><code>sub</code>: Subject (email del usuario)</li>
+                        <li><code>roles</code>: Array de roles del usuario</li>
+                        <li><code>iss</code>: Issuer (quién emitió el token)</li>
+                        <li><code>iat</code>: Issued At (cuándo se emitió - Unix timestamp)</li>
+                        <li><code>exp</code>: Expiration (cuándo vence - Unix timestamp)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="contenido">
+                <div class="bloque">
+                    <h3>3️⃣ Firma (Signature)</h3>
+                    <p>Es un HMAC calculado usando header + payload + clave secreta:</p>
+                    <div class="codigo">
+<span class="codigo-comentario">// En el servidor (Java)</span>
+HMACSHA384(
+  base64url(header) + <span class="codigo-string">"."</span> + base64url(payload),
+  <span class="codigo-string">"clave-secreta-del-servidor"</span>
+)
+                    </div>
+                    <p><strong>¿Por qué la firma?</strong></p>
+                    <ul>
+                        <li>Si alguien altera 1 carácter del payload, la firma no coincide</li>
+                        <li>El servidor rechaza el token adulterado</li>
+                        <li>La clave secreta está SOLO en el servidor (nunca en el frontend)</li>
+                    </ul>
+                </div>
+
+                <div class="bloque">
+                    <h3>🔒 Seguridad: Mitos y Verdades</h3>
+                    <table class="tabla">
+                        <tr>
+                            <th>Pregunta</th>
+                            <th>Respuesta</th>
+                        </tr>
+                        <tr>
+                            <td>¿Está cifrado?</td>
+                            <td>❌ No. Base64 NO es cifrado.</td>
+                        </tr>
+                        <tr>
+                            <td>¿Puedo leer el payload?</td>
+                            <td>✅ Sí, cualquiera lo puede leer.</td>
+                        </tr>
+                        <tr>
+                            <td>¿Puedo modificarlo?</td>
+                            <td>❌ No. La firma lo detecta.</td>
+                        </tr>
+                        <tr>
+                            <td>¿Viaja en la URL?</td>
+                            <td>❌ En un header HTTP seguro.</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="nota">
+                <strong>Nunca</strong> pongas datos sensibles (contraseñas, DNI, tarjetas) en el payload. El JWT es para IDENTIFICAR y AUTORIZAR, no para guardar secretos.
+            </div>
+
+            <h3>🎯 El Ciclo Completo de un JWT en Enexia</h3>
+            <div class="paso">
+                <div class="paso-numero">1</div>
+                <div class="paso-contenido">
+                    <strong>Usuario hace login</strong><br>
+                    Envía email y contraseña al servidor
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">2</div>
+                <div class="paso-contenido">
+                    <strong>Servidor valida credenciales</strong><br>
+                    Verifica email y contraseña contra la BD
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">3</div>
+                <div class="paso-contenido">
+                    <strong>Servidor genera JWT</strong><br>
+                    Crea header + payload + firma con clave secreta
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">4</div>
+                <div class="paso-contenido">
+                    <strong>Servidor devuelve el token</strong><br>
+                    El cliente recibe el token en la respuesta del login
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">5</div>
+                <div class="paso-contenido">
+                    <strong>Frontend guarda el token</strong><br>
+                    Se almacena en <code>sessionStorage</code> (o localStorage)
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">6</div>
+                <div class="paso-contenido">
+                    <strong>Frontend envía token en requests</strong><br>
+                    En el header: <code>Authorization: Bearer &lt;token&gt;</code>
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">7</div>
+                <div class="paso-contenido">
+                    <strong>Servidor valida el token</strong><br>
+                    Verifica firma, emisor y vigencia
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">8</div>
+                <div class="paso-contenido">
+                    <strong>Servidor procesa la request</strong><br>
+                    Si el token es válido, accede a los datos del usuario
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: PROMESAS -->
+        <div class="seccion">
+            <h2>⏳ Promesas en JavaScript: Control Asíncrono</h2>
+
+            <div class="contenido full">
+                <div class="bloque">
+                    <h3>¿Qué es una Promesa?</h3>
+                    <p>Una <strong>Promesa</strong> es un objeto que representa el resultado eventual de una operación asíncrona. Es como decirle a JavaScript:</p>
+                    <p style="font-style: italic; margin: 15px 0; padding: 15px; background: #fff3cd; border-radius: 6px;">
+                        "Haz esto en el futuro y hazme saber cuando termine, sin bloquear lo demás"
+                    </p>
+                </div>
+            </div>
+
+            <div class="contenido">
+                <div class="bloque">
+                    <h3>Estados de una Promesa</h3>
+                    <div class="diagrama">
+PENDIENTE
+   ↓
+   ├─→ RESUELTA ✅ (resolve)
+   └─→ RECHAZADA ❌ (reject)
+                    </div>
+                    <ul>
+                        <li><strong>Pendiente:</strong> La operación aún no termina</li>
+                        <li><strong>Resuelta:</strong> La operación fue exitosa</li>
+                        <li><strong>Rechazada:</strong> La operación falló</li>
+                    </ul>
+                </div>
+
+                <div class="bloque">
+                    <h3>Sintaxis Básica</h3>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> miPromesa = <span class="codigo-palabra-clave">new</span> <span class="codigo-funcion">Promise</span>((resolve, reject) => {
+  <span class="codigo-comentario">// Código asíncrono aquí</span>
+  <span class="codigo-palabra-clave">if</span> (exito) {
+    <span class="codigo-funcion">resolve</span>(resultado);
+  } <span class="codigo-palabra-clave">else</span> {
+    <span class="codigo-funcion">reject</span>(error);
+  }
+});
+                    </div>
+                </div>
+            </div>
+
+            <h3>📚 Ejemplos Prácticos</h3>
+
+            <div class="paso">
+                <div class="paso-numero">A</div>
+                <div class="paso-contenido">
+                    <strong>Promesa Simple: Esperar 2 segundos</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> esperar = <span class="codigo-palabra-clave">new</span> <span class="codigo-funcion">Promise</span>((resolve) => {
+  <span class="codigo-funcion">setTimeout</span>(() => {
+    <span class="codigo-funcion">resolve</span>(<span class="codigo-string">"¡Listo!"</span>);
+  }, 2000);
+});
+
+esperar.<span class="codigo-funcion">then</span>(resultado => {
+  <span class="codigo-funcion">console.log</span>(resultado); <span class="codigo-comentario">// "¡Listo!" (después de 2s)</span>
+});
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">B</div>
+                <div class="paso-contenido">
+                    <strong>Promesa con Rechazo: Validar número</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> validar = <span class="codigo-palabra-clave">new</span> <span class="codigo-funcion">Promise</span>((resolve, reject) => {
+  <span class="codigo-palabra-clave">const</span> num = 5;
+  <span class="codigo-palabra-clave">if</span> (num > 10) {
+    <span class="codigo-funcion">resolve</span>(<span class="codigo-string">"Número válido"</span>);
+  } <span class="codigo-palabra-clave">else</span> {
+    <span class="codigo-funcion">reject</span>(<span class="codigo-string">"Número muy pequeño"</span>);
+  }
+});
+
+validar
+  .<span class="codigo-funcion">then</span>(msg => <span class="codigo-funcion">console.log</span>(msg))
+  .<span class="codigo-funcion">catch</span>(error => <span class="codigo-funcion">console.log</span>(<span class="codigo-string">"Error:"</span>, error));
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔗 Encadenamiento de Promesas (.then())</h3>
+
+            <div class="paso">
+                <div class="paso-numero">1</div>
+                <div class="paso-contenido">
+                    <strong>Problema: Callback Hell</strong>
+                    <div class="codigo">
+<span class="codigo-comentario">// Código "anidado" difícil de leer</span>
+obtenerUsuario(id, (error, usuario) => {
+  <span class="codigo-palabra-clave">if</span> (error) <span class="codigo-funcion">console.log</span>(error);
+  obtenerPerfil(usuario.id, (error, perfil) => {
+    <span class="codigo-palabra-clave">if</span> (error) <span class="codigo-funcion">console.log</span>(error);
+    obtenerEventos(perfil.id, (error, eventos) => {
+      <span class="codigo-comentario">// ... y así ad infinitum</span>
+    });
+  });
+});
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">2</div>
+                <div class="paso-contenido">
+                    <strong>Solución: .then() encadenado</strong>
+                    <div class="codigo">
+obtenerUsuario(id)
+  .<span class="codigo-funcion">then</span>(usuario => obtenerPerfil(usuario.id))
+  .<span class="codigo-funcion">then</span>(perfil => obtenerEventos(perfil.id))
+  .<span class="codigo-funcion">then</span>(eventos => <span class="codigo-funcion">console.log</span>(eventos))
+  .<span class="codigo-funcion">catch</span>(error => <span class="codigo-funcion">console.log</span>(<span class="codigo-string">"Error:"</span>, error));
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Ventajas:</strong> Código más legible, fácil de seguir de izquierda a derecha.</p>
+                </div>
+            </div>
+
+            <h3>🚀 Async/Await: Sintaxis Moderna (RECOMENDADO)</h3>
+
+            <p><code>async/await</code> es una forma más limpia de trabajar con promesas. Hace que el código asíncrono se vea como síncrono:</p>
+
+            <div class="paso">
+                <div class="paso-numero">Antes</div>
+                <div class="paso-contenido">
+                    <strong>Con .then()</strong>
+                    <div class="codigo">
+<span class="codigo-funcion">obtenerDatos</span>()
+  .<span class="codigo-funcion">then</span>(datos => <span class="codigo-funcion">procesarDatos</span>(datos))
+  .<span class="codigo-funcion">then</span>(resultado => <span class="codigo-funcion">mostrarResultado</span>(resultado))
+  .<span class="codigo-funcion">catch</span>(error => <span class="codigo-funcion">console.log</span>(error));
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">Después</div>
+                <div class="paso-contenido">
+                    <strong>Con async/await</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> main() {
+  <span class="codigo-palabra-clave">try</span> {
+    <span class="codigo-palabra-clave">const</span> datos = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">obtenerDatos</span>();
+    <span class="codigo-palabra-clave">const</span> resultado = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">procesarDatos</span>(datos);
+    <span class="codigo-funcion">mostrarResultado</span>(resultado);
+  } <span class="codigo-palabra-clave">catch</span> (error) {
+    <span class="codigo-funcion">console.log</span>(error);
+  }
+}
+
+<span class="codigo-funcion">main</span>();
+                    </div>
+                </div>
+            </div>
+
+            <div class="nota">
+                <strong>Regla de oro:</strong> Cuando veas <code>async</code>, la función retorna una Promesa. Cuando uses <code>await</code>, JavaScript espera a que la Promesa se resuelva.
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: FETCH API -->
+        <div class="seccion">
+            <h2>🌐 Fetch API: Hacer Peticiones HTTP desde JavaScript</h2>
+
+            <div class="contenido full">
+                <div class="bloque">
+                    <h3>¿Qué es Fetch?</h3>
+                    <p><code>fetch()</code> es la forma moderna de hacer peticiones HTTP en JavaScript. Devuelve una <strong>Promesa</strong> que se resuelve con la respuesta del servidor.</p>
+                    <p><strong>Sintaxis básica:</strong></p>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(url, opciones);
+<span class="codigo-palabra-clave">const</span> datos = <span class="codigo-palabra-clave">await</span> respuesta.<span class="codigo-funcion">json</span>();
+                    </div>
+                </div>
+            </div>
+
+            <h3>📍 Ciclo Completo de una Petición</h3>
+
+            <div class="paso">
+                <div class="paso-numero">1</div>
+                <div class="paso-contenido">
+                    <strong>Crear la petición</strong><br>
+                    Define la URL y las opciones (método, headers, cuerpo)
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">2</div>
+                <div class="paso-contenido">
+                    <strong>Enviar al servidor</strong><br>
+                    JavaScript hace la petición de forma asíncrona (no bloquea)
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">3</div>
+                <div class="paso-contenido">
+                    <strong>Recibir respuesta</strong><br>
+                    Cuando el servidor responde, la Promesa se resuelve
+                </div>
+            </div>
+            <div class="paso">
+                <div class="paso-numero">4</div>
+                <div class="paso-contenido">
+                    <strong>Procesar datos</strong><br>
+                    Convierte JSON a objeto JavaScript y lo usa
+                </div>
+            </div>
+
+            <h3>📚 Ejemplos por Método HTTP</h3>
+
+            <div class="contenido">
+                <div class="bloque">
+                    <h3>GET: Obtener Datos</h3>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> obtenerEventos() {
+  <span class="codigo-palabra-clave">try</span> {
+    <span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+      <span class="codigo-string">'http://localhost:8080/api/eventos'</span>
+    );
+
+    <span class="codigo-palabra-clave">const</span> eventos = <span class="codigo-palabra-clave">await</span> respuesta.<span class="codigo-funcion">json</span>();
+    <span class="codigo-funcion">console.log</span>(eventos);
+  } <span class="codigo-palabra-clave">catch</span> (error) {
+    <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Error:'</span>, error);
+  }
+}
+                    </div>
+                </div>
+
+                <div class="bloque">
+                    <h3>POST: Enviar Datos</h3>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> crearEvento(evento) {
+  <span class="codigo-palabra-clave">try</span> {
+    <span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+      <span class="codigo-string">'http://localhost:8080/api/eventos'</span>,
+      {
+        method: <span class="codigo-string">'POST'</span>,
+        headers: {
+          <span class="codigo-string">'Content-Type'</span>: <span class="codigo-string">'application/json'</span>
+        },
+        body: <span class="codigo-funcion">JSON.stringify</span>(evento)
+      }
+    );
+
+    <span class="codigo-palabra-clave">const</span> resultado = <span class="codigo-palabra-clave">await</span> respuesta.<span class="codigo-funcion">json</span>();
+    <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Creado:'</span>, resultado);
+  } <span class="codigo-palabra-clave">catch</span> (error) {
+    <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Error:'</span>, error);
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔄 Estados de la Respuesta HTTP</h3>
+
+            <table class="tabla">
+                <tr>
+                    <th>Rango</th>
+                    <th>Significado</th>
+                    <th>Ejemplos</th>
+                </tr>
+                <tr>
+                    <td><strong>2XX</strong></td>
+                    <td>✅ Éxito</td>
+                    <td>200 OK, 201 Created, 204 No Content</td>
+                </tr>
+                <tr>
+                    <td><strong>3XX</strong></td>
+                    <td>↪️ Redirección</td>
+                    <td>301 Moved Permanently, 302 Found</td>
+                </tr>
+                <tr>
+                    <td><strong>4XX</strong></td>
+                    <td>❌ Error del cliente</td>
+                    <td>400 Bad Request, 401 Unauthorized, 404 Not Found</td>
+                </tr>
+                <tr>
+                    <td><strong>5XX</strong></td>
+                    <td>🔥 Error del servidor</td>
+                    <td>500 Internal Server Error, 503 Service Unavailable</td>
+                </tr>
+            </table>
+
+            <div class="nota">
+                <strong>Importante:</strong> Fetch NO lanza error para códigos 4XX o 5XX. Siempre debes verificar <code>respuesta.ok</code> o <code>respuesta.status</code>.
+            </div>
+
+            <h3>Verificar el Status de la Respuesta</h3>
+
+            <div class="paso">
+                <div class="paso-numero">❌</div>
+                <div class="paso-contenido">
+                    <strong>Malo: Asumir que siempre es éxito</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(url);
+<span class="codigo-palabra-clave">const</span> datos = <span class="codigo-palabra-clave">await</span> respuesta.<span class="codigo-funcion">json</span>();
+<span class="codigo-comentario">// ¿Y si el servidor respondió 401? Vas a intentar procesar error como éxito</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">✅</div>
+                <div class="paso-contenido">
+                    <strong>Bien: Verificar respuesta.ok</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(url);
+
+<span class="codigo-palabra-clave">if</span> (respuesta.ok) {
+  <span class="codigo-palabra-clave">const</span> datos = <span class="codigo-palabra-clave">await</span> respuesta.<span class="codigo-funcion">json</span>();
+  <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Éxito:'</span>, datos);
+} <span class="codigo-palabra-clave">else</span> {
+  <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Error:'</span>, respuesta.status);
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: HEADERS & AUTENTICACIÓN -->
+        <div class="seccion">
+            <h2>🎯 Headers HTTP y Autenticación con Token</h2>
+
+            <div class="contenido full">
+                <div class="bloque">
+                    <h3>¿Qué son los Headers?</h3>
+                    <p>Los <strong>headers</strong> son metadatos que acompañan a cada petición HTTP. Son pares clave-valor que le dicen al servidor información sobre la petición.</p>
+                </div>
+            </div>
+
+            <h3>📋 Headers Comunes</h3>
+
+            <table class="tabla">
+                <tr>
+                    <th>Header</th>
+                    <th>Propósito</th>
+                    <th>Ejemplo</th>
+                </tr>
+                <tr>
+                    <td><strong>Content-Type</strong></td>
+                    <td>Tipo de datos que envías</td>
+                    <td><code>application/json</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Accept</strong></td>
+                    <td>Tipo de datos que quieres recibir</td>
+                    <td><code>application/json</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Authorization</strong></td>
+                    <td>Token de autenticación</td>
+                    <td><code>Bearer eyJhbGc...</code></td>
+                </tr>
+                <tr>
+                    <td><strong>User-Agent</strong></td>
+                    <td>Información del navegador</td>
+                    <td><code>Mozilla/5.0...</code></td>
+                </tr>
+                <tr>
+                    <td><strong>X-Custom-Header</strong></td>
+                    <td>Headers personalizados (comienzan con X-)</td>
+                    <td>Depende de la API</td>
+                </tr>
+            </table>
+
+            <h3>🔐 El Header Authorization con JWT</h3>
+
+            <p>Para enviar un JWT, se usa el header <code>Authorization</code> con el formato:</p>
+
+            <div class="diagrama">
+Authorization: Bearer &lt;token_jwt_completo&gt;
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">Paso 1</div>
+                <div class="paso-contenido">
+                    <strong>Obtener el token después del login</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> respuestaLogin = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+  <span class="codigo-string">'http://localhost:8080/api/auth/login'</span>,
+  {
+    method: <span class="codigo-string">'POST'</span>,
+    headers: { <span class="codigo-string">'Content-Type'</span>: <span class="codigo-string">'application/json'</span> },
+    body: <span class="codigo-funcion">JSON.stringify</span>({
+      email: <span class="codigo-string">'hola@hola.com'</span>,
+      password: <span class="codigo-string">'mi-contraseña'</span>
+    })
+  }
+);
+
+<span class="codigo-palabra-clave">const</span> datos = <span class="codigo-palabra-clave">await</span> respuestaLogin.<span class="codigo-funcion">json</span>();
+<span class="codigo-palabra-clave">const</span> token = datos.token;  <span class="codigo-comentario">// 👈 El token que devuelve el servidor</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">Paso 2</div>
+                <div class="paso-contenido">
+                    <strong>Guardar el token en sessionStorage</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">sessionStorage.setItem</span>(<span class="codigo-string">'enexia_token'</span>, token);
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">Paso 3</div>
+                <div class="paso-contenido">
+                    <strong>Recuperar el token para una petición autenticada</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> token = <span class="codigo-palabra-clave">sessionStorage.getItem</span>(<span class="codigo-string">'enexia_token'</span>);
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">Paso 4</div>
+                <div class="paso-contenido">
+                    <strong>Enviar el token en el header Authorization</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+  <span class="codigo-string">'http://localhost:8080/api/auth/me'</span>,
+  {
+    method: <span class="codigo-string">'GET'</span>,
+    headers: {
+      <span class="codigo-string">'Content-Type'</span>: <span class="codigo-string">'application/json'</span>,
+      <span class="codigo-string">'Authorization'</span>: <span class="codigo-string">'Bearer '</span> + token  <span class="codigo-comentario">// 👈 Aquí va el token</span>
+    }
+  }
+);
+                    </div>
+                </div>
+            </div>
+
+            <h3>🏗️ Función Helper: Petición Autenticada</h3>
+
+            <p>Para no repetir el código del header en cada petición, crea una función helper (como la de Enexia):</p>
+
+            <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> peticionAutenticada(url, opciones = {}) {
+  <span class="codigo-palabra-clave">const</span> token = <span class="codigo-palabra-clave">sessionStorage.getItem</span>(<span class="codigo-string">'enexia_token'</span>);
+
+  <span class="codigo-palabra-clave">const</span> headersFinales = {
+    <span class="codigo-string">'Content-Type'</span>: <span class="codigo-string">'application/json'</span>,
+    <span class="codigo-comentario">// Si hay token, lo agrega; si no, no hace nada</span>
+    ...(token && { <span class="codigo-string">'Authorization'</span>: <span class="codigo-string">'Bearer '</span> + token })
+  };
+
+  <span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(url, {
+    ...opciones,
+    headers: headersFinales
+  });
+
+  <span class="codigo-palabra-clave">return</span> respuesta;
+}
+
+<span class="codigo-comentario">// Uso:</span>
+<span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">peticionAutenticada</span>(
+  <span class="codigo-string">'http://localhost:8080/api/auth/me'</span>,
+  { method: <span class="codigo-string">'GET'</span> }
+);
+            </div>
+
+            <div class="nota">
+                El operador spread (<code>...</code>) "desempaqueta" objetos. En este caso, si hay token, agrega <code>"Authorization"</code> a los headers; si no hay, no agrega nada.
+            </div>
+        </div>
+
+        <!-- SECCIÓN 5: EN ENEXIA -->
+        <div class="seccion">
+            <h2>⚙️ Cómo Funciona en Enexia - Todo Junto</h2>
+
+            <div class="contenido full">
+                <div class="bloque">
+                    <h3>Archivos Clave en el Proyecto</h3>
+                    <table class="tabla">
+                        <tr>
+                            <th>Archivo</th>
+                            <th>Responsabilidad</th>
+                        </tr>
+                        <tr>
+                            <td><code>js/auth.js</code></td>
+                            <td>Guardar/recuperar token y usuario</td>
+                        </tr>
+                        <tr>
+                            <td><code>js/api.js</code></td>
+                            <td>Wrapper sobre fetch() con token automático</td>
+                        </tr>
+                        <tr>
+                            <td><code>pages/login-desktop-claro.html</code></td>
+                            <td>Formulario de login que genera el JWT</td>
+                        </tr>
+                        <tr>
+                            <td><code>controller/AuthController.java</code></td>
+                            <td>Endpoints /login, /registro, /me (backend)</td>
+                        </tr>
+                        <tr>
+                            <td><code>security/JwtService.java</code></td>
+                            <td>Genera y valida JWT en el servidor</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <h3>🎬 Flujo Completo: Login → Dashboard</h3>
+
+            <div class="paso">
+                <div class="paso-numero">1</div>
+                <div class="paso-contenido">
+                    <strong>Usuario abre login-desktop-claro.html</strong>
+                    <div class="codigo">
+http://localhost:8000/pages/auth/login-desktop-claro.html
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">2</div>
+                <div class="paso-contenido">
+                    <strong>Usuario ingresa email y contraseña y hace clic en "Iniciar sesión"</strong>
+                    <p>JavaScript dispara el evento submit del formulario</p>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">3</div>
+                <div class="paso-contenido">
+                    <strong>JavaScript llama a API.login()</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> API.<span class="codigo-funcion">login</span>({
+  email: <span class="codigo-string">'hola@hola.com'</span>,
+  password: <span class="codigo-string">'mi-clave'</span>
+});
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">4</div>
+                <div class="paso-contenido">
+                    <strong>Backend recibe POST /api/auth/login</strong>
+                    <p>AuthController valida credenciales en BD</p>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">5</div>
+                <div class="paso-contenido">
+                    <strong>JwtService genera el JWT</strong>
+                    <div class="codigo">
+<span class="codigo-comentario">// En el servidor (Java)</span>
+String token = jwtService.<span class="codigo-funcion">generarToken</span>(
+  <span class="codigo-string">"hola@hola.com"</span>,
+  Arrays.<span class="codigo-funcion">asList</span>(<span class="codigo-string">"PARTICIPANTE"</span>)
+);
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">6</div>
+                <div class="paso-contenido">
+                    <strong>Backend devuelve 200 OK con el token</strong>
+                    <div class="codigo">
+{
+  <span class="codigo-string">"idUsuario"</span>: 123,
+  <span class="codigo-string">"email"</span>: <span class="codigo-string">"hola@hola.com"</span>,
+  <span class="codigo-string">"token"</span>: <span class="codigo-string">"eyJhbGciOiJIUzM4NCJ9...."</span>,
+  <span class="codigo-string">"roles"</span>: [<span class="codigo-string">"PARTICIPANTE"</span>]
+}
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">7</div>
+                <div class="paso-contenido">
+                    <strong>Frontend guarda el token en sessionStorage</strong>
+                    <div class="codigo">
+Auth.<span class="codigo-funcion">guardarSesion</span>(respuesta);
+<span class="codigo-comentario">// Internamente: sessionStorage.setItem('enexia_token', token)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">8</div>
+                <div class="paso-contenido">
+                    <strong>Frontend redirige al dashboard</strong>
+                    <div class="codigo">
+window.location.href = <span class="codigo-string">'../participant/dashboard.html'</span>;
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">9</div>
+                <div class="paso-contenido">
+                    <strong>En el dashboard, JavaScript hace peticiones autenticadas</strong>
+                    <div class="codigo">
+<span class="codigo-comentario">// Usa el token automáticamente</span>
+<span class="codigo-palabra-clave">const</span> datos = <span class="codigo-palabra-clave">await</span> API.<span class="codigo-funcion">get</span>(<span class="codigo-string">'/api/auth/me'</span>);
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">10</div>
+                <div class="paso-contenido">
+                    <strong>Backend valida el token en el filtro JWT</strong>
+                    <p>JwtAuthenticationFilter verifica firma, emisor, vigencia</p>
+                    <p>Si es válido, el usuario es autenticado</p>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">11</div>
+                <div class="paso-contenido">
+                    <strong>Backend procesa la request con el usuario autenticado</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">@GetMapping</span>(<span class="codigo-string">"/me"</span>)
+<span class="codigo-palabra-clave">public</span> ResponseEntity obtenerDatos(Principal principal) {
+  <span class="codigo-comentario">// principal.getName() = email del usuario autenticado</span>
+  <span class="codigo-palabra-clave">return</span> ... ;
+}
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">12</div>
+                <div class="paso-contenido">
+                    <strong>Frontend recibe los datos del usuario</strong>
+                    <div class="codigo">
+{
+  <span class="codigo-string">"email"</span>: <span class="codigo-string">"hola@hola.com"</span>,
+  <span class="codigo-string">"roles"</span>: [<span class="codigo-string">"PARTICIPANTE"</span>]
+}
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔍 Debugging: Dónde Ver el Token</h3>
+
+            <div class="bloque">
+                <h4>En DevTools (F12)</h4>
+                <ul>
+                    <li><strong>Console:</strong> Escribe <code>sessionStorage.getItem('enexia_token')</code></li>
+                    <li><strong>Application/Storage → Session Storage:</strong> Verifica la clave 'enexia_token'</li>
+                    <li><strong>Network:</strong> Haz una petición y verifica que el header Authorization está presente</li>
+                </ul>
+            </div>
+
+            <div class="bloque">
+                <h4>Decodificar un JWT</h4>
+                <p>Puedes usar <code>jwt.io</code> o hacerlo en JavaScript:</p>
+                <div class="codigo">
+<span class="codigo-palabra-clave">const</span> token = <span class="codigo-palabra-clave">sessionStorage.getItem</span>(<span class="codigo-string">'enexia_token'</span>);
+<span class="codigo-palabra-clave">const</span> payload = <span class="codigo-palabra-clave">JSON.parse</span>(
+  <span class="codigo-funcion">atob</span>(token.<span class="codigo-funcion">split</span>(<span class="codigo-string">'.'</span>)[1])
+);
+<span class="codigo-funcion">console.log</span>(payload);
+<span class="codigo-comentario">// { sub: "hola@hola.com", roles: ["PARTICIPANTE"], ...}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 6: EJERCICIOS -->
+        <div class="seccion">
+            <h2>🧪 Ejercicios Prácticos</h2>
+
+            <h3>Ejercicio 1: Crear una Promesa Básica</h3>
+
+            <div class="paso">
+                <div class="paso-numero">📝</div>
+                <div class="paso-contenido">
+                    <strong>Tarea:</strong> Crea una función que retorne una Promesa que se resuelve después de 3 segundos
+                    <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> esperar3Segundos() {
+  <span class="codigo-palabra-clave">return</span> <span class="codigo-palabra-clave">new</span> <span class="codigo-funcion">Promise</span>((resolve) => {
+    <span class="codigo-funcion">setTimeout</span>(() => {
+      <span class="codigo-funcion">resolve</span>(<span class="codigo-string">"¡3 segundos pasaron!"</span>);
+    }, 3000);
+  });
+}
+
+<span class="codigo-comentario">// Prueba:</span>
+<span class="codigo-palabra-clave">const</span> resultado = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">esperar3Segundos</span>();
+<span class="codigo-funcion">console.log</span>(resultado);
+                    </div>
+                </div>
+            </div>
+
+            <h3>Ejercicio 2: Hacer una Petición GET Simple</h3>
+
+            <div class="paso">
+                <div class="paso-numero">📝</div>
+                <div class="paso-contenido">
+                    <strong>Tarea:</strong> Crea una función que haga GET a http://jsonplaceholder.typicode.com/users/1 y muestre el nombre del usuario
+                    <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> obtenerUsuario() {
+  <span class="codigo-palabra-clave">try</span> {
+    <span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+      <span class="codigo-string">'http://jsonplaceholder.typicode.com/users/1'</span>
+    );
+    <span class="codigo-palabra-clave">const</span> usuario = <span class="codigo-palabra-clave">await</span> respuesta.<span class="codigo-funcion">json</span>();
+    <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Nombre:'</span>, usuario.name);
+  } <span class="codigo-palabra-clave">catch</span> (error) {
+    <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Error:'</span>, error);
+  }
+}
+
+<span class="codigo-funcion">obtenerUsuario</span>();
+                    </div>
+                </div>
+            </div>
+
+            <h3>Ejercicio 3: Simulador de Login</h3>
+
+            <div class="ejemplo-interactivo">
+                <h4>Simulador Interactivo de Login + Token</h4>
+                <div>
+                    <label>Email:</label>
+                    <input type="email" id="emailEj3" placeholder="test@example.com" value="test@example.com">
+                </div>
+                <div>
+                    <label>Contraseña:</label>
+                    <input type="password" id="passEj3" placeholder="mi-contraseña" value="123456">
+                </div>
+                <button onclick="simularLogin()">Simular Login</button>
+                <div class="resultado" id="resultadoEj3" style="display:none;"></div>
+            </div>
+
+            <h3>Ejercicio 4: Usar Token en Header</h3>
+
+            <div class="paso">
+                <div class="paso-numero">📝</div>
+                <div class="paso-contenido">
+                    <strong>Tarea:</strong> Crea una función que envíe un token en el header Authorization
+                    <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> peticionConToken(token) {
+  <span class="codigo-palabra-clave">try</span> {
+    <span class="codigo-palabra-clave">const</span> respuesta = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+      <span class="codigo-string">'http://localhost:8080/api/auth/me'</span>,
+      {
+        method: <span class="codigo-string">'GET'</span>,
+        headers: {
+          <span class="codigo-string">'Authorization'</span>: <span class="codigo-string">'Bearer '</span> + token
+        }
+      }
+    );
+
+    <span class="codigo-palabra-clave">const</span> datos = <span class="codigo-palabra-clave">await</span> respuesta.<span class="codigo-funcion">json</span>();
+
+    <span class="codigo-palabra-clave">if</span> (respuesta.ok) {
+      <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Autenticado:'</span>, datos);
+    } <span class="codigo-palabra-clave">else</span> {
+      <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'No autorizado'</span>, respuesta.status);
+    }
+  } <span class="codigo-palabra-clave">catch</span> (error) {
+    <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Error:'</span>, error);
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <h3>Ejercicio 5: Cadena de Promesas</h3>
+
+            <div class="paso">
+                <div class="paso-numero">📝</div>
+                <div class="paso-contenido">
+                    <strong>Tarea:</strong> Crea 3 funciones que dependan una de otra con async/await
+                    <div class="codigo">
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> obtenerPost() {
+  <span class="codigo-palabra-clave">const</span> r = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+    <span class="codigo-string">'http://jsonplaceholder.typicode.com/posts/1'</span>
+  );
+  <span class="codigo-palabra-clave">return</span> r.<span class="codigo-funcion">json</span>();
+}
+
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> obtenerComentarios(postId) {
+  <span class="codigo-palabra-clave">const</span> r = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">fetch</span>(
+    <span class="codigo-string">`http://jsonplaceholder.typicode.com/posts/</span><span class="codigo-string">${postId}</span><span class="codigo-string">/comments`</span>
+  );
+  <span class="codigo-palabra-clave">return</span> r.<span class="codigo-funcion">json</span>();
+}
+
+<span class="codigo-palabra-clave">async</span> <span class="codigo-funcion">function</span> principal() {
+  <span class="codigo-palabra-clave">const</span> post = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">obtenerPost</span>();
+  <span class="codigo-palabra-clave">const</span> comentarios = <span class="codigo-palabra-clave">await</span> <span class="codigo-funcion">obtenerComentarios</span>(post.id);
+
+  <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Post:'</span>, post.title);
+  <span class="codigo-funcion">console.log</span>(<span class="codigo-string">'Comentarios:'</span>, comentarios.<span class="codigo-funcion">length</span>);
+}
+
+<span class="codigo-funcion">principal</span>();
+                    </div>
+                </div>
+            </div>
+
+            <div class="nota">
+                <strong>Recomendación:</strong> Abre DevTools (F12), ve a la consola, copia el código y pruébalo. Verás exactamente qué sucede.
+            </div>
+        </div>
+
+        <!-- SECCIÓN 7: COOKIES HTTPONLY -->
+        <div class="seccion">
+            <h2>🍪 Cookies HttpOnly: Autenticación Segura</h2>
+
+            <div class="contenido full">
+                <div class="bloque">
+                    <h3>¿Por qué las Cookies HttpOnly?</h3>
+                    <p>Una <strong>cookie HttpOnly</strong> es la forma SEGURA de almacenar tokens de autenticación. El navegador la guarda, la envía automáticamente en cada petición, pero <strong>JavaScript NO puede leerla</strong>.</p>
+                    <ul>
+                        <li>✅ Protege contra <strong>XSS</strong> (inyección maliciosa de JavaScript)</li>
+                        <li>✅ Se envía automáticamente (funciona con navegación de páginas)</li>
+                        <li>✅ Protección <strong>CSRF</strong> con SameSite</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>📋 Flujo Completo: Backend → Frontend</h3>
+
+            <div class="paso">
+                <div class="paso-numero">Backend</div>
+                <div class="paso-contenido">
+                    <strong>1. Generar Cookie HttpOnly (LoginResponse)</strong>
+                    <div class="codigo">
+<span class="codigo-palabra-clave">ResponseCookie</span> cookie = <span class="codigo-palabra-clave">ResponseCookie</span>
+    .<span class="codigo-funcion">from</span>(<span class="codigo-string">"auth_token"</span>, token)
+    .<span class="codigo-funcion">httpOnly</span>(<span class="codigo-palabra-clave">true</span>)           <span class="codigo-comentario">// JavaScript NO puede leer</span>
+    .<span class="codigo-funcion">secure</span>(<span class="codigo-palabra-clave">true</span>)             <span class="codigo-comentario">// Solo HTTPS</span>
+    .<span class="codigo-funcion">sameSite</span>(<span class="codigo-string">"Strict"</span>)          <span class="codigo-comentario">// Protección CSRF</span>
+    .<span class="codigo-funcion">path</span>(<span class="codigo-string">"/"</span>)
+    .<span class="codigo-funcion">maxAge</span>(86400)               <span class="codigo-comentario">// 24 horas</span>
+    .<span class="codigo-funcion">build</span>();
+
+response.<span class="codigo-funcion">addHeader</span>(HttpHeaders.SET_COOKIE, cookie.<span class="codigo-funcion">toString</span>());
+                    </div>
+                    <p><strong>La respuesta JSON NO incluye el token</strong> — la cookie se envía en un header separado.</p>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">Red</div>
+                <div class="paso-contenido">
+                    <strong>2. Headers HTTP (Invisible para el usuario)</strong>
+                    <div class="diagrama">
+Response Headers:
+Set-Cookie: auth_token=eyJhbGc...; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400
+
+Cuando el navegador recibe esta respuesta:
+→ Guarda la cookie automáticamente
+→ JavaScript NO puede acceder
+→ Se envía en TODAS las peticiones futuras
+                    </div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-numero">Frontend</div>
+                <div class="paso-contenido">
+                    <strong>3. Fetch Automático (Sin hacer nada)</strong>
+                    <div class="codigo">
+<span class="codigo-comentario">// El navegador AUTOMÁTICAMENTE agrega:</span>
+<span class="codigo-funcion">fetch</span>(<span class="codigo-string">'http://localhost:8080/api/eventos'</span>, {
+    credentials: <span class="codigo-string">'include'</span>  <span class="codigo-comentario">// ← IMPORTANTE: incluye cookies</span>
+});
+
+<span class="codigo-comentario">// Headers enviados automáticamente:</span>
+<span class="codigo-comentario">// Cookie: auth_token=eyJhbGc...</span>
+
+<span class="codigo-comentario">// ¡También funciona con navegación normal!</span>
+window.location.<span class="codigo-funcion">href</span> = <span class="codigo-string">'/pages/dashboard.html'</span>;
+<span class="codigo-comentario">// La cookie se envía automáticamente</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔄 Comparación: sessionStorage vs HttpOnly</h3>
+
+            <table class="tabla">
+                <tr>
+                    <th>Aspecto</th>
+                    <th>sessionStorage</th>
+                    <th>HttpOnly Cookie</th>
+                </tr>
+                <tr>
+                    <td>Vulnerable a XSS</td>
+                    <td>❌ SÍ</td>
+                    <td>✅ NO</td>
+                </tr>
+                <tr>
+                    <td>Se envía automáticamente</td>
+                    <td>❌ NO (manual con fetch)</td>
+                    <td>✅ SÍ (automático)</td>
+                </tr>
+                <tr>
+                    <td>Funciona con window.location</td>
+                    <td>❌ NO</td>
+                    <td>✅ SÍ</td>
+                </tr>
+                <tr>
+                    <td>JavaScript puede leerlo</td>
+                    <td>✅ SÍ</td>
+                    <td>❌ NO (seguro)</td>
+                </tr>
+                <tr>
+                    <td>Complejidad</td>
+                    <td>Baja</td>
+                    <td>Media</td>
+                </tr>
+            </table>
+
+            <div class="nota">
+                <strong>HttpOnly es el estándar de seguridad.</strong> Todos los sitios modernos (Google, GitHub, etc.) usan cookies HttpOnly para autenticación.
+            </div>
+
+            <h3>⚠️ Punto Importante: credentials</h3>
+
+            <p>Cuando usas cookies con <strong>CORS</strong> (origen diferente), DEBES agregar <code>credentials: 'include'</code>:</p>
+
+            <div class="codigo">
+<span class="codigo-comentario">// ❌ MALO: Cookie NO se envía</span>
+<span class="codigo-funcion">fetch</span>(<span class="codigo-string">'http://localhost:8080/api/eventos'</span>);
+
+<span class="codigo-comentario">// ✅ BIEN: Cookie se envía</span>
+<span class="codigo-funcion">fetch</span>(<span class="codigo-string">'http://localhost:8080/api/eventos'</span>, {
+    credentials: <span class="codigo-string">'include'</span>
+});
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+function mostrarSeccion(index) {
+    const secciones = document.querySelectorAll('.seccion');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    secciones.forEach((s, i) => {
+        s.classList.toggle('activa', i === index);
+    });
+
+    navItems.forEach((n, i) => {
+        n.classList.toggle('active', i === index);
+    });
+}
+
+function simularLogin() {
+    const email = document.getElementById('emailEj3').value;
+    const pass = document.getElementById('passEj3').value;
+    const resultado = document.getElementById('resultadoEj3');
+
+    if (!email || !pass) {
+        resultado.style.display = 'block';
+        resultado.textContent = '❌ Completa todos los campos';
+        resultado.classList.add('error');
+        return;
+    }
+
+    const token = 'eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIlZW1haWwlIiwicm9sZXMiOlsiUEFSVElDSVBBTlRFIl0sImlhdCI6'.replace('%email%', encodeURIComponent(email)) + Math.floor(Date.now()/1000) + '}.ueZPyvl6IWkEeSuo3VgBk';
+
+    resultado.style.display = 'block';
+    resultado.classList.remove('error');
+    resultado.innerHTML = `
+        <h4>✅ Login Simulado Exitoso</h4>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Token (primeros 50 caracteres):</strong></p>
+        <code style="word-break:break-all;font-size:0.8em;">${token.substring(0, 50)}...</code>
+        <p style="margin-top:15px;"><strong>Guardado en sessionStorage:</strong></p>
+        <code>sessionStorage.setItem('enexia_token', '${token.substring(0, 30)}...')</code>
+    `;
+}
+</script>
+
+</body>
+</html>

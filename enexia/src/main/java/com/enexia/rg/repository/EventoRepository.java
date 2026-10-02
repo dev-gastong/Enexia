@@ -170,6 +170,23 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     Optional<Evento> bloquearParaActualizar(@Param("idEvento") Long idEvento);
 
     /**
+     * Cola de moderacion del administrador (RF-6.1): TODOS los eventos, de
+     * cualquier organizador, sin filtrar por estado de sistema ni de
+     * organizador -- es justamente el panel que tiene que ver tanto los
+     * rechazados por el sistema (escenario a) como los ya aprobados y
+     * publicados (escenario b, candidatos a una suspension disciplinaria).
+     * El filtro por estado concreto lo resuelve el cliente sobre esta misma
+     * pagina, igual que ya hace mis-eventos.html con sus pseudo-filtros.
+     */
+    @EntityGraph(attributePaths = {"categoria", "estadoSistema", "estadoOrganizador",
+                                   "organizador", "organizador.personaFisica", "personaJuridica"})
+    @Query("""
+            SELECT e FROM Evento e
+            WHERE (:texto IS NULL OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :texto, '%')))
+            """)
+    Page<Evento> buscarParaModeracion(@Param("texto") String texto, Pageable paginado);
+
+    /**
      * Cuenta los eventos vigentes de un organizador (RF-2.1 / DFD 2.1, limite de plan).
      *
      * Excluye los dados de baja: si contaran, un organizador que limpia su

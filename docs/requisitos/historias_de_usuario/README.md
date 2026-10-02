@@ -50,13 +50,13 @@
 
 #### Criterios de Aceptación:
 
-* **Validación de Credenciales:** El sistema debe verificar que el email exista y que el hash de la contraseña coincida. Ante fallas, retornará el mensaje genérico: *"Email o contraseña incorrectos"*.
+* **Validación de Credenciales:** El sistema debe verificar que el nickname exista y que el hash de la contraseña coincida. Ante fallas, retornará el mensaje genérico: *"Usuario o contraseña incorrectos"*.
 
 
 * **Generación y Persistencia de Identidad (JWT):** Ante una autenticación exitosa, el backend generará un **Token JWT** firmado que encapsule el `id_usuario`, `nickname` y `rol`. El cliente lo almacenará de forma segura en las cabeceras de sus peticiones.
 
 
-* **Control de Intentos Fallidos (Bloqueo Automático):** El backend llevará un contador síncrono de intentos consecutivos por email. Al alcanzar el **tercer (3°) intento fallido**, mutará automáticamente el estado del usuario a `"BLOQUEADO"`, denegando accesos posteriores y redirigiendo al flujo de desbloqueo.
+* **Control de Intentos Fallidos (Bloqueo Automático):** El backend llevará un contador síncrono de intentos consecutivos por nickname. Al alcanzar el **tercer (3°) intento fallido**, mutará automáticamente el estado del usuario a `"BLOQUEADO"`, denegando accesos posteriores y redirigiendo al flujo de desbloqueo.
 
 
 * **Control de Estado de Cuenta:** El sistema impedirá el inicio de sesión a cualquier cuenta cuyo estado sea diferente de `"ACTIVO"` (rebota usuarios en estado `"SUSPENDIDO"`, `"BLOQUEADO"` o `"DE_BAJA"`).

@@ -1,9 +1,15 @@
 ## Módulo 6: Panel de Administración Global
 
-* #### **RF-6.1: Anulación Manual de Moderación y Control de Estados de Eventos**
+* #### **RF-6.1: Moderación Administrativa General de Eventos**
 
 
-El sistema debe permitir a los usuarios con rol de *Administrador* forzar y sobreescribir el estado operacional de cualquier evento. Sabiendo que las APIs de moderación automática alteran de forma directa y síncrona el estado del evento ante una infracción (mutándolo a "RECHAZADO_SISTEMA"), el administrador tendrá la facultad exclusiva de actuar como segunda instancia. Podrá revertir de manera discrecional las decisiones automatizadas del software para pasar el registro de `Evento_Estado_Sistema` a estados como "APROBADO_MANUAL" o ratificarlo como "RECHAZADO_MANUAL", detallando los motivos en el campo `motivo_codigo`.
+El sistema debe permitir a los usuarios con rol de *Administrador* actuar como autoridad de moderación sobre **cualquier evento**, sea cual sea su estado vigente en `Evento_Estado_Sistema`, cubriendo dos escenarios distintos bajo el mismo mecanismo:
+
+**(a) Revisión de segunda instancia:** cuando las APIs de moderación automática rechazan un evento o una modificación posterior (mutándolo a "RECHAZADO_SISTEMA" o "CAMBIO_RECHAZADO"), el administrador podrá revertir esa decisión a "APROBADO_MANUAL"/"CAMBIO_APROBADO", o ratificarla dejándolo en "RECHAZADO_MANUAL"/"CAMBIO_RECHAZADO", con `motivo_codigo = ADMIN_REVISO`.
+
+**(b) Suspensión disciplinaria:** ante una denuncia, fraude o infracción detectada *después* de que el evento ya se encuentra aprobado y visible en el catálogo ("APROBADO_SISTEMA" o "APROBADO_MANUAL"), el administrador podrá forzar discrecionalmente su pase a "RECHAZADO_MANUAL", retirándolo de inmediato del catálogo público, seleccionando un `motivo_codigo` específico para este caso (p. ej. "DENUNCIA_FUNDADA", "FRAUDE_DETECTADO", "INFRACCION_POST_PUBLICACION"). Esta acción es reversible: el administrador puede restituir el evento a "APROBADO_MANUAL" si la denuncia resulta infundada.
+
+En ambos escenarios el sistema registra el cambio en `Historial_Estado_Evento` (con `tipo_agente = ADMIN`) y audita la decisión en `Historial_Interacciones`. No se admite una transición que no cambie nada (ej. aprobar algo ya aprobado, o rechazar algo ya rechazado): el backend responde `409` en ese caso.
 * #### **RF-6.2: Gestión Disciplinaria y Control de Estados de Cuentas de Usuario**
 
 

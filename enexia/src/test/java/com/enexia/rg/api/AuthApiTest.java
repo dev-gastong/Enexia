@@ -108,32 +108,32 @@ class AuthApiTest extends BaseApiTest {
         }
 
         @Test
-        @DisplayName("Email inexistente y contrasena incorrecta dan EXACTAMENTE la misma respuesta")
+        @DisplayName("Nickname inexistente y contrasena incorrecta dan EXACTAMENTE la misma respuesta")
         void mismaRespuestaParaAmbosCasos() {
             String sufijo = sufijoUnico();
             api.post("/api/auth/registro", jsonCon(alta(sufijo, "PARTICIPANTE")));
 
             APIResponse passwordMala = api.post("/api/auth/login", jsonCon(Map.of(
-                    "email", "api" + sufijo + "@enexia.test", "password", "ClaveEquivocada1")));
+                    "nickname", "api" + sufijo, "password", "ClaveEquivocada1")));
 
-            APIResponse emailInexistente = api.post("/api/auth/login", jsonCon(Map.of(
-                    "email", "noexiste" + sufijoUnico() + "@enexia.test", "password", "ClaveEquivocada1")));
+            APIResponse nicknameInexistente = api.post("/api/auth/login", jsonCon(Map.of(
+                    "nickname", "noexiste" + sufijoUnico(), "password", "ClaveEquivocada1")));
 
             // Las tres comparaciones son la politica entera: si alguna difiere,
-            // un atacante puede enumerar que correos estan registrados.
-            assertThat(passwordMala.status()).isEqualTo(emailInexistente.status()).isEqualTo(401);
+            // un atacante puede enumerar que nicknames estan registrados.
+            assertThat(passwordMala.status()).isEqualTo(nicknameInexistente.status()).isEqualTo(401);
             assertThat(cuerpo(passwordMala).get("error").asText())
-                    .isEqualTo(cuerpo(emailInexistente).get("error").asText())
+                    .isEqualTo(cuerpo(nicknameInexistente).get("error").asText())
                     .isEqualTo("CREDENCIALES_INVALIDAS");
             assertThat(cuerpo(passwordMala).get("mensaje").asText())
-                    .isEqualTo(cuerpo(emailInexistente).get("mensaje").asText());
+                    .isEqualTo(cuerpo(nicknameInexistente).get("mensaje").asText());
         }
 
         @Test
         @DisplayName("La respuesta no publica ninguna cabecera de diagnostico")
         void sinCabecerasDelatoras() {
             APIResponse respuesta = api.post("/api/auth/login", jsonCon(Map.of(
-                    "email", "noexiste" + sufijoUnico() + "@enexia.test", "password", "Cualquiera1")));
+                    "nickname", "noexiste" + sufijoUnico(), "password", "Cualquiera1")));
 
             // X-Reintentar-Despues publicaba el fin del cooldown. Leida desde las
             // DevTools delataba que la cuenta existe y esta penalizada, que es
@@ -146,12 +146,12 @@ class AuthApiTest extends BaseApiTest {
         void elCooldownNoSeNota() {
             String sufijo = sufijoUnico();
             api.post("/api/auth/registro", jsonCon(alta(sufijo, "PARTICIPANTE")));
-            String email = "api" + sufijo + "@enexia.test";
+            String nickname = "api" + sufijo;
 
             String primerCuerpo = null;
             for (int intento = 1; intento <= 4; intento++) {
                 APIResponse fallo = api.post("/api/auth/login",
-                        jsonCon(Map.of("email", email, "password", "Equivocada" + intento)));
+                        jsonCon(Map.of("nickname", nickname, "password", "Equivocada" + intento)));
 
                 assertThat(fallo.status())
                         .as("el intento %d no debe distinguirse de los otros", intento)

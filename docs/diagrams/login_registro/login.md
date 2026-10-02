@@ -1,5 +1,12 @@
 # DFD 1.2 — Inicio de Sesión
 
+> **Revisado 2026-09-30.** El identificador de login pasó de **email** a **nickname**: el email
+> queda como dato de contacto de la cuenta (recuperación de acceso, aviso de bloqueo por
+> RF-1.5) pero dejó de ser lo que el usuario escribe para entrar. El motivo interno
+> `EMAIL_INEXISTENTE` se renombró a `NICKNAME_INEXISTENTE` y el mensaje público pasó de
+> "Email o contraseña incorrectos" a "Usuario o contraseña incorrectos" (ver
+> `UsuarioLoginRequest`, `AuthService.login`).
+
 > **Revisado 2026-09-09.** Reemplaza la versión anterior, que describía control de tráfico por IP,
 > una escalera de penalización 3/6/9, verificación CAPTCHA y un segundo factor por correo (2FA).
 > Ninguno de esos cuatro mecanismos forma parte del alcance vigente:
@@ -21,7 +28,7 @@ código HTTP (401), código de aplicación (`CREDENCIALES_INVALIDAS`), mensaje, 
 ```mermaid
 graph TD
     INICIO([INICIO: Solicitud de Autenticación]) --> User([Usuario en Login])
-    User -->|Petición con Email y Password| P1_2_1[1.2.1: Validar Formatos de Entrada]
+    User -->|Petición con Nickname y Password| P1_2_1[1.2.1: Validar Formatos de Entrada]
 
     %% Almacenes de Datos
     subgraph Almacenes de Seguridad
@@ -35,16 +42,16 @@ graph TD
 
     %% 1. VALIDACION DE FORMATO
     P1_2_1 --> C_Format{¿Formatos de Entrada<br>Válidos?}
-    C_Format -->|No| M_EmailFmt[/motivo interno:<br>FORMATO_INVALIDO/]
+    C_Format -->|No| M_FormatoInvalido[/motivo interno:<br>FORMATO_INVALIDO/]
     C_Format -->|Sí| P1_2_2[1.2.2: Recuperar Usuario y Campos de Control]
 
     %% 2. LECTURA DE DATOS DE CONTROL
-    P1_2_2 -->|1. Consultar Email, Estado e Intentos| D2_User
+    P1_2_2 -->|1. Consultar Nickname, Estado e Intentos| D2_User
     D2_User -->|2. Retornar Registro del Usuario| P1_2_2
 
     P1_2_2 --> C_Existe{¿Existe la Cuenta?}
     C_Existe -->|No| P_Senuelo[1.2.2A: Comparar contra Hash Señuelo<br>coste temporal constante]
-    P_Senuelo --> M_NoExiste[/motivo interno:<br>EMAIL_INEXISTENTE/]
+    P_Senuelo --> M_NoExiste[/motivo interno:<br>NICKNAME_INEXISTENTE/]
 
     C_Existe -->|Sí| C_Estado{¿estado_usuario<br>es ACTIVO?}
     C_Estado -->|BLOQUEADO| P_Senuelo2[1.2.2B: Comparar contra Hash Señuelo]
@@ -72,13 +79,13 @@ graph TD
     P1_2_5 --> M_Bloqueo[/motivo interno:<br>CUENTA_BLOQUEADA/]
 
     %% CONVERGENCIA DE MOTIVOS: al log, NO a la respuesta
-    M_EmailFmt --> P_Audit[1.2.6: Registrar Motivo Real en Auditoría]
+    M_FormatoInvalido --> P_Audit[1.2.6: Registrar Motivo Real en Auditoría]
     M_NoExiste --> P_Audit
     M_Estado --> P_Audit
     M_PassMal --> P_Audit
     M_Bloqueo --> P_Audit
     P_Audit -->|Persistir código específico| D6_Logs
-    P_Audit --> Err_Generico(["SALIDA ÚNICA DE ERROR — 401 CREDENCIALES_INVALIDAS<br>'Email o contraseña incorrectos'<br>sin cabeceras extra · tiempo constante"])
+    P_Audit --> Err_Generico(["SALIDA ÚNICA DE ERROR — 401 CREDENCIALES_INVALIDAS<br>'Usuario o contraseña incorrectos'<br>sin cabeceras extra · tiempo constante"])
 
     %% CASO B: EXITO
     C_Pass -->|Sí| P1_2_7[1.2.7: Resetear intentos_fallidos = 0]

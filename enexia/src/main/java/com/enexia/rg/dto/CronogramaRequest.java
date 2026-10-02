@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import com.enexia.rg.validation.FechaFuturaValida;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.Valid;
@@ -34,7 +35,7 @@ public class CronogramaRequest {
      * fecha ya paso, nadie podria inscribirse.
      */
     @NotNull(message = "La fecha es obligatoria")
-    @Future(message = "La fecha debe ser futura")
+    @FechaFuturaValida(message = "La fecha ingresada debe ser posterior o igual al día de hoy")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate fecha;
 

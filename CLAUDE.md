@@ -295,15 +295,17 @@ backend/src/main/java/com/enexia/
 
 ##### ⚠️ Login failure policy — REWRITTEN 2026-09-08 (user decision)
 
+> **Login identifier changed 2026-09-30:** the username field is now **nickname**, not email. Email stays as the account's contact channel (recovery link, block notification) but is no longer what you type to sign in. See `UsuarioLoginRequest`, `AuthService.login`, `UsuarioRepository.buscarActivoPorNicknameConRoles`.
+
 **1. IP-based rate limiting was REMOVED.**
 Behind CGNAT or an institution's wifi, hundreds of legitimate devices share one public IP. Blocking that IP took a whole area offline because of a single attacker — a denial of service the attacker could trigger at will. `RateLimitService` and `RateLimitExcedidoException` were deleted.
 
-> **Open risk, deliberately accepted:** with no per-IP control, *password spraying* (one common password against thousands of emails) has no dedicated brake, because no single account accumulates failures. **Resolved 2026-09-09 (ADR-13):** blocking on the 3rd failure per account, combined with a rejection that is indistinguishable in body, headers and timing — and a recovery endpoint that is equally opaque — denies the sprayer both the attempt budget and the enumeration signal it needs. Alerting on anomalous volume in `historial_interacciones`, **without** rejecting requests, remains a nice-to-have.
+> **Open risk, deliberately accepted:** with no per-IP control, *password spraying* (one common password against thousands of nicknames) has no dedicated brake, because no single account accumulates failures. **Resolved 2026-09-09 (ADR-13):** blocking on the 3rd failure per account, combined with a rejection that is indistinguishable in body, headers and timing — and a recovery endpoint that is equally opaque — denies the sprayer both the attempt budget and the enumeration signal it needs. Alerting on anomalous volume in `historial_interacciones`, **without** rejecting requests, remains a nice-to-have.
 
 **2. Account blocking is now SILENT.**
-Every login rejection answers identically: `401`, code `CREDENCIALES_INVALIDAS`, same message, no extra headers, and the same wall-clock cost. The attacker cannot tell "email doesn't exist" from "wrong password" from "account blocked" — not by body, status, headers, or timing.
+Every login rejection answers identically: `401`, code `CREDENCIALES_INVALIDAS`, same message, no extra headers, and the same wall-clock cost. The attacker cannot tell "nickname doesn't exist" from "wrong password" from "account blocked" — not by body, status, headers, or timing.
 
-- All auth failures extend `AutenticacionFallidaException`, which carries an **internal** code (`EMAIL_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_SUSPENDIDA`). That code goes to the log and `historial_interacciones` — **never** to the HTTP response.
+- All auth failures extend `AutenticacionFallidaException`, which carries an **internal** code (`NICKNAME_INEXISTENTE`, `PASSWORD_INCORRECTA`, `CUENTA_BLOQUEADA`, `CUENTA_SUSPENDIDA`). That code goes to the log and `historial_interacciones` — **never** to the HTTP response.
 - `GlobalExceptionHandler` has **one** handler for the whole family. **Do not add a more specific `@ExceptionHandler`** for any subclass: Spring would pick it and the response would start leaking account state again.
 - Every rejection path pays one BCrypt comparison (decoy hash) so response time is constant.
 - The `X-Reintentar-Despues` header was removed: read from DevTools, it confirmed the account exists and is penalized.
@@ -381,6 +383,7 @@ This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modul
 | **M2** — Events | Creation with async moderation pipeline (RF-2.1 to RF-2.6), Cloudinary integration (RF-2.3), organizer dashboard (RF-2.8), logical delete (RF-2.9), statistics (RF-2.10) |
 | **M4** — Public interface | Paginated catalog, text search, category/date/location filters, technical sheet, passive visit tracking (RF-4.1 to RF-4.5) |
 | **M5** — Moderation | Text phase + image phase, sequential and asynchronous (RF-5.1 to RF-5.3) |
+| **M6** — Admin panel | Started 2026-10-01: general event moderation (RF-6.1) — `AdminEventoService`/`EventoAdminController`, reversible disciplinary suspension of already-approved events in addition to the pre-existing 2nd-instance review. First admin screen (`pages/admin/moderacion-eventos.html`). **Not built yet:** any way to grant the `ADMINISTRADOR` role (RF-6.2 to RF-6.4 — user management, categories, subscriptions — remain inert sidebar items). |
 
 **Key endpoints**
 
@@ -406,6 +409,9 @@ GET    /api/publico/eventos/{id}             anónimo   ficha técnica + registr
 GET    /api/publico/categorias               anónimo
 GET    /api/publico/provincias               anónimo
 GET    /api/publico/provincias/{id}/ciudades anónimo
+
+GET    /api/admin/eventos                    ADMINISTRADOR cola de moderación (todos los organizadores, RF-6.1)
+PATCH  /api/admin/eventos/{id}                ADMINISTRADOR decisión: aprobar/ratificar/suspender/revertir (RF-6.1)
 ```
 
 **Event state machine** (two independent axes — the public catalog requires BOTH to allow):
@@ -506,13 +512,17 @@ EXIT;
 mysql -u root -p enexia < docs/diseño_bd/migraciones/2026-09-08_sprint2.sql
 ```
 
-> ### ⚠️ `ddl-auto=update` CANNOT ADD COLUMNS ON THIS SETUP
+> ### ✅ `ddl-auto=update` column bug — RESOLVED 2026-09-09 (upgrade to MariaDB 11.8.9)
 >
-> Discovered 2026-09-08. Hibernate emits `ALTER TABLE IF EXISTS <t> ADD COLUMN ...`, and the MariaDB shipped with XAMPP (**10.4.32**) does not support `IF EXISTS` in `ALTER TABLE`: it answers **error 1064, syntax error**. Hibernate logs the failure but **does not abort startup**, so the app comes up normally and the column simply isn't there. The symptom shows up later at runtime as `Unknown column '...' in 'field list'`.
+> **Root cause (discovered 2026-09-08):** Hibernate 7 (Spring Boot 4.1) dropped support for MariaDB below **10.6** and still emits `ALTER TABLE IF EXISTS <t> ADD COLUMN ...`. The MariaDB shipped with every current XAMPP bundle (PHP 8.0/8.1/8.2) is **10.4.32**, which rejects `IF EXISTS` in `ALTER TABLE` with **error 1064, syntax error**. Hibernate logs the failure but **does not abort startup**, so the app comes up normally and the column simply isn't there — the symptom shows up later at runtime as `Unknown column '...' in 'field list'`. This had been silently broken since Sprint 1: four `persona_juridica` columns declared in the entity since 2026-07-26 never existed in the database, unnoticed until the public catalog queried that table.
 >
-> This had been silently broken since Sprint 1: four `persona_juridica` columns declared in the entity since 2026-07-26 never existed in the database. Nobody noticed because no query touched that table until the public catalog did.
+> **Fix applied:** installed **MariaDB 11.8 LTS as a standalone Windows service** (outside XAMPP, same port 3306, `application.properties` unchanged), restored the data, and confirmed `ddl-auto=update` now adds/recreates columns with zero `1064` errors and zero `HHH000511` warnings. XAMPP-Lite's bundled 11.4.10 would also clear the 10.6 floor, but changes Apache/PHP too — the standalone service was simpler. XAMPP itself is left intact but **must not have its MySQL service running** (port conflict on 3306). Full writeup: [docs/log/sprint_2/2026-09-09_upgrade_mariadb.md](./docs/log/sprint_2/2026-09-09_upgrade_mariadb.md).
 >
-> **Rule for the team:** every column added to an `@Entity` from now on must also go into a migration script under `docs/diseño_bd/migraciones/`. The real fix is upgrading MariaDB to **10.6+** (the minimum Hibernate 7 supports) or moving to Flyway/Liquibase with `ddl-auto=validate`, which is what production needs anyway.
+> **Dev environment requirement:** MariaDB **10.6+** (project runs 11.8.9 LTS). If you're on a fresh machine with only XAMPP's bundled MariaDB, this bug will reappear — install a standalone 10.6+ instance instead.
+>
+> **Side effect worth knowing:** upgrading past 10.4 exposed two real concurrency bugs that the old version's conservative locking had been masking — a lost-update on `Evento` (fixed with `@DynamicUpdate`) and a snapshot-isolation abort on concurrent writes (fixed with pessimistic locking + `READ_COMMITTED` on those transactions). See the writeup for details if you hit `Record has changed since last read` anywhere.
+>
+> **Rule for the team, unchanged:** every column added to an `@Entity` still goes into a migration script under `docs/diseño_bd/migraciones/` — `ddl-auto=update` working again doesn't replace migrations, especially since production will run `ddl-auto=validate` (Flyway/Liquibase) regardless of dev's MariaDB version.
 
 ### Key Database Fields (Sprint 1 - Usuario table)
 

@@ -79,6 +79,7 @@ public class AuditoriaService {
     public static final String ACCION_EVENTO_MODIFICADO = "EVENTO_MODIFICADO";
     public static final String ACCION_EVENTO_DADO_DE_BAJA = "EVENTO_DADO_DE_BAJA";
     public static final String ACCION_MODERACION_ERROR = "MODERACION_ERROR";
+    public static final String ACCION_EVENTO_MODERADO_ADMIN = "EVENTO_MODERADO_ADMIN";
 
     // --- Modulo 3: participacion (RF-3.1 a RF-3.5)
     public static final String ACCION_INSCRIPCION_CREADA = "INSCRIPCION_CREADA";

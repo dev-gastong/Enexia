@@ -3,6 +3,8 @@ package com.enexia.rg.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -33,6 +35,7 @@ import com.enexia.rg.repository.InscripcionRepository;
 import com.enexia.rg.repository.PagoEstadoRepository;
 import com.enexia.rg.repository.PagoRepository;
 import com.enexia.rg.repository.UsuarioRepository;
+import com.enexia.rg.repository.ValoracionRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +63,7 @@ public class InscripcionService {
     private final PagoEstadoRepository pagoEstadoRepository;
     private final HistorialEstadoInscripcionRepository historialRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ValoracionRepository valoracionRepository;
     private final AuditoriaService auditoriaService;
     private final RegistroInscripcionService registroInscripcionService;
 
@@ -184,7 +188,7 @@ public class InscripcionService {
         log.info("Inscripcion {} cancelada por el usuario {}", idInscripcion, participante.getIdUsuario());
 
         return mapear(inscripcion, historialRepository.buscarPorInscripcion(idInscripcion).stream()
-                .map(this::mapearHistorialItem).toList());
+                .map(this::mapearHistorialItem).toList(), false);
     }
 
     // =====================================================================
@@ -208,8 +212,28 @@ public class InscripcionService {
                                 h -> h.getInscripcion().getIdInscripcion(),
                                 Collectors.mapping(this::mapearHistorialItem, Collectors.toList())));
 
-        return pagina.map(inscripcion -> mapear(
-                inscripcion, historialPorInscripcion.getOrDefault(inscripcion.getIdInscripcion(), List.of())));
+        // En lote (RF-3.4): que cronogramas de ESTA pagina ya valoro el usuario,
+        // para que el frontend sepa en cuales ofrecer "Dejar valoracion" sin
+        // tener que esperar el 409 de RECURSO_DUPLICADO al intentarlo. Mismo
+        // patron que ValoracionRepository ya usa para la ficha publica.
+        List<Long> idsCronograma = pagina.getContent().stream()
+                .map(i -> i.getCronogramaTicket() == null || i.getCronogramaTicket().getCronograma() == null
+                        ? null : i.getCronogramaTicket().getCronograma().getIdCronograma())
+                .filter(Objects::nonNull)
+                .distinct().toList();
+        Set<Long> cronogramasYaValorados = idsCronograma.isEmpty()
+                ? Set.of()
+                : valoracionRepository.idsDeCronogramasYaValoradosPorUsuario(
+                        participante.getIdUsuario(), idsCronograma);
+
+        return pagina.map(inscripcion -> {
+            Long idCronograma = inscripcion.getCronogramaTicket() == null
+                    || inscripcion.getCronogramaTicket().getCronograma() == null
+                    ? null : inscripcion.getCronogramaTicket().getCronograma().getIdCronograma();
+            return mapear(inscripcion,
+                    historialPorInscripcion.getOrDefault(inscripcion.getIdInscripcion(), List.of()),
+                    idCronograma != null && cronogramasYaValorados.contains(idCronograma));
+        });
     }
 
     // =====================================================================
@@ -221,7 +245,7 @@ public class InscripcionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro la inscripcion"));
 
         return mapear(inscripcion, historialRepository.buscarPorInscripcion(idInscripcion).stream()
-                .map(this::mapearHistorialItem).toList());
+                .map(this::mapearHistorialItem).toList(), false);
     }
 
     private void registrarHistorial(Inscripcion inscripcion, InscripcionEstado estado, Usuario usuario) {
@@ -244,7 +268,8 @@ public class InscripcionService {
                 ? null : inscripcion.getEstadoInscripcion().getNombreEstado();
     }
 
-    private InscripcionResponse mapear(Inscripcion inscripcion, List<HistorialEstadoItem> historial) {
+    private InscripcionResponse mapear(Inscripcion inscripcion, List<HistorialEstadoItem> historial,
+                                        boolean yaValorado) {
         CronogramaTicket ticket = inscripcion.getCronogramaTicket();
         EventoCronograma cronograma = ticket == null ? null : ticket.getCronograma();
         String estado = nombreEstado(inscripcion);
@@ -257,13 +282,16 @@ public class InscripcionService {
                         ? null : cronograma.getEvento().getNombre())
                 .tipoTicket(ticket == null || ticket.getTipoTicket() == null
                         ? null : ticket.getTipoTicket().getNombre())
+                .idCronograma(cronograma == null ? null : cronograma.getIdCronograma())
                 .fechaCronograma(cronograma == null ? null : cronograma.getFecha())
                 .horaInicio(cronograma == null ? null : cronograma.getHoraInicio())
+                .horaFin(cronograma == null ? null : cronograma.getHoraFin())
                 .estado(estado)
                 .fechaInscripcion(inscripcion.getFechaInscripcion())
                 .precioAbonado(inscripcion.getPrecioAbonado())
                 .codigoQr(InscripcionEstadoNombre.CONFIRMADA.name().equalsIgnoreCase(estado)
                         ? CODIGO_QR_PREFIJO + inscripcion.getIdInscripcion() : null)
+                .yaValorado(yaValorado)
                 .historial(historial)
                 .build();
     }

@@ -124,13 +124,17 @@ public class SecurityConfig {
                         // datos de verdad viajan por /api/** protegido mas
                         // abajo, que si exige el token en cada fetch.
                         //
-                        // /pages/organizador/** entero cae en esta misma regla
-                        // (dashboard, mis-eventos, evento-form, etc, RF-2.x): son
-                        // todas paginas de shell que hacen su propio guard de JS
-                        // y llaman a /api/organizador/** ya protegido abajo.
+                        // /pages/organizador/** y /pages/participante/** enteros
+                        // caen en esta misma regla (dashboard, mis-eventos,
+                        // evento-form, perfil, mis-inscripciones, etc, RF-2.x y
+                        // RF-3.x): son todas paginas de shell que hacen su propio
+                        // guard de JS y llaman a /api/organizador/** o
+                        // /api/participante/** ya protegidos mas abajo.
                         .requestMatchers("/pages/dashboard.html").permitAll()
                         .requestMatchers("/pages/prueba-token.html").permitAll()
                         .requestMatchers("/pages/organizador/**").permitAll()
+                        .requestMatchers("/pages/participante/**").permitAll()
+                        .requestMatchers("/pages/admin/**").permitAll()
 
                         // --- Endpoints por rol (RF-1.3)
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")

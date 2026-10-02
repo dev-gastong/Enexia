@@ -5,6 +5,8 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/enexia" />
+        <option name="gradleHome" value="C:\gradle\gradle-9.7.0" />
+        <option name="gradleJvm" value="ms-17" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/enexia" />

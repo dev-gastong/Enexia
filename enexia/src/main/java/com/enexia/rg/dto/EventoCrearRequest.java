@@ -37,7 +37,7 @@ public class EventoCrearRequest {
     private String nombre;
 
     @NotBlank(message = "La descripcion es obligatoria")
-    @Size(min = 20, max = 5000, message = "La descripcion debe tener entre 20 y 5000 caracteres")
+    @Size(min = 5, max = 5000, message = "La descripcion debe tener entre 5 y 5000 caracteres")
     private String descripcion;
 
     @NotNull(message = "La categoria es obligatoria")

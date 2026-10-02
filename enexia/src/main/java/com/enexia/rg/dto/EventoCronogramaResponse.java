@@ -24,8 +24,17 @@ public class EventoCronogramaResponse {
     private LocalTime horaFin;
     private List<TicketResponse> tickets;
 
-    /** fecha + horaFin ya paso: no se puede inscribir mas (RF-3.1). */
+    /** fecha + horaFin ya paso: la funcion termino (habilita valorar, RF-3.4). */
     private boolean finalizado;
+
+    /**
+     * fecha + horaInicio ya paso: la funcion ya arranco (o ya termino) y no se
+     * puede inscribir mas (RF-3.1). Es el corte que usa el boton de
+     * inscribirse -- distinto de {@code finalizado}, que sigue midiendo
+     * horaFin porque a eso responde "puedeValorar". Mismo criterio de corte
+     * que {@code InscripcionService.cancelar} usa para la cancelacion.
+     */
+    private boolean iniciado;
 
     /**
      * El visitante autenticado ya tiene una inscripcion activa para ESTE

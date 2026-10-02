@@ -36,6 +36,9 @@ public class EventoResponse {
      */
     private String organizador;
 
+    /** true si el evento va a nombre de una Persona_Juridica, false si es a titulo personal. */
+    private Boolean organizadorEsOrganizacion;
+
     /** EN_PROCESO / APROBADO_SISTEMA / RECHAZADO_SISTEMA... (RF-2.2). */
     private String estadoSistema;
 

@@ -606,7 +606,7 @@ body {
                 <form id="formLogin" novalidate>
 
                     <div class="campo">
-                        <label class="campo__etiqueta" for="email">Usuario o correo electr&oacute;nico</label>
+                        <label class="campo__etiqueta" for="nickname">Nombre de usuario</label>
                         <div class="entrada">
                             <svg class="entrada__icono" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
@@ -614,7 +614,7 @@ body {
                                     <path d="M5.33333 4.66667C5.33333 6.13844 6.52822 7.33333 8 7.33333C9.47178 7.33333 10.6667 6.13844 10.6667 4.66667C10.6667 3.19489 9.47178 2 8 2C6.52822 2 5.33333 3.19489 5.33333 4.66667Z"/>
                                 </g>
                             </svg>
-                            <input type="email" id="email" name="email" placeholder="tu@correo.com" autocomplete="username">
+                            <input type="text" id="nickname" name="nickname" placeholder="tu_usuario" autocomplete="username">
                         </div>
                     </div>
 
@@ -691,7 +691,7 @@ document.getElementById('verClave').addEventListener('click', () => {
 document.getElementById('formLogin').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const email = document.getElementById('email').value.trim();
+    const nickname = document.getElementById('nickname').value.trim();
     const password = document.getElementById('password').value;
     const btnEnviar = document.getElementById('btnEnviar');
     const mensajeError = document.getElementById('mensajeError');
@@ -700,7 +700,7 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
     mensajeError.hidden = true;
     mensajeError.textContent = '';
 
-    if (!email || !password) {
+    if (!nickname || !password) {
         mostrarError('Completa todos los campos');
         return;
     }
@@ -709,7 +709,7 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
     btnEnviar.textContent = 'Iniciando sesión...';
 
     try {
-        const respuesta = await API.login({ email, password });
+        const respuesta = await API.login({ nickname, password });
 
         if (respuesta.ok && respuesta.cuerpo) {
             Auth.guardarSesion(respuesta.cuerpo);

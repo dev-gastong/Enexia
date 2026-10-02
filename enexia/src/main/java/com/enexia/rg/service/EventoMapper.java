@@ -92,6 +92,7 @@ public class EventoMapper {
                 .urlPortada(evento.getUrlPortada())
                 .categoria(evento.getCategoria() == null ? null : evento.getCategoria().getNombreCategoria())
                 .organizador(firmaOrganizador(evento))
+                .organizadorEsOrganizacion(evento.getPersonaJuridica() != null)
                 .estadoSistema(evento.getEstadoSistema() == null ? null
                         : evento.getEstadoSistema().getEstadoSistema())
                 .motivoRechazo(evento.getEstadoSistema() == null ? null
@@ -176,6 +177,12 @@ public class EventoMapper {
             boolean finalizado = LocalDateTime.of(cronograma.getFecha(), cronograma.getHoraFin())
                     .isBefore(ahora);
 
+            // Corte de inscripcion (RF-3.1): no basta con "no finalizado" --
+            // una funcion en curso ya arranco y no tiene sentido dejar sumarse
+            // a mitad de evento. Mismo umbral que RegistroInscripcionService.
+            boolean iniciado = !LocalDateTime.of(cronograma.getFecha(), cronograma.getHoraInicio())
+                    .isAfter(ahora);
+
             boolean puedeValorar = finalizado
                     && estadoParticipante.idsConfirmado().contains(cronograma.getIdCronograma())
                     && !estadoParticipante.idsYaValorado().contains(cronograma.getIdCronograma());
@@ -191,6 +198,7 @@ public class EventoMapper {
                             .map(this::aTicket)
                             .toList())
                     .finalizado(finalizado)
+                    .iniciado(iniciado)
                     .yaInscripto(estadoParticipante.idsInscriptoActivo().contains(cronograma.getIdCronograma()))
                     .puedeValorar(puedeValorar)
                     .build());

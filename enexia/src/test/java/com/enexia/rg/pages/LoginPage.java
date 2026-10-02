@@ -15,7 +15,7 @@ public class LoginPage {
     private final Page page;
 
     // Locators para los elementos del formulario
-    private final Locator email; // Campo de entrada de usuario
+    private final Locator nickname; // Campo de entrada de usuario (login por nickname, no por email)
     private final Locator password; // Campo de entrada de contraseña
     private final Locator loginButton; // Botón para enviar el formulario
     private final Locator flashMessage; // Mensaje de resultado (éxito/error)
@@ -29,7 +29,7 @@ public class LoginPage {
     public LoginPage(Page page) {
         this.page = page;
         // Localiza el campo de usuario usando su etiqueta asociada
-        this.email = page.getByLabel("Usuario o correo electrónico");
+        this.nickname = page.getByLabel("Nombre de usuario");
         // Localiza el campo de contraseña usando su etiqueta asociada
         this.password = page.locator("#password");
         // Localiza el botón de login usando su rol y nombre
@@ -50,12 +50,12 @@ public class LoginPage {
     /**
      * Realiza el login ingresando usuario y contraseña
      *
-     * @param user - Nombre de usuario a ingresar
+     * @param user - Nickname de la cuenta a ingresar (el login ya no acepta email)
      * @param pass - Contraseña a ingresar
      */
     public void login(String user, String pass) {
         // Completa el campo de usuario
-        email.fill(user);
+        nickname.fill(user);
         // Completa el campo de contraseña
         password.fill(pass);
         // Hace clic en el botón de login

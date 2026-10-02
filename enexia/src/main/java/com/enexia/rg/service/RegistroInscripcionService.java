@@ -106,14 +106,17 @@ public class RegistroInscripcionService {
 
         // Vigencia (RF-3.1, DFD 3.1.1): el DFD original no lo contemplaba, pero
         // sin este chequeo se podia reservar un cupo en una funcion que ya
-        // termino -- nadie va a poder asistir a algo que ya paso. Se compara
-        // contra hora_fin y no hora_inicio: un evento en curso todavia tiene
-        // sentido dejar sumarse hasta que termina.
+        // arranco o ya termino. Se compara contra hora_inicio, no hora_fin:
+        // dejar sumarse a un evento en curso permitia inscribirse y, para
+        // cuando la funcion terminaba, calificar con una inscripcion que
+        // nunca correspondio a haber asistido desde el principio. Mismo
+        // umbral que usa InscripcionService.cancelar para el corte de
+        // cancelacion.
         EventoCronograma cronogramaDelTicket = ticket.getCronograma();
-        LocalDateTime finDeFuncion = LocalDateTime.of(
-                cronogramaDelTicket.getFecha(), cronogramaDelTicket.getHoraFin());
-        if (finDeFuncion.isBefore(LocalDateTime.now())) {
-            throw new OperacionNoPermitidaException("Este evento ya finalizo");
+        LocalDateTime inicioDeFuncion = LocalDateTime.of(
+                cronogramaDelTicket.getFecha(), cronogramaDelTicket.getHoraInicio());
+        if (!inicioDeFuncion.isAfter(LocalDateTime.now())) {
+            throw new OperacionNoPermitidaException("Las inscripciones para este evento ya cerraron");
         }
 
         // Unicidad (ver javadoc de InscripcionRepository.existeActivaDeUsuarioEnCronograma):

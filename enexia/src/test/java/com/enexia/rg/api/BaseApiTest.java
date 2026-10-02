@@ -101,11 +101,12 @@ public abstract class BaseApiTest {
     protected static String registrarYObtenerToken(String perfil) {
         String sufijo = sufijoUnico();
         String email = "api" + sufijo + "@enexia.test";
+        String nickname = "api" + sufijo;
         String password = "Segura123";
 
         Map<String, Object> alta = new LinkedHashMap<>();
         alta.put("email", email);
-        alta.put("nickname", "api" + sufijo);
+        alta.put("nickname", nickname);
         alta.put("password", password);
         alta.put("passwordConfirmacion", password);
         alta.put("nombre", "Ana");
@@ -121,7 +122,8 @@ public abstract class BaseApiTest {
                     + registro.status() + " " + registro.text());
         }
 
-        Map<String, Object> credenciales = Map.of("email", email, "password", password);
+        // El login se identifica por nickname, no por email (ver UsuarioLoginRequest).
+        Map<String, Object> credenciales = Map.of("nickname", nickname, "password", password);
         APIResponse login = api.post("/api/auth/login", jsonCon(credenciales));
         if (login.status() != 200) {
             throw new IllegalStateException("No se pudo iniciar sesion: " + login.text());

@@ -131,6 +131,11 @@ const API = {
         return this.peticion('PUT', ruta, datos, true);
     },
 
+    /** PATCH autenticado */
+    patch(ruta, datos) {
+        return this.peticion('PATCH', ruta, datos, true);
+    },
+
     /** DELETE autenticado */
     delete(ruta) {
         return this.peticion('DELETE', ruta, null, true);
@@ -220,6 +225,21 @@ const API = {
     /** DELETE /api/organizador/eventos/{id} -> baja logica (RF-2.9) */
     darDeBajaEvento(idEvento) {
         return this.delete('/api/organizador/eventos/' + idEvento);
+    },
+
+    /* ===== Modulo 6: moderacion administrativa de eventos (RF-6.1) ===== */
+
+    /** GET /api/admin/eventos?... -> cola de moderacion del administrador */
+    listarEventosParaModerar(parametros = {}) {
+        const query = new URLSearchParams(
+            Object.entries(parametros).filter(([, v]) => v !== null && v !== undefined && v !== '')
+        ).toString();
+        return this.get('/api/admin/eventos' + (query ? '?' + query : ''));
+    },
+
+    /** PATCH /api/admin/eventos/{id} -> aprobar, rechazar, suspender o revertir (RF-6.1) */
+    decidirModeracionAdmin(idEvento, datos) {
+        return this.patch('/api/admin/eventos/' + idEvento, datos);
     },
 
     /* ===== Modulo 1: perfil propio ===== */

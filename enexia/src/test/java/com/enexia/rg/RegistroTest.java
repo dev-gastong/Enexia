@@ -268,10 +268,11 @@ public class RegistroTest extends BaseTest {
                 new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(ESPERA_MS));
 
         // Cierre del circuito: si el alta guardara la clave en claro o con otro
-        // algoritmo, el BCrypt.matches() del login fallaria aca.
+        // algoritmo, el BCrypt.matches() del login fallaria aca. El login se
+        // hace con el NICKNAME (no el email, ver UsuarioLoginRequest).
         LoginPage login = new LoginPage(page);
         login.navegar();
-        login.login(datos.email, datos.password);
+        login.login(datos.nickname, datos.password);
 
         page.waitForSelector("#mensajeError",
                 new com.microsoft.playwright.Page.WaitForSelectorOptions()

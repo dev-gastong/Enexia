@@ -67,17 +67,19 @@ import lombok.extern.slf4j.Slf4j;
  * 2. EL BLOQUEO DE CUENTA PASO A SER SILENCIOSO.
  *    Todos los rechazos de login responden identico: 401, codigo
  *    CREDENCIALES_INVALIDAS, mismo texto, sin cabeceras extra y con el mismo
- *    costo en tiempo. El atacante no puede distinguir "email inexistente" de
+ *    costo en tiempo. El atacante no puede distinguir "nickname inexistente" de
  *    "contrasena incorrecta" ni de "cuenta bloqueada": ni por el cuerpo, ni por
  *    el status, ni por las cabeceras, ni por el reloj. Al titular legitimo se le
  *    avisa por email, con un enlace de recuperacion: es el unico canal que el
- *    atacante no controla (ver RecuperacionCuentaService).
+ *    atacante no controla (ver RecuperacionCuentaService). El email sigue
+ *    siendo el dato de contacto de la cuenta aunque desde 2026-09-30 ya no sea
+ *    lo que se escribe para entrar (ver {@link #login}).
  *
  * CONSECUENCIA CONOCIDA Y ASUMIDA: sin control por IP, el "password spraying"
- * (una contrasena comun probada contra miles de emails distintos) ya no tiene
- * freno propio, porque ninguna cuenta acumula fallos. Queda anotado como riesgo
- * abierto para el proximo sprint; la mitigacion natural es alertar por volumen
- * anomalo en historial_interacciones sin llegar a rechazar peticiones.
+ * (una contrasena comun probada contra miles de nicknames distintos) ya no
+ * tiene freno propio, porque ninguna cuenta acumula fallos. Queda anotado como
+ * riesgo abierto para el proximo sprint; la mitigacion natural es alertar por
+ * volumen anomalo en historial_interacciones sin llegar a rechazar peticiones.
  *
  * El registro de Persona Juridica vive en PersonaJuridicaService (RF-7.2).
  */
@@ -130,22 +132,26 @@ public class AuthService {
      */
     public UsuarioLoginResponse login(UsuarioLoginRequest peticion, HttpServletRequest request) {
 
-        // --- Paso 1.2.4: recuperar cuenta y campos de control.
+        // --- Paso 1.2.2: recuperar cuenta y campos de control.
         // (El paso 1.2.1, rate limiting por IP, se retiro: ver javadoc de la clase.)
+        // El identificador de login es el NICKNAME, no el email (decision
+        // 2026-09-30): el email sigue siendo el subject del JWT y el dato de
+        // contacto para recuperacion/avisos, pero no es lo que se escribe para
+        // entrar. Ver UsuarioRepository.buscarActivoPorNicknameConRoles.
         Usuario usuario = usuarioRepository
-                .buscarActivoPorEmailConRoles(peticion.getEmail())
+                .buscarActivoPorNicknameConRoles(peticion.getNickname())
                 .orElse(null);
 
         if (usuario == null) {
-            // El email no existe. Se gasta igual el tiempo de un BCrypt real
+            // El nickname no existe. Se gasta igual el tiempo de un BCrypt real
             // para no responder mas rapido que en el caso "existe pero la clave
             // esta mal": esa diferencia de milisegundos, medida muchas veces,
-            // le revela a un atacante que emails estan registrados.
+            // le revela a un atacante que nicknames estan registrados.
             nivelarTiempoDeRespuesta(peticion.getPassword());
             auditoriaService.registrarAparte(null, AuditoriaService.ACCION_LOGIN_FALLIDO,
-                    "Intento contra un email no registrado", request);
+                    "Intento contra un nickname no registrado", request);
             throw new CredencialesInvalidasException(
-                    CredencialesInvalidasException.CODIGO_EMAIL_INEXISTENTE);
+                    CredencialesInvalidasException.CODIGO_NICKNAME_INEXISTENTE);
         }
 
         // --- Paso 1.2.4: el estado debe ser ACTIVO (RF-1.6).

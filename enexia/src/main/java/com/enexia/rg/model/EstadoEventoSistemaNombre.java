@@ -18,10 +18,19 @@ public enum EstadoEventoSistemaNombre {
     /** Rechazado automaticamente. Queda oculto y a la espera de revision manual. */
     RECHAZADO_SISTEMA,
 
-    /** Un administrador revirtio un rechazo automatico (RF-6.1). Tambien visible. */
+    /**
+     * Un administrador revirtio un rechazo automatico, o restituyo un evento
+     * que habia suspendido (RF-6.1, escenarios a y b). Tambien visible.
+     */
     APROBADO_MANUAL,
 
-    /** Un administrador confirmo el rechazo. Definitivo. */
+    /**
+     * Un administrador confirmo el rechazo automatico (RF-6.1a, con
+     * {@code motivo_codigo = null}), o suspendio un evento que ya estaba
+     * aprobado por una denuncia, fraude o infraccion post-publicacion
+     * (RF-6.1b, con un motivo de {@link MotivoSuspensionAdmin}). Reversible:
+     * un administrador puede volver a pasarlo a APROBADO_MANUAL.
+     */
     RECHAZADO_MANUAL,
 
     /**
