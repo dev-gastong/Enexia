@@ -237,7 +237,17 @@ const API = {
         return this.get('/api/admin/eventos' + (query ? '?' + query : ''));
     },
 
-    /** PATCH /api/admin/eventos/{id} -> aprobar, rechazar, suspender o revertir (RF-6.1) */
+    /** GET /api/organizador/eventos/{id}/moderacion -> por que un evento propio esta rechazado o suspendido */
+    obtenerModeracionEvento(idEvento) {
+        return this.get('/api/organizador/eventos/' + idEvento + '/moderacion');
+    },
+
+    /** GET /api/admin/eventos/{id} -> detalle para decidir (sin registrar visita) */
+    obtenerDetalleEventoAdmin(idEvento) {
+        return this.get('/api/admin/eventos/' + idEvento);
+    },
+
+    /** PATCH /api/admin/eventos/{id} -> aprobar, suspender o revertir (RF-6.1) */
     decidirModeracionAdmin(idEvento, datos) {
         return this.patch('/api/admin/eventos/' + idEvento, datos);
     },

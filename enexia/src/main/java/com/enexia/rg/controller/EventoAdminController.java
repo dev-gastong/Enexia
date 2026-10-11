@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.enexia.rg.dto.AdminDecisionEventoRequest;
+import com.enexia.rg.dto.EventoAdminDetalleResponse;
 import com.enexia.rg.dto.EventoResponse;
 import com.enexia.rg.service.AdminEventoService;
 
@@ -63,10 +64,22 @@ public class EventoAdminController {
     }
 
     /**
+     * Detalle de un evento para decidir sobre el (RF-6.1): estado, motivo del
+     * rechazo, datos de contexto y, si esta suspendido, la observacion con la
+     * que se suspendio. No registra visita, a diferencia de la ficha publica.
+     */
+    @GetMapping("/{idEvento}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<EventoAdminDetalleResponse> detalle(@PathVariable Long idEvento) {
+        return ResponseEntity.ok(adminEventoService.obtenerDetalle(idEvento));
+    }
+
+    /**
      * Decision administrativa sobre un evento (RF-6.1): aprobar de todas
-     * formas, ratificar un rechazo automatico, suspender uno ya publicado o
-     * revertir una suspension anterior. Cual de las cuatro ocurre lo decide
-     * el service segun el estado vigente del evento, no un parametro aparte.
+     * formas un rechazo automatico, suspender uno ya publicado (con motivo y
+     * observacion) o revertir una suspension anterior. Cual de las tres
+     * ocurre lo decide el service segun el estado vigente del evento, no un
+     * parametro aparte.
      */
     @PatchMapping("/{idEvento}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")

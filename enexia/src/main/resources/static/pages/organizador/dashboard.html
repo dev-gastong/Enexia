@@ -21,7 +21,6 @@
 
 :root {
     --panel-ancho: 260px;
-    --radio-tarjeta: 16px;
 }
 
 * { box-sizing: border-box; }
@@ -65,7 +64,7 @@ a:hover { color: var(--acento-fuerte); }
 
 .sidebar__item {
     display: flex; align-items: center; gap: 12px;
-    padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio);
+    padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio-campo);
     color: var(--texto-secundario); font-size: 14px; font-weight: 500;
 }
 .sidebar__item svg { display: block; width: 17px; height: 17px; flex: none; }
@@ -80,7 +79,7 @@ a:hover { color: var(--acento-fuerte); }
 
 .sidebar__salir {
     display: flex; align-items: center; gap: 10px;
-    margin: 4px 16px 20px; padding: 11px 14px; border-radius: var(--radio);
+    margin: 4px 16px 20px; padding: 11px 14px; border-radius: var(--radio-campo);
     color: var(--error); font-size: 14px; font-weight: 500;
     background: transparent; border: 0; cursor: pointer; text-align: left;
 }
@@ -161,7 +160,7 @@ a:hover { color: var(--acento-fuerte); }
     background: var(--superficie-alt);
 }
 .fila-evento__portada {
-    width: 52px; height: 52px; border-radius: var(--radio); flex: none;
+    width: 52px; height: 52px; border-radius: var(--radio-campo); flex: none;
     background: var(--acento-tinte) center/cover no-repeat;
     display: flex; align-items: center; justify-content: center; color: var(--acento);
 }
@@ -191,7 +190,7 @@ a:hover { color: var(--acento-fuerte); }
 
 .btn-icono {
     display: flex; align-items: center; justify-content: center;
-    width: 34px; height: 34px; border-radius: var(--radio);
+    width: 34px; height: 34px; border-radius: var(--radio-campo);
     border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario);
     cursor: pointer; transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
@@ -502,6 +501,8 @@ a:hover { color: var(--acento-fuerte); }
         if (evento.estadoOrganizador === 'CANCELADO') return { texto: 'Cancelado', clase: 'neutro' };
         if (evento.estadoOrganizador === 'FINALIZADO') return { texto: 'Finalizado', clase: 'neutro' };
         if (evento.estadoSistema === 'EN_PROCESO') return { texto: 'En revision', clase: 'alerta' };
+        // RECHAZADO_MANUAL con motivo = suspension de un administrador sobre un evento ya publicado (RF-6.1b)
+        if (evento.estadoSistema === 'RECHAZADO_MANUAL' && evento.motivoRechazo) return { texto: 'Suspendido', clase: 'error' };
         if (evento.estadoSistema && evento.estadoSistema.startsWith('RECHAZADO')) return { texto: 'Rechazado', clase: 'error' };
         if (evento.estadoSistema && evento.estadoSistema.startsWith('APROBADO')) return { texto: 'Publicado', clase: 'ok' };
         return { texto: evento.estadoSistema || '-', clase: 'neutro' };

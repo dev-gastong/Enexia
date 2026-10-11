@@ -425,6 +425,76 @@ class EventoServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Motivo de moderacion (lo que ve el organizador)")
+    class MotivoDeModeracion {
+
+        private Evento eventoEn(String estado, String motivo) {
+            Evento evento = eventoPropio();
+            com.enexia.rg.model.EventoEstadoSistema fila = new com.enexia.rg.model.EventoEstadoSistema();
+            fila.setEstadoSistema(estado);
+            fila.setMotivoCodigo(motivo);
+            evento.setEstadoSistema(fila);
+            when(eventoRepository.buscarConAsociaciones(99L)).thenReturn(Optional.of(evento));
+            return evento;
+        }
+
+        private void ultimoAsiento(String observacion) {
+            com.enexia.rg.model.HistorialEstadoEvento ultimo = new com.enexia.rg.model.HistorialEstadoEvento();
+            ultimo.setObservacion(observacion);
+            ultimo.setFechaCambio(java.time.LocalDateTime.of(2026, 10, 11, 1, 0));
+            when(historialRepository.findFirstByEventoIdEventoOrderByFechaCambioDescIdHistorialDesc(99L))
+                    .thenReturn(Optional.of(ultimo));
+        }
+
+        @Test
+        @DisplayName("Un evento suspendido devuelve el motivo y la observacion del administrador")
+        void suspendidoConObservacion() {
+            eventoEn("RECHAZADO_MANUAL", "FRAUDE_DETECTADO");
+            ultimoAsiento("Las entradas del evento no existen");
+
+            var respuesta = servicio.motivoDeModeracion(EMAIL, 99L);
+
+            assertThat(respuesta.getMotivoCodigo()).isEqualTo("FRAUDE_DETECTADO");
+            assertThat(respuesta.getObservacionAdmin()).isEqualTo("Las entradas del evento no existen");
+            assertThat(respuesta.getFechaDecision()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Un rechazo automatico no tiene observacion y ni consulta el historial")
+        void rechazoAutomatico() {
+            eventoEn("RECHAZADO_SISTEMA", "MODERACION_TEXTO");
+
+            var respuesta = servicio.motivoDeModeracion(EMAIL, 99L);
+
+            assertThat(respuesta.getMotivoCodigo()).isEqualTo("MODERACION_TEXTO");
+            assertThat(respuesta.getObservacionAdmin()).isNull();
+            verify(historialRepository, never())
+                    .findFirstByEventoIdEventoOrderByFechaCambioDescIdHistorialDesc(any());
+        }
+
+        @Test
+        @DisplayName("Un evento aprobado nunca expone observacion, aunque el historial tenga una vieja")
+        void aprobadoNoExpone() {
+            eventoEn("APROBADO_MANUAL", null);
+            ultimoAsiento("observacion de una suspension anterior");
+
+            assertThat(servicio.motivoDeModeracion(EMAIL, 99L).getObservacionAdmin()).isNull();
+        }
+
+        @Test
+        @DisplayName("Evento de otro organizador -> 404, no 403")
+        void eventoAjeno() {
+            Evento ajeno = eventoEn("RECHAZADO_MANUAL", "FRAUDE_DETECTADO");
+            Usuario otro = new Usuario();
+            otro.setIdUsuario(999L);
+            ajeno.setOrganizador(otro);
+
+            assertThatThrownBy(() -> servicio.motivoDeModeracion(EMAIL, 99L))
+                    .isInstanceOf(RecursoNoEncontradoException.class);
+        }
+    }
+
     // =====================================================================
     // Auxiliares
     // =====================================================================

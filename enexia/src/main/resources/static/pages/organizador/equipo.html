@@ -22,7 +22,7 @@
    propio equipo.
    ===================================================================== */
 
-:root { --panel-ancho: 260px; --radio-tarjeta: 16px; }
+:root { --panel-ancho: 260px; }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; font-family: var(--sans); background: var(--lienzo); color: var(--texto-secundario); -webkit-font-smoothing: antialiased; }
@@ -40,7 +40,7 @@ a:hover { color: var(--acento-fuerte); }
 .sidebar__rol { font-size: 11px; color: var(--texto-secundario); padding-left: 2px; }
 .sidebar__separador { margin: 4px 24px 12px; border: 0; border-top: 1px solid var(--borde); }
 .sidebar__nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; flex: 1; }
-.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
+.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio-campo); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
 .sidebar__item svg { display: block; width: 17px; height: 17px; flex: none; }
 .sidebar__item:hover { background: var(--superficie-alt); color: var(--texto); }
 .sidebar__item--activo { background: var(--acento-tinte); border-left-color: var(--acento); color: var(--acento-fuerte); }
@@ -49,7 +49,7 @@ a:hover { color: var(--acento-fuerte); }
 .sidebar__plan-badge { display: inline-block; padding: 3px 9px; border: 1px solid var(--alerta-borde); border-radius: 4px; color: var(--alerta); font-family: var(--marca); font-size: 11px; font-weight: 700; letter-spacing: .6px; }
 .sidebar__plan-texto { margin: 10px 0 0; font-size: 11px; color: var(--texto-secundario); }
 .sidebar__plan-link { display: block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--acento); cursor: default; }
-.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 4px 16px 20px; padding: 11px 14px; border-radius: var(--radio); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
+.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 4px 16px 20px; padding: 11px 14px; border-radius: var(--radio-campo); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
 .sidebar__salir:hover { background: var(--error-tinte); }
 .sidebar__salir svg { width: 16px; height: 16px; flex: none; }
 
@@ -96,7 +96,7 @@ a:hover { color: var(--acento-fuerte); }
 .chip-rol--admin { background: var(--acento-tinte); color: var(--acento-fuerte); border: 1px solid var(--acento-borde); }
 .chip-rol--miembro { background: var(--superficie-alt); color: var(--texto-secundario); border: 1px solid var(--borde); }
 
-.btn-quitar { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radio); border: 1px solid var(--error-borde); background: var(--error-tinte); color: var(--error); cursor: pointer; flex: none; }
+.btn-quitar { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radio-campo); border: 1px solid var(--error-borde); background: var(--error-tinte); color: var(--error); cursor: pointer; flex: none; }
 .btn-quitar svg { width: 13px; height: 13px; }
 .btn-quitar:hover { background: var(--error-borde); }
 

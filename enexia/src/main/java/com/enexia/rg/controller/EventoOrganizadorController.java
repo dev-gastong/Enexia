@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.enexia.rg.dto.EventoCrearRequest;
 import com.enexia.rg.dto.EventoDetalleResponse;
 import com.enexia.rg.dto.EventoEstadisticasResponse;
+import com.enexia.rg.dto.EventoModeracionResponse;
 import com.enexia.rg.dto.EventoResponse;
 import com.enexia.rg.exception.ReglaNegocioException;
 import com.enexia.rg.service.EventoService;
@@ -198,6 +199,18 @@ public class EventoOrganizadorController {
                                                     HttpServletRequest request) {
 
         return ResponseEntity.ok(eventoService.darDeBaja(principal.getName(), idEvento, request));
+    }
+
+    /**
+     * Por que un evento propio esta rechazado o suspendido. Incluye la
+     * observacion del administrador cuando fue una suspension.
+     */
+    @GetMapping("/{idEvento}/moderacion")
+    @PreAuthorize("hasRole('ORGANIZADOR')")
+    public ResponseEntity<EventoModeracionResponse> moderacion(@PathVariable Long idEvento,
+                                                               Principal principal) {
+
+        return ResponseEntity.ok(eventoService.motivoDeModeracion(principal.getName(), idEvento));
     }
 
     /** Metricas de rendimiento del evento (RF-2.10). */

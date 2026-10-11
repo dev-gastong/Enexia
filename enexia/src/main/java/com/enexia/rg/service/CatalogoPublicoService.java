@@ -123,7 +123,10 @@ public class CatalogoPublicoService {
         Evento evento = eventoRepository.buscarPublicoPorId(
                         idEvento,
                         EventoRepository.ESTADOS_VISIBLES,
-                        EstadoEventoOrganizadorNombre.PUBLICADO.name())
+                        // Un evento ya finalizado no esta en la grilla, pero su
+                        // ficha sigue abierta: ahi se lo valora (RF-3.4).
+                        List.of(EstadoEventoOrganizadorNombre.PUBLICADO.name(),
+                                EstadoEventoOrganizadorNombre.FINALIZADO.name()))
                 // 404 unico para "no existe" y para "existe pero no es publico":
                 // distinguirlos permitiria descubrir que eventos fueron
                 // rechazados por moderacion probando ids.

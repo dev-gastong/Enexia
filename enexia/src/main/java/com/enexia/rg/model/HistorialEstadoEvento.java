@@ -45,4 +45,12 @@ public class HistorialEstadoEvento {
 
     @Column(name = "fecha_cambio")
     private LocalDateTime fechaCambio;
+
+    /**
+     * Texto libre que deja el administrador al suspender un evento (RF-6.1b).
+     * Null en toda otra transicion: el pipeline automatico no escribe aca y
+     * aprobar no necesita justificarse.
+     */
+    @Column(name = "observacion", length = 500)
+    private String observacion;
 }

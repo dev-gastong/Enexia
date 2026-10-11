@@ -21,6 +21,7 @@ import com.enexia.rg.dto.CronogramaRequest;
 import com.enexia.rg.dto.EventoCrearRequest;
 import com.enexia.rg.dto.EventoDetalleResponse;
 import com.enexia.rg.dto.EventoEstadisticasResponse;
+import com.enexia.rg.dto.EventoModeracionResponse;
 import com.enexia.rg.dto.EventoResponse;
 import com.enexia.rg.dto.TicketRequest;
 import com.enexia.rg.event.EventoCreadoEvent;
@@ -599,6 +600,14 @@ public class EventoService {
         if (EstadoEventoOrganizadorNombre.DADO_DE_BAJA.name().equalsIgnoreCase(estadoActual)) {
             throw new OperacionNoPermitidaException("El evento ya estaba dado de baja");
         }
+        // Un evento que ya termino o que se cancelo es historia, no algo que se
+        // retire: dar de baja uno finalizado borraria de la vista del
+        // organizador un evento con inscriptos y valoraciones.
+        if (EstadoEventoOrganizadorNombre.FINALIZADO.name().equalsIgnoreCase(estadoActual)
+                || EstadoEventoOrganizadorNombre.CANCELADO.name().equalsIgnoreCase(estadoActual)) {
+            throw new OperacionNoPermitidaException(
+                    "No se puede dar de baja un evento " + estadoActual.toLowerCase());
+        }
 
         EventoEstadoOrganizador baja = estadoOrganizadorRepository
                 .findByEstadoOrganizadorIgnoreCase(EstadoEventoOrganizadorNombre.DADO_DE_BAJA.name())
@@ -616,6 +625,45 @@ public class EventoService {
         log.info("Evento {} dado de baja por el usuario {}", idEvento, organizador.getIdUsuario());
 
         return eventoMapper.aTarjeta(evento, null, null);
+    }
+
+    // =====================================================================
+    // MOTIVO DE MODERACION  (RF-2.8 / RF-6.1)
+    // =====================================================================
+
+    /**
+     * Por que un evento propio esta rechazado o suspendido.
+     *
+     * La observacion libre del administrador solo se devuelve si el evento
+     * esta suspendido (RECHAZADO_MANUAL): es su explicacion al organizador de
+     * un retiro del catalogo. Se pide aparte de la tarjeta del dashboard para
+     * que nunca viaje en una respuesta que tambien ve el publico.
+     */
+    @Transactional(readOnly = true)
+    public EventoModeracionResponse motivoDeModeracion(String email, Long idEvento) {
+        Usuario organizador = usuarioRepository.buscarActivoPorEmailConRoles(email)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro la cuenta"));
+
+        Evento evento = buscarPropio(idEvento, organizador);
+
+        String estado = evento.getEstadoSistema() == null
+                ? null : evento.getEstadoSistema().getEstadoSistema();
+        boolean suspendido = EstadoEventoSistemaNombre.RECHAZADO_MANUAL.name().equals(estado);
+
+        HistorialEstadoEvento decision = suspendido
+                ? historialRepository
+                        .findFirstByEventoIdEventoOrderByFechaCambioDescIdHistorialDesc(idEvento)
+                        .orElse(null)
+                : null;
+
+        return EventoModeracionResponse.builder()
+                .idEvento(idEvento)
+                .estadoSistema(estado)
+                .motivoCodigo(evento.getEstadoSistema() == null
+                        ? null : evento.getEstadoSistema().getMotivoCodigo())
+                .observacionAdmin(decision == null ? null : decision.getObservacion())
+                .fechaDecision(decision == null ? null : decision.getFechaCambio())
+                .build();
     }
 
     // =====================================================================

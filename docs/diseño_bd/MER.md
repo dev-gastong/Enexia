@@ -178,6 +178,7 @@ erDiagram
         int id_estado_sistema FK
         int id_usuario FK
         timestamp fecha_cambio
+        varchar observacion "Texto libre de la suspensión administrativa (RF-6.1b); NULL en el resto de las transiciones"
     }
     Evento ||--o{ Historial_Estado_Evento : "registra historial de"
     Evento_Estado_Organizador ||--o{ Historial_Estado_Evento : "se asienta en"

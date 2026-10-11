@@ -26,7 +26,7 @@
    "Ver estadisticas" (mismo endpoint que dashboard.html).
    ===================================================================== */
 
-:root { --panel-ancho: 260px; --radio-tarjeta: 16px; }
+:root { --panel-ancho: 260px; }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; font-family: var(--sans); background: var(--lienzo); color: var(--texto-secundario); -webkit-font-smoothing: antialiased; }
@@ -44,7 +44,7 @@ a:hover { color: var(--acento-fuerte); }
 .sidebar__rol { font-size: 11px; color: var(--texto-secundario); padding-left: 2px; }
 .sidebar__separador { margin: 4px 24px 12px; border: 0; border-top: 1px solid var(--borde); }
 .sidebar__nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; flex: 1; }
-.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
+.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio-campo); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
 .sidebar__item svg { display: block; width: 17px; height: 17px; flex: none; }
 .sidebar__item:hover { background: var(--superficie-alt); color: var(--texto); }
 .sidebar__item--activo { background: var(--acento-tinte); border-left-color: var(--acento); color: var(--acento-fuerte); }
@@ -53,7 +53,7 @@ a:hover { color: var(--acento-fuerte); }
 .sidebar__plan-badge { display: inline-block; padding: 3px 9px; border: 1px solid var(--alerta-borde); border-radius: 4px; color: var(--alerta); font-family: var(--marca); font-size: 11px; font-weight: 700; letter-spacing: .6px; }
 .sidebar__plan-texto { margin: 10px 0 0; font-size: 11px; color: var(--texto-secundario); }
 .sidebar__plan-link { display: block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--acento); cursor: default; }
-.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 4px 16px 20px; padding: 11px 14px; border-radius: var(--radio); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
+.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 4px 16px 20px; padding: 11px 14px; border-radius: var(--radio-campo); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
 .sidebar__salir:hover { background: var(--error-tinte); }
 .sidebar__salir svg { width: 16px; height: 16px; flex: none; }
 
@@ -75,9 +75,9 @@ a:hover { color: var(--acento-fuerte); }
 .boton:active { transform: translateY(1px); }
 .boton svg { width: 15px; height: 15px; }
 
-.boton-borde { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--error-borde); border-radius: var(--radio); background: var(--error-tinte); color: var(--error); font-size: 13px; font-weight: 600; cursor: pointer; }
+.boton-borde { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--error-borde); border-radius: var(--radio-campo); background: var(--error-tinte); color: var(--error); font-size: 13px; font-weight: 600; cursor: pointer; }
 .boton-borde:hover { background: var(--error-borde); }
-.boton-fantasma { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); color: var(--texto-secundario); font-size: 13px; font-weight: 600; cursor: pointer; }
+.boton-fantasma { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--borde); border-radius: var(--radio-campo); background: var(--superficie); color: var(--texto-secundario); font-size: 13px; font-weight: 600; cursor: pointer; }
 .boton-fantasma:hover { background: var(--superficie-alt); color: var(--texto); }
 
 /* --- Franja de leyenda (activos/rechazados/finalizados) --------------- */
@@ -99,7 +99,7 @@ a:hover { color: var(--acento-fuerte); }
 
 .filtros { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .filtros select, .filtros input {
-    padding: 9px 13px; border: 1px solid var(--borde-campo); border-radius: var(--radio);
+    padding: 9px 13px; border: 1px solid var(--borde-campo); border-radius: var(--radio-campo);
     background: var(--superficie); color: var(--texto); font-family: inherit; font-size: 13px; outline: none;
 }
 .filtros select:focus, .filtros input:focus { border-color: var(--acento); box-shadow: var(--foco-accion); }
@@ -113,7 +113,7 @@ a:hover { color: var(--acento-fuerte); }
    por breakpoint reparta filas hijas en columnas equivocadas. Scroll propio
    evita tocar la estructura de columnas segun el ancho. */
 .tabla-scroll { overflow-x: auto; }
-.tabla-grid { display: grid; grid-template-columns: 64px minmax(220px,1fr) 130px 130px 150px 220px; min-width: 900px; }
+.tabla-grid { display: grid; grid-template-columns: 64px minmax(220px,1fr) 130px 130px 150px 340px; min-width: 1030px; }
 
 .tabla-grid__cab { display: contents; }
 .tabla-grid__cab > div {
@@ -129,13 +129,13 @@ a:hover { color: var(--acento-fuerte); }
 .tabla-fila > div:last-child { padding-right: 24px; }
 .tabla-fila:hover > div { background: var(--superficie-alt); }
 
-.miniatura { width: 44px; height: 44px; border-radius: var(--radio); border: 1px solid var(--borde); background: var(--acento-tinte) center/cover no-repeat; display: flex; align-items: center; justify-content: center; color: var(--acento); font-family: var(--marca); font-weight: 700; font-size: 15px; flex: none; }
+.miniatura { width: 44px; height: 44px; border-radius: var(--radio-campo); border: 1px solid var(--borde); background: var(--acento-tinte) center/cover no-repeat; display: flex; align-items: center; justify-content: center; color: var(--acento); font-family: var(--marca); font-weight: 700; font-size: 15px; flex: none; }
 
-.col-info { flex-direction: column !important; align-items: flex-start !important; gap: 6px; }
+.col-info { flex-direction: column !important; align-items: flex-start !important; justify-content: center; gap: 6px; }
 .col-info__nombre { font-size: 14px; font-weight: 700; color: var(--texto); }
-.chip-categoria { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: var(--radio-sm); font-size: 11px; font-weight: 600; }
+.chip-categoria { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: var(--radio-campo); font-size: 11px; font-weight: 600; }
 
-.col-fecha { flex-direction: column !important; align-items: flex-start !important; gap: 3px; }
+.col-fecha { flex-direction: column !important; align-items: flex-start !important; justify-content: center; gap: 3px; }
 .col-fecha__val { font-size: 13px; color: var(--texto); font-weight: 500; }
 .col-fecha__sin { font-size: 12px; color: var(--texto-secundario); font-style: italic; }
 
@@ -152,8 +152,9 @@ a:hover { color: var(--acento-fuerte); }
 .chip-estado--neutro { background: var(--borde); color: var(--texto-secundario); }
 .chip-estado--neutro .chip-estado__punto { background: var(--texto-secundario); }
 
-.col-acciones { gap: 8px; flex-wrap: wrap; }
-.btn-mini { display: inline-flex; align-items: center; gap: 5px; padding: 7px 11px; border-radius: var(--radio-sm); border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+/* Una sola linea: con tres botones apilados la fila crecia y descentraba el resto. */
+.col-acciones { gap: 8px; flex-wrap: nowrap; }
+.btn-mini { display: inline-flex; align-items: center; gap: 5px; padding: 7px 11px; border-radius: var(--radio-campo); border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .btn-mini:hover { background: var(--superficie-alt); color: var(--texto); }
 .btn-mini svg { width: 12px; height: 12px; flex: none; }
 .btn-mini--error { border-color: var(--error-borde); background: var(--error-tinte); color: var(--error); }
@@ -175,11 +176,11 @@ a:hover { color: var(--acento-fuerte); }
 .paginacion { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; background: var(--superficie-alt); }
 .paginacion__texto { font-size: 12px; color: var(--texto-secundario); }
 .paginacion__botones { display: flex; align-items: center; gap: 8px; }
-.paginacion__btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radio-sm); border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); cursor: pointer; }
+.paginacion__btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radio-campo); border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); cursor: pointer; }
 .paginacion__btn:hover:not(:disabled) { background: var(--acento-tinte); color: var(--acento-fuerte); }
 .paginacion__btn:disabled { opacity: .4; cursor: not-allowed; }
 .paginacion__btn svg { width: 13px; height: 13px; }
-.paginacion__num { display: flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: var(--radio-sm); background: var(--acento-tinte); border: 1px solid var(--acento-borde); color: var(--acento-fuerte); font-size: 12px; font-weight: 700; }
+.paginacion__num { display: flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: var(--radio-campo); background: var(--acento-tinte); border: 1px solid var(--acento-borde); color: var(--acento-fuerte); font-size: 12px; font-weight: 700; }
 
 /* --- Modal (confirmacion / alerta) --------------------------------------- */
 
@@ -192,8 +193,12 @@ a:hover { color: var(--acento-fuerte); }
 .modal__icono--error { background: var(--error-tinte); color: var(--error); }
 .modal__icono--alerta { background: var(--alerta-tinte); color: var(--alerta); }
 .modal__titulo { margin: 0 0 8px; font-family: var(--marca); font-size: 18px; font-weight: 700; color: var(--texto); }
+.modal__nota { margin: 4px 0 12px; padding: 12px 14px; border: 1px solid var(--borde); border-left: 3px solid var(--error); border-radius: var(--radio-campo); background: var(--superficie-alt); }
+.modal__nota[hidden] { display: none; }
+.modal__nota-etiqueta { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-secundario); }
+.modal__nota-texto { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--texto); white-space: pre-wrap; overflow-wrap: anywhere; }
 .modal__texto { margin: 0 0 8px; font-size: 13.5px; line-height: 1.6; color: var(--texto-secundario); }
-.modal__aviso-cupo { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radio); background: var(--alerta-tinte); border: 1px solid var(--alerta-borde); color: var(--alerta); font-size: 12.5px; }
+.modal__aviso-cupo { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radio-campo); background: var(--alerta-tinte); border: 1px solid var(--alerta-borde); color: var(--alerta); font-size: 12.5px; }
 .modal__acciones { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
 /* --- Toast --------------------------------------------------------------- */
@@ -383,10 +388,11 @@ a:hover { color: var(--acento-fuerte); }
         </div>
         <p class="modal__titulo" id="modalMotivoTitulo">Evento rechazado</p>
         <p class="modal__texto" id="modalMotivoTexto">&hellip;</p>
-        <p class="modal__texto">
-            No se puede editar un evento rechazado. Si queres volver a intentarlo, cargalo
-            como un evento nuevo corrigiendo lo que motivo el rechazo.
-        </p>
+        <div class="modal__nota" id="modalMotivoNota" hidden>
+            <span class="modal__nota-etiqueta">Mensaje del administrador</span>
+            <p class="modal__nota-texto" id="modalMotivoNotaTexto"></p>
+        </div>
+        <p class="modal__texto" id="modalMotivoAyuda"></p>
         <div class="modal__acciones">
             <button class="boton-fantasma" id="btnCerrarMotivo" type="button">Cerrar</button>
         </div>
@@ -465,6 +471,16 @@ a:hover { color: var(--acento-fuerte); }
         ERROR_PIPELINE: 'Ocurrio un error tecnico durante la moderacion automatica.'
     };
 
+    /* Suspension de un administrador sobre un evento que ya estaba publicado
+       (RF-6.1b). Solo se muestra la categoria del motivo: la observacion que
+       dejo el administrador es una nota interna (puede nombrar a quien hizo
+       la denuncia) y el endpoint del organizador no la expone. */
+    const MOTIVOS_SUSPENSION = {
+        DENUNCIA_FUNDADA: 'Recibimos una denuncia sobre este evento y, tras revisarla, se confirmo la infraccion.',
+        FRAUDE_DETECTADO: 'Detectamos indicios de fraude en este evento o en su organizacion.',
+        INFRACCION_POST_PUBLICACION: 'Este evento incumple las normas de la plataforma aunque ya habia sido aprobado.'
+    };
+
     const CATEGORIA_COLOR = {
         cultural: 'cat-cultural', educativo: 'cat-educativo', social: 'cat-social',
         deportivo: 'cat-deportivo', deportes: 'cat-deportivo', gaming: 'cat-gaming'
@@ -475,9 +491,18 @@ a:hover { color: var(--acento-fuerte); }
         if (evento.estadoOrganizador === 'CANCELADO') return { texto: 'Cancelado', clase: 'neutro' };
         if (evento.estadoOrganizador === 'FINALIZADO') return { texto: 'Finalizado', clase: 'neutro' };
         if (evento.estadoSistema === 'EN_PROCESO') return { texto: 'En revision', clase: 'alerta' };
+        if (esSuspendido(evento)) return { texto: 'Suspendido', clase: 'error' };
         if (evento.estadoSistema && evento.estadoSistema.startsWith('RECHAZADO')) return { texto: 'Rechazado', clase: 'error' };
         if (evento.estadoSistema && evento.estadoSistema.startsWith('APROBADO')) return { texto: 'Publicado', clase: 'ok' };
         return { texto: evento.estadoSistema || '-', clase: 'neutro' };
+    }
+
+    /* Un RECHAZADO_MANUAL con motivo de suspension: lo decidio un
+       administrador sobre un evento ya publicado. Es distinto de un rechazo
+       del pipeline, y el organizador no tiene que "corregir y volver a
+       cargar": la suspension se resuelve con la administracion. */
+    function esSuspendido(evento) {
+        return evento.estadoSistema === 'RECHAZADO_MANUAL' && !!MOTIVOS_SUSPENSION[evento.motivoRechazo];
     }
 
     function esEditable(evento) {
@@ -695,9 +720,30 @@ a:hover { color: var(--acento-fuerte); }
     const modalMotivo = document.getElementById('modalMotivo');
 
     function abrirModalMotivo(evento) {
-        document.getElementById('modalMotivoTitulo').textContent = '"' + evento.nombre + '" fue rechazado';
-        document.getElementById('modalMotivoTexto').textContent =
-            MOTIVOS[evento.motivoRechazo] || 'No se registro un motivo especifico.';
+        const suspendido = esSuspendido(evento);
+        document.getElementById('modalMotivoTitulo').textContent =
+            '"' + evento.nombre + '" fue ' + (suspendido ? 'suspendido' : 'rechazado');
+        document.getElementById('modalMotivoTexto').textContent = suspendido
+            ? MOTIVOS_SUSPENSION[evento.motivoRechazo]
+            : (MOTIVOS[evento.motivoRechazo] || 'No se registro un motivo especifico.');
+        // La observacion del administrador vive en un endpoint propio (no en la
+        // tarjeta, que tambien alimenta el catalogo publico). Se pide solo
+        // para una suspension; se muestra con textContent.
+        const nota = document.getElementById('modalMotivoNota');
+        nota.hidden = true;
+        if (suspendido) {
+            const idPedido = evento.idEvento;
+            API.obtenerModeracionEvento(idPedido).then(r => {
+                if (!modalMotivo.classList.contains('modal-velo--visible')) return;
+                if (r.ok && r.cuerpo && r.cuerpo.observacionAdmin) {
+                    document.getElementById('modalMotivoNotaTexto').textContent = r.cuerpo.observacionAdmin;
+                    nota.hidden = false;
+                }
+            });
+        }
+        document.getElementById('modalMotivoAyuda').textContent = suspendido
+            ? 'El evento dejo de mostrarse en el catalogo publico. Si crees que se trata de un error, comunicate con la administracion de Enexia: la suspension puede revertirse.'
+            : 'No se puede editar un evento rechazado. Si queres volver a intentarlo, cargalo como un evento nuevo corrigiendo lo que motivo el rechazo.';
         modalMotivo.classList.add('modal-velo--visible');
     }
     document.getElementById('btnCerrarMotivo').addEventListener('click', () => modalMotivo.classList.remove('modal-velo--visible'));

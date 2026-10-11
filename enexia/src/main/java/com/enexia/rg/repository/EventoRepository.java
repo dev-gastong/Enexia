@@ -95,6 +95,12 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
      * Repite la doble condicion de visibilidad a proposito: si la ficha usara
      * findById a secas, cualquiera podria leer un evento RECHAZADO_SISTEMA
      * pegando su id en la URL, y el rechazo por moderacion no serviria de nada.
+     *
+     * El eje del organizador acepta una LISTA (PUBLICADO y FINALIZADO), a
+     * diferencia del catalogo, que solo lista PUBLICADO: un evento que ya
+     * termino sale de la grilla pero su ficha tiene que seguir abriendose, porque
+     * es desde ahi que quien asistio lo valora (RF-3.4) y desde "Mis
+     * inscripciones" que lo vuelve a consultar.
      */
     @EntityGraph(attributePaths = {"categoria", "estadoSistema", "estadoOrganizador",
                                    "organizador", "organizador.personaFisica", "personaJuridica"})
@@ -102,11 +108,41 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
             SELECT e FROM Evento e
             WHERE e.idEvento = :idEvento
               AND e.estadoSistema.estadoSistema IN :estadosVisibles
-              AND e.estadoOrganizador.estadoOrganizador = :estadoPublicado
+              AND e.estadoOrganizador.estadoOrganizador IN :estadosOrganizador
             """)
     Optional<Evento> buscarPublicoPorId(@Param("idEvento") Long idEvento,
                                         @Param("estadosVisibles") List<String> estadosVisibles,
-                                        @Param("estadoPublicado") String estadoPublicado);
+                                        @Param("estadosOrganizador") List<String> estadosOrganizador);
+
+    /**
+     * Eventos que ya terminaron y siguen figurando como PUBLICADO (o, con
+     * {@code idEvento}, la misma comprobacion para un solo evento).
+     *
+     * Un evento termino cuando tiene al menos una fecha y NINGUNA queda por
+     * delante: ni un dia futuro ni una funcion de hoy que aun no acabo. Misma
+     * regla que la ficha usa para marcar una funcion como finalizada.
+     *
+     * Solo cuentan los aprobados: un evento rechazado o suspendido cuya fecha
+     * paso conserva su estado, porque ahi el organizador (y el administrador)
+     * necesitan seguir viendo POR QUE no salio, y un revertir posterior lo
+     * deja aprobado y en la proxima pasada se finaliza solo.
+     */
+    @Query("""
+            SELECT e.idEvento FROM Evento e
+            WHERE e.estadoOrganizador.estadoOrganizador = :estadoPublicado
+              AND e.estadoSistema.estadoSistema IN :estadosAprobados
+              AND (:idEvento IS NULL OR e.idEvento = :idEvento)
+              AND EXISTS (SELECT 1 FROM EventoCronograma c WHERE c.evento = e)
+              AND NOT EXISTS (
+                    SELECT 1 FROM EventoCronograma c2
+                    WHERE c2.evento = e
+                      AND (c2.fecha > :hoy OR (c2.fecha = :hoy AND c2.horaFin > :ahora)))
+            """)
+    List<Long> buscarIdsFinalizables(@Param("estadoPublicado") String estadoPublicado,
+                                     @Param("estadosAprobados") List<String> estadosAprobados,
+                                     @Param("idEvento") Long idEvento,
+                                     @Param("hoy") LocalDate hoy,
+                                     @Param("ahora") java.time.LocalTime ahora);
 
     /**
      * Dashboard del organizador (RF-2.8).

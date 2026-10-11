@@ -2,6 +2,7 @@ package com.enexia.rg.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,6 +15,11 @@ import lombok.Setter;
  * eso segun el estado actual del evento, porque depende de un dato que esta
  * en la base y no en el request. Aca solo se valida la forma, nunca con que
  * valor concreto del enum {@code MotivoSuspensionAdmin} tiene que corresponder.
+ *
+ * {@code observacion} es el texto libre que acompana a la suspension (RF-6.1b):
+ * el codigo dice la CATEGORIA del motivo, la observacion deja constancia del
+ * caso concreto. Misma regla que {@code motivoCodigo}: solo se exige al
+ * suspender, y quien lo decide es el service. Aca solo se acota el largo.
  */
 @Getter
 @Setter
@@ -25,4 +31,7 @@ public class AdminDecisionEventoRequest {
     private String decision;
 
     private String motivoCodigo;
+
+    @Size(max = 500, message = "La observacion no puede superar los 500 caracteres")
+    private String observacion;
 }
