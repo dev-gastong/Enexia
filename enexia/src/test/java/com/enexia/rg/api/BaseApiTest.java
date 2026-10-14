@@ -41,7 +41,9 @@ import com.microsoft.playwright.options.RequestOptions;
  */
 public abstract class BaseApiTest {
 
-    protected static final String BASE_URL = "http://localhost:8080";
+    /** 8080 por defecto; {@code -Denexia.baseUrl=...} apunta a otra instancia ya corriendo. */
+    protected static final String BASE_URL =
+            System.getProperty("enexia.baseUrl", "http://localhost:8080");
 
     protected static Playwright playwright;
     protected static APIRequestContext api;

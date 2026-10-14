@@ -132,3 +132,29 @@ const Auth = {
         return true;
     }
 };
+
+/* =====================================================================
+   Verificacion de sesion al abrir cualquier pagina.
+
+   El JWT vive en el navegador y sigue "valido" para el cliente aunque el
+   backend ya no lo acepte: una suspension (RF-6.2) o un bloqueo posterior
+   al login lo dejan sin efecto del lado del servidor, pero la pagina no se
+   entera hasta que hace una llamada autenticada. Esta sonda unica hace que
+   el cliente se entere al cargar: si el servidor responde 401, se cierra la
+   sesion y se manda al login, en vez de seguir mostrando al usuario como
+   conectado. Los errores de red NO cierran sesion (backend caido != sesion
+   invalida).
+   ===================================================================== */
+(function verificarSesionVigente() {
+    if (typeof window === 'undefined' || !Auth.autenticado()) return;
+    if (window.location.pathname.indexOf('/pages/auth/') === 0) return;
+
+    fetch('/api/usuario/perfil', {
+        headers: { 'Authorization': 'Bearer ' + Auth.token() }
+    }).then(function (respuesta) {
+        if (respuesta.status === 401) {
+            Auth.cerrarSesion();
+            window.location.href = '/pages/auth/login-desktop-claro.html';
+        }
+    }).catch(function () { /* sin red: no se concluye nada */ });
+})();

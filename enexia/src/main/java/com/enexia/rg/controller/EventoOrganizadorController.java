@@ -55,6 +55,7 @@ public class EventoOrganizadorController {
     private static final int TAMANO_PAGINA_MAXIMO = 50;
 
     private final EventoService eventoService;
+    private final com.enexia.rg.service.FinalizacionEventosService finalizacionEventosService;
 
     /**
      * Crea un evento (RF-2.1 a RF-2.6).
@@ -173,6 +174,11 @@ public class EventoOrganizadorController {
                 Math.max(0, pagina),
                 Math.min(Math.max(1, tamano), TAMANO_PAGINA_MAXIMO),
                 Sort.by(Sort.Direction.DESC, "fechaCreacion"));
+
+        // Aca y no dentro de listarDeOrganizador: ese metodo ya abre su
+        // transaccion de lectura, y con REPEATABLE READ el cambio confirmado
+        // por la finalizacion no seria visible en esa misma transaccion.
+        finalizacionEventosService.finalizarVencidosDe(principal.getName());
 
         return ResponseEntity.ok(eventoService.listarDeOrganizador(
                 principal.getName(), texto, idCategoria, estado, paginado));

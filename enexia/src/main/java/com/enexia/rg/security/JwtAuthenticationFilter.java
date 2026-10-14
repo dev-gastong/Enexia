@@ -11,6 +11,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.enexia.rg.repository.UsuarioRepository;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,6 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String PREFIJO_ROL = "ROLE_";
 
     private final JwtService jwtService;
+    private final UsuarioRepository usuarioRepository;
 
     @Override
     protected void doFilterInternal(
@@ -77,6 +80,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String email = jwtService.extraerEmail(token);
+
+        // El JWT es stateless: sigue firmado y vigente aunque un administrador
+        // haya suspendido la cuenta (RF-6.2) o el sistema la haya bloqueado
+        // (RF-1.4) DESPUES de emitirlo. Sin este chequeo, esa sancion solo
+        // impediria el proximo login, y el usuario seguiria navegando e
+        // inscribiendose hasta que el token venza. Se consulta el estado vigente
+        // en la base en cada peticion autenticada; una cuenta que no esta ACTIVO
+        // se trata como anonima y los endpoints protegidos responden 401.
+        if (!cuentaHabilitada(email)) {
+            log.debug("Token valido descartado: la cuenta {} ya no esta habilitada", email);
+            return;
+        }
+
         List<SimpleGrantedAuthority> autoridades = jwtService.extraerRoles(token).stream()
                 .map(rol -> new SimpleGrantedAuthority(PREFIJO_ROL + rol))
                 .toList();
@@ -96,6 +112,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(autenticacion);
 
         log.debug("Peticion autenticada por JWT para {}", email);
+    }
+
+    /** Falla cerrado: ante un error de base de datos la peticion queda anonima, nunca autenticada. */
+    private boolean cuentaHabilitada(String email) {
+        try {
+            return email != null && usuarioRepository.cuentaHabilitada(email);
+        } catch (RuntimeException ex) {
+            log.error("No se pudo verificar el estado de la cuenta; se rechaza el token", ex);
+            return false;
+        }
     }
 
     /**

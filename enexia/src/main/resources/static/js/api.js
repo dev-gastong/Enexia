@@ -242,6 +242,24 @@ const API = {
         return this.patch('/api/admin/eventos/' + idEvento, datos);
     },
 
+    /** GET /api/admin/usuarios?... -> directorio paginado de cuentas (RF-6.2) */
+    listarUsuariosAdmin(parametros = {}) {
+        const query = new URLSearchParams(
+            Object.entries(parametros).filter(([, v]) => v !== null && v !== undefined && v !== '')
+        ).toString();
+        return this.get('/api/admin/usuarios' + (query ? '?' + query : ''));
+    },
+
+    /** GET /api/admin/usuarios/resumen -> { totalUsuarios, cuentasSuspendidas } */
+    resumenUsuariosAdmin() {
+        return this.get('/api/admin/usuarios/resumen');
+    },
+
+    /** PATCH /api/admin/usuarios/{id}/estado -> { accion: 'SUSPENDER' | 'REACTIVAR' }, responde { mensaje } */
+    cambiarEstadoUsuarioAdmin(idUsuario, accion) {
+        return this.patch('/api/admin/usuarios/' + idUsuario + '/estado', { accion });
+    },
+
     /* ===== Modulo 1: perfil propio ===== */
 
     /** GET /api/usuario/perfil -> datos de identidad del usuario autenticado */

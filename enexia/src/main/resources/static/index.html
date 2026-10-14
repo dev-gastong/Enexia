@@ -80,7 +80,7 @@ img { max-width: 100%; display: block; }
 
 /* --- Barra de busqueda ------------------------------------------------------ */
 
-.busqueda { position: relative; width: 100%; max-width: 1024px; margin-bottom: 8px; }
+.busqueda { position: relative; width: 100%; max-width: 1376px; margin-bottom: 8px; }
 .busqueda__caja {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding: 14px;
     border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie);
@@ -95,18 +95,29 @@ img { max-width: 100%; display: block; }
 .busqueda__select select { width: 100%; cursor: pointer; }
 .busqueda__fecha input { cursor: pointer; }
 
+/* Escritorio: todos los filtros y el boton en UNA sola fila. */
+@media (min-width: 1000px) {
+    .busqueda__caja { flex-wrap: nowrap; justify-content: stretch; }
+    .busqueda__texto { flex: 1 1 260px; }
+    .busqueda__select { flex: 0 1 auto; min-width: 140px; }
+    .busqueda__caja .boton { flex: none; white-space: nowrap; }
+}
+
 @media (max-width: 700px) {
     .busqueda__campo { flex: 1 1 100%; }
 }
 
 /* --- Seccion de eventos ------------------------------------------------------ */
 
-.seccion-eventos { max-width: 1280px; margin: 0 auto; padding: 56px 32px 80px; }
+.separador-seccion { max-width: 1440px; margin: 0 auto; padding: 0 32px; }
+.separador-seccion hr { margin: 0; border: 0; border-top: 1px solid var(--borde); }
+
+.seccion-eventos { max-width: 1440px; margin: 0 auto; padding: 56px 32px 80px; }
 .seccion-eventos__cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
 .seccion-eventos__cabecera h2 { margin: 0 0 4px; color: var(--texto); font-family: var(--marca); font-size: 24px; font-weight: 700; }
 .seccion-eventos__cabecera p { margin: 0; font-size: 13px; color: var(--texto-secundario); }
 
-.grilla-eventos { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+.grilla-eventos { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px; }
 
 .tarjeta-evento { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
 .tarjeta-evento:hover { transform: translateY(-3px); box-shadow: var(--sombra-md), var(--sombra-tarjeta); }
@@ -222,6 +233,8 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         </div>
     </div>
 </section>
+
+<div class="separador-seccion"><hr></div>
 
 <section class="seccion-eventos">
     <div class="seccion-eventos__cabecera">

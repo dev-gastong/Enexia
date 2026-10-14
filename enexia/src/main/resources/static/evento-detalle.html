@@ -841,7 +841,11 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
     }
 
     async function cargarRelacionados(idCategoria, idEventoActual) {
-        const r = await API.publico('/api/publico/eventos?idCategoria=' + idCategoria + '&tamano=4');
+        // desde=hoy: solo eventos con alguna funcion hoy o a futuro. Un evento
+        // que ya termino no es una recomendacion valida.
+        const hoy = new Date();
+        const desde = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+        const r = await API.publico('/api/publico/eventos?idCategoria=' + idCategoria + '&desde=' + desde + '&tamano=6');
         if (!r.ok) return;
 
         const eventos = ((r.cuerpo && r.cuerpo.content) || []).filter(e => e.idEvento !== idEventoActual).slice(0, 3);

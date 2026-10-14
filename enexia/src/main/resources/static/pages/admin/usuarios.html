@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Usuarios - Enexia</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../css/tokens.css">
+
+<style>
+/* =====================================================================
+   Enexia - Gestion de Usuarios del Administrador (Modulo 6, RF-6.2)
+   Paleta clara "Atardecer Fueguino": mismos patrones de sidebar, tarjeta y
+   tabla que moderacion-eventos.html (es el mismo sistema de diseno).
+
+   ESTADOS Y ACCIONES (la regla vive en el backend, AdminUsuarioService;
+   esta pantalla solo la refleja con el campo `gestionable` de cada fila):
+     ACTIVO     -> "Suspender"
+     SUSPENDIDO -> "Reactivar"
+     BLOQUEADO  -> "Reactivar" (bloqueo por intentos fallidos; el admin
+                   puede levantarlo sin esperar el enlace del titular)
+     DE_BAJA    -> sin accion (decision del propio titular)
+   La confirmacion final solo aparece si el backend responde con un mensaje:
+   su texto es el que se muestra, no uno armado en el cliente.
+   ===================================================================== */
+
+:root { --panel-ancho: 260px; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: var(--sans); background: var(--lienzo); color: var(--texto-secundario); -webkit-font-smoothing: antialiased; }
+a { color: var(--acento); text-decoration: none; }
+a:hover { color: var(--acento-fuerte); }
+[hidden] { display: none !important; }
+.app { display: flex; min-height: 100vh; }
+
+/* --- Sidebar ------------------------------------------------------------ */
+.sidebar { display: flex; flex-direction: column; flex: none; width: var(--panel-ancho); min-height: 100vh; border-right: 1px solid var(--borde); background: var(--superficie); }
+.sidebar__logo { display: flex; flex-direction: column; gap: 2px; padding: 26px 24px 18px; }
+.sidebar__marca { display: flex; align-items: center; gap: 4px; }
+.sidebar__marca svg { display: block; width: 22px; height: 22px; }
+.sidebar__marca span { font-family: var(--marca); font-size: 22px; font-weight: 700; color: var(--texto); letter-spacing: -.3px; }
+.sidebar__rol { font-size: 11px; color: var(--texto-secundario); padding-left: 2px; }
+.sidebar__separador { margin: 4px 24px 12px; border: 0; border-top: 1px solid var(--borde); }
+.sidebar__nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; flex: 1; }
+.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
+.sidebar__item svg { display: block; width: 17px; height: 17px; flex: none; }
+.sidebar__item:hover { background: var(--superficie-alt); color: var(--texto); }
+.sidebar__item--activo { background: var(--acento-tinte); border-left-color: var(--acento); color: var(--acento-fuerte); }
+.sidebar__item--activo:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
+.sidebar__item--proximamente { cursor: default; opacity: .55; }
+.sidebar__item--proximamente:hover { background: none; color: var(--texto-secundario); }
+.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 16px 16px 20px; padding: 11px 14px; border-radius: var(--radio); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
+.sidebar__salir:hover { background: var(--error-tinte); }
+.sidebar__salir svg { width: 16px; height: 16px; flex: none; }
+
+/* --- Contenido ------------------------------------------------------------ */
+.contenido { flex: 1; min-width: 0; padding: 28px 32px 60px; }
+
+.cabecera { margin-bottom: 26px; }
+.cabecera h1 { margin: 0 0 6px; color: var(--texto); font-family: var(--marca); font-size: 30px; font-weight: 700; letter-spacing: -.5px; overflow-wrap: anywhere; }
+.cabecera p { margin: 0; font-size: 14px; color: var(--texto-secundario); }
+
+.boton-fantasma { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); color: var(--texto-secundario); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.boton-fantasma:hover { background: var(--superficie-alt); color: var(--texto); }
+.boton-borde { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border: 1px solid var(--error-borde); border-radius: var(--radio); background: var(--error); color: var(--blanco); font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.boton-borde:hover { background: var(--error-hover); }
+.boton-ok { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border: 1px solid var(--ok-borde); border-radius: var(--radio); background: var(--ok); color: var(--blanco); font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.boton-ok:hover { filter: brightness(.92); }
+.boton-borde:disabled, .boton-ok:disabled { opacity: .6; cursor: progress; }
+
+/* --- KPIs ------------------------------------------------------------------ */
+.kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-bottom: 28px; }
+.kpi { display: flex; align-items: center; gap: 14px; padding: 20px; border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); }
+.kpi__icono { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: var(--radio-campo); flex: none; }
+.kpi__icono svg { width: 20px; height: 20px; }
+.kpi--info .kpi__icono { background: var(--acento-tinte); color: var(--acento); }
+.kpi--error .kpi__icono { background: var(--error-tinte); color: var(--error); }
+.kpi__valor { font-family: var(--marca); font-size: 26px; font-weight: 700; color: var(--texto); line-height: 1; }
+.kpi__etq { margin-top: 4px; font-size: 12.5px; color: var(--texto-secundario); }
+@media (max-width: 700px) { .kpis { grid-template-columns: 1fr; } }
+
+/* --- Tarjeta de tabla --------------------------------------------------------- */
+.tarjeta { border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); }
+
+.tabla-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px 24px; border-bottom: 1px solid var(--borde); }
+.tabla-cabecera h2 { margin: 0; color: var(--texto); font-family: var(--marca); font-size: 17px; font-weight: 700; }
+.tabla-cabecera p { margin: 2px 0 0; font-size: 12.5px; color: var(--texto-secundario); }
+
+.filtros { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.filtros input[type="search"] { min-width: 220px; padding: 9px 13px; border: 1px solid var(--borde-campo); border-radius: var(--radio); background: var(--superficie); color: var(--texto); font-family: inherit; font-size: 13px; outline: none; }
+.filtros input[type="search"]:focus { border-color: var(--acento); box-shadow: var(--foco-accion); }
+
+.filtro-estado { position: relative; }
+.filtro-estado__btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid var(--borde-campo); border-radius: var(--radio); background: var(--superficie); color: var(--texto-secundario); font-family: inherit; font-size: 13px; cursor: pointer; }
+.filtro-estado__btn:hover { background: var(--superficie-alt); }
+.filtro-estado__btn--activo { border-color: var(--acento); color: var(--acento-fuerte); background: var(--acento-tinte); }
+.filtro-estado__btn svg { width: 14px; height: 14px; flex: none; }
+.filtro-estado__menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 260px; border: 1px solid var(--borde); border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-md); overflow: hidden; }
+.filtro-estado__titulo { padding: 14px 16px 10px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-secundario); border-bottom: 1px solid var(--borde); }
+.filtro-estado__lista { padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.filtro-estado__op { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--radio-sm); background: transparent; color: var(--texto); font-family: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.filtro-estado__op:hover { background: var(--superficie-alt); }
+.filtro-estado__op--sel { background: var(--acento-tinte); color: var(--acento-fuerte); font-weight: 600; }
+.filtro-estado__punto { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.filtro-estado__limpiar { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 16px; border: 0; border-top: 1px solid var(--borde); background: transparent; color: var(--error); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.filtro-estado__limpiar:hover { background: var(--error-tinte); }
+
+/* --- Tabla como grilla --------------------------------------------------------- */
+.tabla-scroll { overflow-x: auto; }
+.tabla-grid { display: grid; grid-template-columns: minmax(240px,1.5fr) 150px 140px 110px 150px 150px; min-width: 940px; }
+.tabla-grid__cab { display: contents; }
+.tabla-grid__cab > div { padding: 12px; border-bottom: 1px solid var(--borde); background: var(--superficie-alt); font-size: 11px; font-weight: 700; color: var(--texto-secundario); text-transform: uppercase; letter-spacing: .04em; }
+.tabla-grid__cab > div:first-child { padding-left: 24px; }
+.tabla-grid__cab > div:last-child { padding-right: 24px; }
+
+.tabla-fila { display: contents; }
+.tabla-fila > div { padding: 14px 12px; border-bottom: 1px solid var(--borde); display: flex; align-items: center; }
+.tabla-fila > div:first-child { padding-left: 24px; }
+.tabla-fila > div:last-child { padding-right: 24px; }
+.tabla-fila:hover > div { background: var(--superficie-alt); }
+
+.col-usuario { gap: 12px; min-width: 0; }
+.avatar { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--acento-tinte); color: var(--acento-fuerte); font-family: var(--marca); font-weight: 700; font-size: 14px; flex: none; }
+.col-usuario__texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.col-usuario__nombre { font-size: 14px; font-weight: 700; color: var(--texto); overflow-wrap: anywhere; }
+.col-usuario__email { font-size: 12px; color: var(--texto-secundario); overflow-wrap: anywhere; }
+
+.chip-rol { display: inline-flex; padding: 3px 9px; border-radius: var(--radio-sm); font-size: 11.5px; font-weight: 600; background: var(--rol-neutro-tinte); color: var(--rol-neutro); }
+.chip-rol--organizador { background: var(--rol-organizador-tinte); color: var(--rol-organizador); }
+.chip-rol--participante { background: var(--rol-participante-tinte); color: var(--rol-participante); }
+.chip-rol--admin { background: var(--rol-admin-tinte); color: var(--rol-admin); }
+
+.celda-fecha { font-size: 13px; color: var(--texto-secundario); }
+.celda-eventos strong { font-size: 15px; color: var(--texto); }
+.celda-eventos--cero strong { color: var(--texto-suave); }
+.celda-eventos span { margin-left: 4px; font-size: 11.5px; color: var(--texto-secundario); }
+
+.chip-estado { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.chip-estado__punto { width: 6px; height: 6px; border-radius: 50%; flex: none; background: currentColor; }
+.chip-estado--ok { background: var(--ok-tinte); color: var(--ok); }
+.chip-estado--error { background: var(--error-tinte); color: var(--error); }
+.chip-estado--alerta { background: var(--alerta-tinte); color: var(--alerta); }
+.chip-estado--neutro { background: var(--borde); color: var(--texto-secundario); }
+
+.btn-mini { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: var(--radio-sm); border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.btn-mini svg { width: 13px; height: 13px; flex: none; }
+.btn-mini--error { border-color: var(--error-borde); background: var(--error-tinte); color: var(--error); }
+.btn-mini--error:hover { background: var(--error-borde); }
+.btn-mini--ok { border-color: var(--ok-borde); background: var(--ok-tinte); color: var(--ok); }
+.btn-mini--ok:hover { background: var(--ok-borde); }
+.sin-accion { font-size: 12px; color: var(--texto-suave); font-style: italic; }
+
+/* --- Vacio / cargando ------------------------------------------------------------- */
+.vacio { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 56px 24px; text-align: center; }
+.vacio__icono { width: 56px; height: 56px; border-radius: var(--radio-campo); background: var(--acento-tinte); color: var(--acento); display: flex; align-items: center; justify-content: center; }
+.vacio__icono svg { width: 26px; height: 26px; }
+.vacio__titulo { margin: 0; color: var(--texto); font-size: 16px; font-weight: 700; }
+.vacio__texto { margin: 0; max-width: 360px; font-size: 13.5px; color: var(--texto-secundario); }
+.cargando { padding: 40px 24px; text-align: center; color: var(--texto-secundario); font-size: 13px; }
+
+/* --- Paginacion --------------------------------------------------------------------- */
+.paginacion { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; background: var(--superficie-alt); border-radius: 0 0 var(--radio-tarjeta) var(--radio-tarjeta); }
+.paginacion__texto { font-size: 12px; color: var(--texto-secundario); }
+.paginacion__botones { display: flex; align-items: center; gap: 8px; }
+.paginacion__btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radio-sm); border: 1px solid var(--borde); background: var(--superficie); color: var(--texto-secundario); cursor: pointer; }
+.paginacion__btn:hover:not(:disabled) { background: var(--acento-tinte); color: var(--acento-fuerte); }
+.paginacion__btn:disabled { opacity: .4; cursor: not-allowed; }
+.paginacion__btn svg { width: 13px; height: 13px; }
+.paginacion__num { display: flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: var(--radio-sm); background: var(--acento-tinte); border: 1px solid var(--acento-borde); color: var(--acento-fuerte); font-size: 12px; font-weight: 700; }
+
+/* --- Modales --------------------------------------------------------------------------- */
+.modal-velo { display: none; position: fixed; inset: 0; z-index: 70; background: rgba(31, 26, 46, .45); align-items: center; justify-content: center; padding: 20px; }
+.modal-velo--visible { display: flex; }
+.modal { position: relative; width: 100%; max-width: 440px; border-radius: var(--radio-tarjeta); background: var(--superficie); box-shadow: var(--sombra-tarjeta); padding: 32px 28px 26px; text-align: center; animation: entrar-modal .18s ease; }
+@keyframes entrar-modal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.modal__icono { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.modal__icono svg { width: 26px; height: 26px; }
+.modal__icono--error { background: var(--error-tinte); color: var(--error); }
+.modal__icono--ok { background: var(--ok-tinte); color: var(--ok); }
+.modal__etiqueta { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; padding: 4px 12px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.modal__etiqueta--error { background: var(--alerta-tinte); color: var(--alerta); border: 1px solid var(--alerta-borde); }
+.modal__etiqueta--ok { background: var(--ok-tinte); color: var(--ok); border: 1px solid var(--ok-borde); }
+.modal__titulo { margin: 0 0 10px; font-family: var(--marca); font-size: 22px; font-weight: 700; color: var(--texto); }
+.modal__texto { margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: var(--texto-secundario); }
+.modal__nota { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 22px; padding: 12px 14px; border-radius: var(--radio); text-align: left; font-size: 12.5px; line-height: 1.5; }
+.modal__nota svg { width: 16px; height: 16px; flex: none; margin-top: 1px; }
+.modal__nota--error { background: var(--alerta-tinte); border: 1px solid var(--alerta-borde); color: var(--texto-secundario); }
+.modal__nota--error svg { color: var(--alerta); }
+.modal__nota--ok { background: var(--ok-tinte); border: 1px solid var(--ok-borde); color: var(--texto-secundario); }
+.modal__nota--ok svg { color: var(--ok); }
+.modal__acciones { display: flex; flex-direction: column; gap: 10px; }
+.modal__acciones button { width: 100%; padding: 12px 16px; font-size: 14px; }
+
+/* confirmacion: solo aparece con el mensaje del backend */
+.modal--confirmacion { max-width: 420px; padding: 30px 28px 26px; border-top: 3px solid var(--ok); }
+.modal--confirmacion.modal--rojo { border-top-color: var(--error); }
+.modal--confirmacion .modal__etiqueta { margin-bottom: 8px; background: none; border: 0; padding: 0; }
+.modal--confirmacion .modal__texto { margin-bottom: 0; }
+.modal__cerrar { position: absolute; top: 12px; right: 12px; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 1px solid var(--borde); border-radius: 50%; background: var(--superficie-alt); color: var(--texto-secundario); cursor: pointer; }
+.modal__cerrar svg { width: 11px; height: 11px; }
+
+/* --- Toast (solo errores) ------------------------------------------------------------------- */
+.toast-pila { position: fixed; top: 20px; right: 20px; z-index: 80; display: flex; flex-direction: column; gap: 10px; }
+.toast { display: flex; align-items: flex-start; gap: 12px; width: 340px; padding: 16px; border: 1px solid var(--borde); border-left: 4px solid var(--error); border-radius: var(--radio-campo); background: var(--superficie); box-shadow: var(--sombra-tarjeta); }
+.toast__titulo { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: var(--texto); }
+.toast__texto { margin: 0; font-size: 13px; color: var(--texto-secundario); }
+
+@media (max-width: 900px) {
+    .sidebar { display: none; }
+    .contenido { padding: 20px 16px 60px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="sidebar__logo">
+            <a class="sidebar__marca" href="../../index.html">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                    <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                    <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                    <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                    <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                    <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                    <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                    <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                    <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                    <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                    <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                    <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                    <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#faf8fa"/>
+                    <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#faf8fa"/>
+                    <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#faf8fa"/>
+                </svg>
+                <span>NEXIA</span>
+            </a>
+            <span class="sidebar__rol">Administrador</span>
+        </div>
+        <hr class="sidebar__separador">
+        <nav class="sidebar__nav">
+            <a class="sidebar__item" href="moderacion-eventos.html">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13.33 8.67C13.33 12 11 13.67 8.23 14.63a.8.8 0 0 1-.46-.01C5 13.67 2.67 12 2.67 8.67V4c0-.37.26-.67.67-.67 1.33 0 3-.8 4.16-1.81.28-.24.69-.24.97 0C9.67 2.54 11.33 3.33 12.67 3.33c.4 0 .66.3.66.67v4.67Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 8 7.33 9.33 10 6.67" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Moderación de Eventos
+            </a>
+            <a class="sidebar__item sidebar__item--activo" href="usuarios.html">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10.67 14v-1.33c0-.71-.28-1.39-.78-1.89s-1.18-.78-1.89-.78H4c-.71 0-1.39.28-1.89.78s-.78 1.18-.78 1.89V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7.33a2.67 2.67 0 1 0 0-5.33 2.67 2.67 0 0 0 0 5.33Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Gestión de Usuarios
+            </a>
+            <span class="sidebar__item sidebar__item--proximamente" title="Disponible mas adelante">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8.83" y="2" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="8.83" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8.83" y="8.83" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
+                Categorías de Eventos
+            </span>
+            <span class="sidebar__item sidebar__item--proximamente" title="Disponible mas adelante">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12" stroke="currentColor" stroke-width="1.4"/></svg>
+                Control de Suscripciones
+            </span>
+        </nav>
+        <button class="sidebar__salir" id="btnCerrarSesion" type="button">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 14H3.33C2.6 14 2 13.4 2 12.67V3.33C2 2.6 2.6 2 3.33 2H6M10.67 11.33L14 8L10.67 4.67M14 8H6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="contenido">
+
+        <div class="cabecera">
+            <h1>Gestión de Usuarios</h1>
+            <p>Administración de organizadores, asistentes y cuentas de la plataforma.</p>
+        </div>
+
+        <div class="kpis">
+            <div class="kpi kpi--info">
+                <div class="kpi__icono"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.67 14v-1.33c0-.71-.28-1.39-.78-1.89s-1.18-.78-1.89-.78H4c-.71 0-1.39.28-1.89.78s-.78 1.18-.78 1.89V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7.33a2.67 2.67 0 1 0 0-5.33 2.67 2.67 0 0 0 0 5.33Z" stroke="currentColor" stroke-width="1.4"/><path d="M14.67 14v-1.33a2.67 2.67 0 0 0-2-2.58M10.67 2.09a2.67 2.67 0 0 1 0 5.16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+                <div><div class="kpi__valor" id="kpiTotal">&ndash;</div><div class="kpi__etq">Total Usuarios</div></div>
+            </div>
+            <div class="kpi kpi--error">
+                <div class="kpi__icono"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.3"/><path d="M3.6 3.6l8.8 8.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+                <div><div class="kpi__valor" id="kpiSuspendidas">&ndash;</div><div class="kpi__etq">Cuentas Suspendidas</div></div>
+            </div>
+        </div>
+
+        <div class="tarjeta">
+            <div class="tabla-cabecera">
+                <div>
+                    <h2>Directorio de Usuarios</h2>
+                    <p>Listado completo con estado de cuenta y acciones de moderación</p>
+                </div>
+                <div class="filtros">
+                    <input type="search" id="filtroTexto" placeholder="Buscar usuario..." aria-label="Buscar usuario">
+                    <div class="filtro-estado">
+                        <button class="filtro-estado__btn" id="btnFiltroEstado" type="button" aria-haspopup="true" aria-expanded="false">
+                            <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 2.5h11L8.5 7v4.5l-3 1V7L1.5 2.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                            <span id="textoFiltroEstado">Filtrar</span>
+                        </button>
+                        <div class="filtro-estado__menu" id="menuFiltroEstado" hidden>
+                            <div class="filtro-estado__titulo">Filtrar por estado</div>
+                            <div class="filtro-estado__lista" id="listaFiltroEstado"></div>
+                            <button class="filtro-estado__limpiar" id="btnLimpiarFiltros" type="button">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabla-scroll">
+                <div class="tabla-grid" id="tablaUsuarios">
+                    <div class="tabla-grid__cab">
+                        <div>Usuario / Email</div>
+                        <div>Rol</div>
+                        <div>Fecha Registro</div>
+                        <div>Eventos</div>
+                        <div>Estado</div>
+                        <div>Acciones</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="paginacion">
+                <span class="paginacion__texto" id="paginacionTexto">&hellip;</span>
+                <div class="paginacion__botones">
+                    <button class="paginacion__btn" id="btnPaginaAnterior" type="button" aria-label="Página anterior">
+                        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 2 4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <span class="paginacion__num" id="paginacionNum">1</span>
+                    <button class="paginacion__btn" id="btnPaginaSiguiente" type="button" aria-label="Página siguiente">
+                        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Modal: suspender / reactivar (una sola estructura, dos variantes) -->
+<div class="modal-velo" id="modalCuenta">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalCuentaTitulo">
+        <div class="modal__icono" id="modalCuentaIcono"></div>
+        <span class="modal__etiqueta" id="modalCuentaEtiqueta"></span>
+        <h3 class="modal__titulo" id="modalCuentaTitulo"></h3>
+        <p class="modal__texto" id="modalCuentaTexto"></p>
+        <div class="modal__nota" id="modalCuentaNota">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.3"/><path d="M8 7.2V11M8 5h.007" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <span id="modalCuentaNotaTexto"></span>
+        </div>
+        <div class="modal__acciones">
+            <button class="boton-ok" id="btnConfirmarCuenta" type="button"></button>
+            <button class="boton-fantasma" id="btnCancelarCuenta" type="button">Volver Atrás</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: confirmacion. Solo se abre con el mensaje que devolvio el backend. -->
+<div class="modal-velo" id="modalConfirmacion">
+    <div class="modal modal--confirmacion" id="modalConfirmacionCaja" role="alertdialog" aria-modal="true" aria-labelledby="modalConfirmacionEtiqueta">
+        <button class="modal__cerrar" id="btnCerrarConfirmacion" type="button" aria-label="Cerrar">
+            <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="modal__icono" id="modalConfirmacionIcono"></div>
+        <span class="modal__etiqueta" id="modalConfirmacionEtiqueta"></span>
+        <p class="modal__texto" id="modalConfirmacionTexto"></p>
+    </div>
+</div>
+
+<div class="toast-pila" id="toastPila" aria-live="polite"></div>
+
+<script src="../../js/api.js"></script>
+<script src="../../js/auth.js"></script>
+<script src="../../js/utils.js"></script>
+
+<script>
+/* =====================================================================
+   Gestion de Usuarios - panel del administrador (RF-6.2)
+
+   A diferencia de moderacion-eventos.html, la paginacion y los filtros
+   (texto y estado) los resuelve el SERVIDOR: el directorio de usuarios
+   crece sin tope y no tiene sentido traerlo entero. Las tarjetas de
+   arriba salen de /api/admin/usuarios/resumen (toda la base, no la pagina).
+   ===================================================================== */
+(function () {
+
+    if (!Auth.exigirSesion('../auth/login-desktop-claro.html')) return;
+    if (!Auth.hasRole('ADMINISTRADOR')) {
+        window.location.href = '../auth/login-desktop-claro.html';
+        return;
+    }
+
+    document.getElementById('btnCerrarSesion').addEventListener('click', function () {
+        Auth.cerrarSesion();
+        window.location.href = '../auth/login-desktop-claro.html';
+    });
+
+    const TAMANO_PAGINA = 10;
+    let pagina = 0;
+    let totalPaginas = 1;
+    let filtroEstado = '';
+    let debounceTexto = null;
+    let pideCarga = 0; // descarta respuestas viejas si el admin sigue tecleando
+
+    const filtroTexto = document.getElementById('filtroTexto');
+
+    /* ------------------------------------------------------ Utilidades --- */
+
+    function esc(valor) {
+        return String(valor == null ? '' : valor)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function mostrarError(titulo, texto) {
+        const pila = document.getElementById('toastPila');
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.innerHTML = '<div><p class="toast__titulo">' + esc(titulo) + '</p><p class="toast__texto">' + esc(texto) + '</p></div>';
+        pila.appendChild(el);
+        setTimeout(() => el.remove(), 6000);
+    }
+
+    const ESTADOS = {
+        ACTIVO:     { texto: 'Activo',     clase: 'ok',      color: 'var(--ok)' },
+        SUSPENDIDO: { texto: 'Suspendido', clase: 'error',   color: 'var(--error)' },
+        BLOQUEADO:  { texto: 'Bloqueado',  clase: 'alerta',  color: 'var(--alerta)' },
+        DE_BAJA:    { texto: 'De baja',    clase: 'neutro',  color: 'var(--texto-suave)' }
+    };
+
+    function infoEstado(estado) {
+        return ESTADOS[estado] || { texto: estado || '-', clase: 'neutro', color: 'var(--texto-suave)' };
+    }
+
+    function infoRol(roles) {
+        const r = roles || [];
+        if (r.indexOf('ADMINISTRADOR') >= 0) return { texto: 'Administrador', clase: 'admin' };
+        if (r.indexOf('ORGANIZADOR') >= 0)   return { texto: 'Organizador', clase: 'organizador' };
+        return { texto: 'Participante', clase: 'participante' };
+    }
+
+    function fechaCorta(iso) {
+        if (!iso) return '-';
+        const f = new Date(iso);
+        if (isNaN(f)) return '-';
+        return f.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    /* -------------------------------------------------------- Filas --- */
+
+    const ICONO_SUSPENDER = '<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.3" stroke="currentColor" stroke-width="1.3"/><path d="M3.3 3.3l7.4 7.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+    const ICONO_REACTIVAR = '<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.3" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 7.2 6.3 9l3.2-3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    function filaUsuario(u) {
+        const fila = document.createElement('div');
+        fila.className = 'tabla-fila';
+
+        const estado = infoEstado(u.estado);
+        const rol = infoRol(u.roles);
+        const nombre = u.nombreCompleto || u.nickname || '-';
+
+        let accion = '<span class="sin-accion">Sin acción</span>';
+        let accionTipo = null;
+        if (u.gestionable) {
+            if (u.estado === 'ACTIVO') {
+                accionTipo = 'SUSPENDER';
+                accion = '<button class="btn-mini btn-mini--error" type="button">' + ICONO_SUSPENDER + 'Suspender</button>';
+            } else if (u.estado === 'SUSPENDIDO' || u.estado === 'BLOQUEADO') {
+                accionTipo = 'REACTIVAR';
+                accion = '<button class="btn-mini btn-mini--ok" type="button">' + ICONO_REACTIVAR + 'Reactivar</button>';
+            }
+        }
+
+        const eventos = u.cantidadEventos || 0;
+
+        fila.innerHTML =
+            '<div class="col-usuario">' +
+                '<span class="avatar">' + esc(nombre.trim().slice(0, 1).toUpperCase()) + '</span>' +
+                '<span class="col-usuario__texto">' +
+                    '<span class="col-usuario__nombre">' + esc(nombre) + '</span>' +
+                    '<span class="col-usuario__email">' + esc(u.email) + '</span>' +
+                '</span>' +
+            '</div>' +
+            '<div><span class="chip-rol chip-rol--' + rol.clase + '">' + rol.texto + '</span></div>' +
+            '<div class="celda-fecha">' + esc(fechaCorta(u.fechaRegistro)) + '</div>' +
+            '<div class="celda-eventos' + (eventos === 0 ? ' celda-eventos--cero' : '') + '"><strong>' + eventos + '</strong><span>' + (eventos === 1 ? 'evento' : 'eventos') + '</span></div>' +
+            '<div><span class="chip-estado chip-estado--' + estado.clase + '"><span class="chip-estado__punto"></span>' + estado.texto + '</span></div>' +
+            '<div>' + accion + '</div>';
+
+        const boton = fila.querySelector('button');
+        if (boton) boton.addEventListener('click', () => abrirModalCuenta(u, accionTipo));
+
+        return fila;
+    }
+
+    /* --------------------------------------------------------- Carga --- */
+
+    function limpiarGrilla() {
+        document.getElementById('tablaUsuarios')
+            .querySelectorAll(':scope > *:not(.tabla-grid__cab)').forEach(n => n.remove());
+    }
+
+    function mensajeEnGrilla(clase, texto) {
+        const el = document.createElement('div');
+        el.className = clase;
+        el.style.gridColumn = '1 / -1';
+        el.textContent = texto;
+        document.getElementById('tablaUsuarios').appendChild(el);
+    }
+
+    async function cargarResumen() {
+        const r = await API.resumenUsuariosAdmin();
+        if (!r.ok || !r.cuerpo) return;
+        document.getElementById('kpiTotal').textContent = r.cuerpo.totalUsuarios;
+        document.getElementById('kpiSuspendidas').textContent = r.cuerpo.cuentasSuspendidas;
+    }
+
+    async function cargar() {
+        const miCarga = ++pideCarga;
+        limpiarGrilla();
+        mensajeEnGrilla('cargando', 'Cargando usuarios...');
+
+        const r = await API.listarUsuariosAdmin({
+            texto: filtroTexto.value.trim(),
+            estado: filtroEstado,
+            pagina: pagina,
+            tamano: TAMANO_PAGINA
+        });
+
+        if (miCarga !== pideCarga) return;
+        limpiarGrilla();
+
+        if (!r.ok) {
+            mensajeEnGrilla('cargando', 'No se pudieron cargar los usuarios.');
+            document.getElementById('paginacionTexto').textContent = '-';
+            return;
+        }
+
+        const cuerpo = r.cuerpo || {};
+        const usuarios = cuerpo.content || [];
+        const total = cuerpo.totalElements || 0;
+        totalPaginas = Math.max(1, cuerpo.totalPages || 1);
+
+        if (!usuarios.length) {
+            const vacio = document.createElement('div');
+            vacio.style.gridColumn = '1 / -1';
+            vacio.innerHTML =
+                '<div class="vacio"><div class="vacio__icono">' +
+                '<svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9.5" cy="9.5" r="6" stroke="currentColor" stroke-width="1.6"/><path d="m14 14 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' +
+                '</div><p class="vacio__titulo">No hay usuarios con estos filtros</p>' +
+                '<p class="vacio__texto">Probá con otra búsqueda o limpiá el filtro de estado.</p></div>';
+            document.getElementById('tablaUsuarios').appendChild(vacio);
+            document.getElementById('paginacionTexto').textContent = 'Mostrando 0 de 0 usuarios';
+        } else {
+            const grid = document.getElementById('tablaUsuarios');
+            usuarios.forEach(u => grid.appendChild(filaUsuario(u)));
+            const desde = pagina * TAMANO_PAGINA + 1;
+            document.getElementById('paginacionTexto').textContent =
+                'Mostrando ' + desde + '-' + (desde + usuarios.length - 1) + ' de ' + total + ' usuarios';
+        }
+
+        document.getElementById('paginacionNum').textContent = (pagina + 1) + ' / ' + totalPaginas;
+        document.getElementById('btnPaginaAnterior').disabled = pagina === 0;
+        document.getElementById('btnPaginaSiguiente').disabled = pagina >= totalPaginas - 1;
+    }
+
+    document.getElementById('btnPaginaAnterior').addEventListener('click', () => { pagina--; cargar(); });
+    document.getElementById('btnPaginaSiguiente').addEventListener('click', () => { pagina++; cargar(); });
+
+    filtroTexto.addEventListener('input', () => {
+        clearTimeout(debounceTexto);
+        debounceTexto = setTimeout(() => { pagina = 0; cargar(); }, 350);
+    });
+
+    /* ------------------------------------------------ Filtro de estado --- */
+
+    const btnFiltro = document.getElementById('btnFiltroEstado');
+    const menuFiltro = document.getElementById('menuFiltroEstado');
+    const listaFiltro = document.getElementById('listaFiltroEstado');
+
+    function pintarOpcionesFiltro() {
+        listaFiltro.innerHTML = '';
+        Object.keys(ESTADOS).forEach(clave => {
+            const e = ESTADOS[clave];
+            const op = document.createElement('button');
+            op.type = 'button';
+            op.className = 'filtro-estado__op' + (filtroEstado === clave ? ' filtro-estado__op--sel' : '');
+            op.innerHTML = '<span class="filtro-estado__punto" style="background:' + e.color + '"></span>' + e.texto;
+            op.addEventListener('click', () => aplicarFiltroEstado(clave));
+            listaFiltro.appendChild(op);
+        });
+    }
+
+    function aplicarFiltroEstado(valor) {
+        filtroEstado = valor;
+        pagina = 0;
+        const activo = valor !== '';
+        document.getElementById('textoFiltroEstado').textContent = activo ? infoEstado(valor).texto : 'Filtrar';
+        btnFiltro.classList.toggle('filtro-estado__btn--activo', activo);
+        cerrarMenuFiltro();
+        cargar();
+    }
+
+    function cerrarMenuFiltro() {
+        menuFiltro.hidden = true;
+        btnFiltro.setAttribute('aria-expanded', 'false');
+    }
+
+    btnFiltro.addEventListener('click', e => {
+        e.stopPropagation();
+        const abrir = menuFiltro.hidden;
+        if (abrir) pintarOpcionesFiltro();
+        menuFiltro.hidden = !abrir;
+        btnFiltro.setAttribute('aria-expanded', String(abrir));
+    });
+    document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
+        filtroTexto.value = '';
+        aplicarFiltroEstado('');
+    });
+    document.addEventListener('click', e => {
+        if (!menuFiltro.hidden && !menuFiltro.contains(e.target)) cerrarMenuFiltro();
+    });
+
+    /* ---------------------------------------------- Modal suspender/reactivar --- */
+
+    const modalCuenta = document.getElementById('modalCuenta');
+    const btnConfirmarCuenta = document.getElementById('btnConfirmarCuenta');
+    let usuarioEnAccion = null;
+    let tipoEnAccion = null;
+
+    const ICONO_MODAL_SUSPENDER = '<svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="16" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    const ICONO_MODAL_REACTIVAR = '<svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="13" cy="9" r="4" stroke="currentColor" stroke-width="2"/><path d="M5 22v-1a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+    function abrirModalCuenta(usuario, tipo) {
+        usuarioEnAccion = usuario;
+        tipoEnAccion = tipo;
+
+        const nombre = usuario.nombreCompleto || usuario.nickname;
+        const icono = document.getElementById('modalCuentaIcono');
+        const etiqueta = document.getElementById('modalCuentaEtiqueta');
+        const nota = document.getElementById('modalCuentaNota');
+
+        if (tipo === 'SUSPENDER') {
+            icono.className = 'modal__icono modal__icono--error';
+            icono.innerHTML = ICONO_MODAL_SUSPENDER;
+            etiqueta.className = 'modal__etiqueta modal__etiqueta--error';
+            etiqueta.textContent = 'Acción crítica';
+            document.getElementById('modalCuentaTitulo').textContent = 'Suspender Cuenta';
+            document.getElementById('modalCuentaTexto').textContent =
+                'Está a punto de suspender la cuenta de ' + nombre + '. Esta acción bloqueará el inicio de sesión del usuario de forma inmediata en la plataforma.';
+            nota.className = 'modal__nota modal__nota--error';
+            document.getElementById('modalCuentaNotaTexto').textContent =
+                'El usuario no podrá acceder a ningún servicio hasta que un administrador reactive la cuenta manualmente.';
+            btnConfirmarCuenta.className = 'boton-borde';
+            btnConfirmarCuenta.textContent = 'Suspender de Todas Formas';
+        } else {
+            icono.className = 'modal__icono modal__icono--ok';
+            icono.innerHTML = ICONO_MODAL_REACTIVAR;
+            etiqueta.className = 'modal__etiqueta modal__etiqueta--ok';
+            etiqueta.textContent = 'Restauración de acceso';
+            document.getElementById('modalCuentaTitulo').textContent = 'Reactivar Cuenta';
+            document.getElementById('modalCuentaTexto').textContent =
+                'Está a punto de rehabilitar el acceso de ' + nombre + '. Se restaurarán todas las credenciales y capacidades operativas de forma inmediata en la plataforma.';
+            nota.className = 'modal__nota modal__nota--ok';
+            document.getElementById('modalCuentaNotaTexto').textContent =
+                'El usuario recuperará el acceso completo a todos los servicios habilitados en su perfil.';
+            btnConfirmarCuenta.className = 'boton-ok';
+            btnConfirmarCuenta.textContent = 'Reactivar Cuenta';
+        }
+
+        btnConfirmarCuenta.disabled = false;
+        modalCuenta.classList.add('modal-velo--visible');
+    }
+
+    function cerrarModalCuenta() {
+        modalCuenta.classList.remove('modal-velo--visible');
+        usuarioEnAccion = null;
+        tipoEnAccion = null;
+    }
+
+    document.getElementById('btnCancelarCuenta').addEventListener('click', cerrarModalCuenta);
+    modalCuenta.addEventListener('click', e => { if (e.target === modalCuenta) cerrarModalCuenta(); });
+
+    btnConfirmarCuenta.addEventListener('click', async () => {
+        if (!usuarioEnAccion) return;
+
+        const id = usuarioEnAccion.idUsuario;
+        const tipo = tipoEnAccion;
+        btnConfirmarCuenta.disabled = true;
+
+        const r = await API.cambiarEstadoUsuarioAdmin(id, tipo);
+
+        cerrarModalCuenta();
+
+        const mensaje = r.ok && r.cuerpo ? r.cuerpo.mensaje : null;
+        if (mensaje) {
+            abrirConfirmacion(tipo, mensaje);
+            cargarResumen();
+            cargar();
+        } else {
+            mostrarError('No se pudo completar la acción', UI.mensajeDeError(r));
+            cargar(); // el estado pudo haber cambiado por otro administrador
+        }
+    });
+
+    /* ------------------------------------- Modal de confirmacion (backend) --- */
+
+    const modalConfirmacion = document.getElementById('modalConfirmacion');
+    let cierreAuto = null;
+
+    function abrirConfirmacion(tipo, mensaje) {
+        const rojo = tipo === 'SUSPENDER';
+        const caja = document.getElementById('modalConfirmacionCaja');
+        const icono = document.getElementById('modalConfirmacionIcono');
+        const etiqueta = document.getElementById('modalConfirmacionEtiqueta');
+
+        caja.classList.toggle('modal--rojo', rojo);
+        icono.className = 'modal__icono ' + (rojo ? 'modal__icono--error' : 'modal__icono--ok');
+        icono.innerHTML = rojo ? ICONO_MODAL_SUSPENDER : ICONO_MODAL_REACTIVAR;
+        etiqueta.className = 'modal__etiqueta ' + (rojo ? 'modal__etiqueta--error' : 'modal__etiqueta--ok');
+        etiqueta.textContent = rojo ? 'Suspensión de usuario' : 'Reactivación de usuario';
+        document.getElementById('modalConfirmacionTexto').textContent = mensaje;
+
+        modalConfirmacion.classList.add('modal-velo--visible');
+        clearTimeout(cierreAuto);
+        cierreAuto = setTimeout(cerrarConfirmacion, 5000);
+    }
+
+    function cerrarConfirmacion() {
+        clearTimeout(cierreAuto);
+        modalConfirmacion.classList.remove('modal-velo--visible');
+    }
+
+    document.getElementById('btnCerrarConfirmacion').addEventListener('click', cerrarConfirmacion);
+    modalConfirmacion.addEventListener('click', e => { if (e.target === modalConfirmacion) cerrarConfirmacion(); });
+
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        cerrarModalCuenta();
+        cerrarConfirmacion();
+        cerrarMenuFiltro();
+    });
+
+    cargarResumen();
+    cargar();
+})();
+</script>
+
+</body>
+</html>

@@ -187,6 +187,42 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     Page<Evento> buscarParaModeracion(@Param("texto") String texto, Pageable paginado);
 
     /**
+     * Eventos PUBLICADOS cuyo cronograma ya termino por completo: tienen al
+     * menos una fecha y ninguna termina despues de {@code horaActual} de hoy.
+     * Es la definicion de FINALIZADO. {@code idOrganizador} nulo = todos.
+     */
+    @Query("""
+            SELECT e.idEvento FROM Evento e
+            WHERE e.estadoOrganizador.estadoOrganizador = :estadoPublicado
+              AND (:idOrganizador IS NULL OR e.organizador.idUsuario = :idOrganizador)
+              AND EXISTS (SELECT 1 FROM EventoCronograma c WHERE c.evento = e)
+              AND NOT EXISTS (
+                    SELECT 1 FROM EventoCronograma c2
+                    WHERE c2.evento = e
+                      AND (c2.fecha > :hoy OR (c2.fecha = :hoy AND c2.horaFin > :horaActual)))
+            """)
+    List<Long> buscarVencidosPublicados(@Param("estadoPublicado") String estadoPublicado,
+                                        @Param("idOrganizador") Long idOrganizador,
+                                        @Param("hoy") LocalDate hoy,
+                                        @Param("horaActual") java.time.LocalTime horaActual);
+
+    /**
+     * Cantidad de eventos de cada organizador del lote, para el directorio de
+     * usuarios del administrador (RF-6.2). Una sola consulta agrupada en vez de
+     * una por fila. Cada elemento es {@code [idUsuario, cantidad]}; los
+     * organizadores sin eventos no aparecen (el service los toma como 0).
+     * No cuenta los dados de baja, que el propio organizador ya no ve.
+     */
+    @Query("""
+            SELECT e.organizador.idUsuario, COUNT(e) FROM Evento e
+            WHERE e.organizador.idUsuario IN :ids
+              AND e.estadoOrganizador.estadoOrganizador <> :estadoBaja
+            GROUP BY e.organizador.idUsuario
+            """)
+    List<Object[]> contarPorOrganizador(@Param("ids") java.util.Collection<Long> ids,
+                                        @Param("estadoBaja") String estadoBaja);
+
+    /**
      * Cuenta los eventos vigentes de un organizador (RF-2.1 / DFD 2.1, limite de plan).
      *
      * Excluye los dados de baja: si contaran, un organizador que limpia su

@@ -81,6 +81,10 @@ public class AuditoriaService {
     public static final String ACCION_MODERACION_ERROR = "MODERACION_ERROR";
     public static final String ACCION_EVENTO_MODERADO_ADMIN = "EVENTO_MODERADO_ADMIN";
 
+    // Modulo 6: gestion disciplinaria de cuentas (RF-6.2)
+    public static final String ACCION_USUARIO_SUSPENDIDO_ADMIN = "USUARIO_SUSPENDIDO_ADMIN";
+    public static final String ACCION_USUARIO_REACTIVADO_ADMIN = "USUARIO_REACTIVADO_ADMIN";
+
     // --- Modulo 3: participacion (RF-3.1 a RF-3.5)
     public static final String ACCION_INSCRIPCION_CREADA = "INSCRIPCION_CREADA";
     public static final String ACCION_INSCRIPCION_CONFIRMADA = "INSCRIPCION_CONFIRMADA";
