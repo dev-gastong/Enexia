@@ -112,6 +112,7 @@ erDiagram
     Categoria {
         int id_categoria PK
         varchar nombre_categoria
+        bool activa "baja logica RF-6.3, default true"
     }
     Evento {
         int id_evento PK

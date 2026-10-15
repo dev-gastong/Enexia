@@ -288,3 +288,28 @@
 **Última actualización:** 2026-07-20 18:45  
 **Por:** Claude Code  
 
+
+---
+
+## Sesión: 2026-10-14 / 2026-10-15 (Sprint 2 · Panel de administración completo + correcciones críticas)
+
+### 🛡️ Panel de administración (Módulo 6)
+* **Gestión de usuarios (RF-6.2)** — `usuarios.html` + `/api/admin/usuarios`: directorio paginado con filtro por estado, suspender/reactivar con modal y confirmación del backend. DFD 6.2 aprobado y movido a `diagrams/modulo_6_admin/`.
+* **ABM de categorías (RF-6.3)** — `categorias.html` + `/api/admin/categorias`. Baja **lógica** reversible (`categoria.activa`), no se puede desactivar la última activa. DFD 6.3 reescrito.
+* **Control de suscripciones (RF-6.4)** — `suscripciones.html` + `/api/admin/suscripciones`: lectura (KPIs, planes, tabla paginada) e intervenciones Revocar / Cambiar Plan / Renovar. Pendientes: Actualizar y Reactivar.
+
+### 🐞 Correcciones del testing manual
+* **Crítico:** un usuario suspendido/bloqueado seguía navegando e inscribiéndose porque el JWT no se revalidaba. Ahora el filtro consulta el estado en cada request (401 si no está `ACTIVO`) y el cliente cierra la sesión al detectarlo.
+* **Eventos finalizados:** `FINALIZADO` nunca se asignaba. Barrido cada 5 min + pasada inmediata en el panel del organizador: 122 eventos de prueba pasaron a `FINALIZADO` y salieron del catálogo.
+* **Relacionados:** solo eventos con funciones a futuro.
+* **Home:** buscador y botón en una sola fila, contenedor más ancho (5 columnas) y separador entre secciones.
+
+### 🧪 Datos de prueba
+* `EventosMasivosApiTest` (apagada por defecto, `-Denexia.masivo=true`): 30 eventos para hoy+10 días con 1-3 fechas y 1-2 tickets por fecha. Corrida real: ids 311–340, todos aprobados.
+* Cuenta `admin_enexia` (id 956) para probar el panel.
+
+### 🔍 Verificación
+* API probada en vivo (casos felices y rechazos 400/401/403/404/409) en una instancia en el 8081 contra la misma base.
+* **Sin tests automáticos** para el filtro JWT, la finalización ni los tres services de admin: deuda explícita.
+
+* **Detalle completo, ADR-20 a 27 y lecciones:** `docs/log/sprint_2/2026-10-14_15_panel_admin_completo_y_correcciones.md`.
