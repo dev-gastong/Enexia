@@ -148,8 +148,10 @@ public class EventoService {
 
         // --- Paso 2.3: campos obligatorios que @Valid no puede comprobar
         // (existencia de la categoria en el catalogo) + cantidad de imagenes.
-        if (!categoriaRepository.existsById(datos.getIdCategoria())) {
-            throw new ReglaNegocioException("La categoria indicada no existe en el catalogo");
+        if (!categoriaRepository.existsByIdCategoriaAndActivaTrue(datos.getIdCategoria())) {
+            // Inexistente o dada de baja por un administrador (RF-6.3): para un
+            // evento NUEVO es lo mismo, no se puede clasificar ahi.
+            throw new ReglaNegocioException("La categoria indicada no existe o ya no esta disponible");
         }
         validarCantidadDeImagenes(imagenes);
 
@@ -275,8 +277,13 @@ public class EventoService {
 
         validarAgenda(datos.getCronogramas());
 
-        if (!categoriaRepository.existsById(datos.getIdCategoria())) {
-            throw new ReglaNegocioException("La categoria indicada no existe en el catalogo");
+        // Una categoria dada de baja no se ofrece para cambiar, pero el evento
+        // que YA la tiene puede seguir editandose sin tener que reclasificarlo.
+        boolean conservaCategoria = evento.getCategoria() != null
+                && datos.getIdCategoria().equals(evento.getCategoria().getIdCategoria());
+        if (!conservaCategoria
+                && !categoriaRepository.existsByIdCategoriaAndActivaTrue(datos.getIdCategoria())) {
+            throw new ReglaNegocioException("La categoria indicada no existe o ya no esta disponible");
         }
         validarCantidadDeImagenes(imagenes);
 

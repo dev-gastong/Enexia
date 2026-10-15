@@ -85,6 +85,17 @@ public class AuditoriaService {
     public static final String ACCION_USUARIO_SUSPENDIDO_ADMIN = "USUARIO_SUSPENDIDO_ADMIN";
     public static final String ACCION_USUARIO_REACTIVADO_ADMIN = "USUARIO_REACTIVADO_ADMIN";
 
+    // Modulo 6: ABM de categorias (RF-6.3)
+    public static final String ACCION_CATEGORIA_CREADA = "CATEGORIA_CREADA";
+    public static final String ACCION_CATEGORIA_RENOMBRADA = "CATEGORIA_RENOMBRADA";
+    public static final String ACCION_CATEGORIA_DESACTIVADA = "CATEGORIA_DESACTIVADA";
+    public static final String ACCION_CATEGORIA_ACTIVADA = "CATEGORIA_ACTIVADA";
+
+    // Modulo 6: intervencion sobre suscripciones (RF-6.4)
+    public static final String ACCION_SUSCRIPCION_REVOCADA_ADMIN = "SUSCRIPCION_REVOCADA_ADMIN";
+    public static final String ACCION_SUSCRIPCION_PLAN_CAMBIADO_ADMIN = "SUSCRIPCION_PLAN_CAMBIADO_ADMIN";
+    public static final String ACCION_SUSCRIPCION_RENOVADA_ADMIN = "SUSCRIPCION_RENOVADA_ADMIN";
+
     // --- Modulo 3: participacion (RF-3.1 a RF-3.5)
     public static final String ACCION_INSCRIPCION_CREADA = "INSCRIPCION_CREADA";
     public static final String ACCION_INSCRIPCION_CONFIRMADA = "INSCRIPCION_CONFIRMADA";

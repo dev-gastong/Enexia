@@ -24,4 +24,15 @@ public class Categoria {
 
     @Column(name = "nombre_categoria")
     private String nombreCategoria;
+
+    /**
+     * Baja LOGICA (RF-6.3). Una categoria inactiva deja de ofrecerse para
+     * eventos nuevos y en los filtros del catalogo, pero NO se borra: los
+     * eventos que ya la tienen conservan su clasificacion, sin registros
+     * huerfanos. El DEFAULT en la columna es obligatorio: sin el, al agregar
+     * la columna a una tabla con filas, MariaDB las dejaria todas en 0
+     * (inactivas) y el catalogo se quedaria sin categorias.
+     */
+    @Column(name = "activa", nullable = false, columnDefinition = "BIT(1) NOT NULL DEFAULT 1")
+    private boolean activa = true;
 }

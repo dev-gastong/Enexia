@@ -187,6 +187,27 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     Page<Evento> buscarParaModeracion(@Param("texto") String texto, Pageable paginado);
 
     /**
+     * Eventos por categoria para el ABM del administrador (RF-6.3). Cada fila es
+     * {@code [idCategoria, cantidad]}. Una sola consulta para todas las
+     * categorias; las que no tienen eventos no aparecen (cuentan 0).
+     * {@code soloVisibles} = publicados y aprobados, es decir, los que se ven en
+     * el catalogo; si no, todos los que no fueron dados de baja.
+     */
+    @Query("""
+            SELECT e.categoria.idCategoria, COUNT(e) FROM Evento e
+            WHERE e.categoria IS NOT NULL
+              AND e.estadoOrganizador.estadoOrganizador <> :estadoBaja
+              AND (:soloVisibles = FALSE OR (
+                    e.estadoOrganizador.estadoOrganizador = :estadoPublicado
+                    AND e.estadoSistema.estadoSistema IN :estadosVisibles))
+            GROUP BY e.categoria.idCategoria
+            """)
+    List<Object[]> contarPorCategoria(@Param("soloVisibles") boolean soloVisibles,
+                                      @Param("estadoBaja") String estadoBaja,
+                                      @Param("estadoPublicado") String estadoPublicado,
+                                      @Param("estadosVisibles") List<String> estadosVisibles);
+
+    /**
      * Eventos PUBLICADOS cuyo cronograma ya termino por completo: tienen al
      * menos una fecha y ninguna termina despues de {@code horaActual} de hoy.
      * Es la definicion de FINALIZADO. {@code idOrganizador} nulo = todos.

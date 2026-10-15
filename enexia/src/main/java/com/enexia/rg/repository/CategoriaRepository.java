@@ -15,4 +15,14 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     Optional<Categoria> findByNombreCategoriaIgnoreCase(String nombreCategoria);
 
     List<Categoria> findAllByOrderByNombreCategoriaAsc();
+
+    /** Solo las vigentes: lo que se ofrece para crear eventos y filtrar el catalogo. */
+    List<Categoria> findByActivaTrueOrderByNombreCategoriaAsc();
+
+    boolean existsByIdCategoriaAndActivaTrue(Long idCategoria);
+
+    long countByActivaTrue();
+
+    /** Otra categoria (distinta de {@code idCategoria}) con ese nombre; para validar renombres. */
+    boolean existsByNombreCategoriaIgnoreCaseAndIdCategoriaNot(String nombreCategoria, Long idCategoria);
 }

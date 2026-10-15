@@ -157,7 +157,7 @@ public class CatalogoPublicoController {
      */
     @GetMapping("/categorias")
     public ResponseEntity<List<OpcionCatalogo>> categorias() {
-        List<OpcionCatalogo> opciones = categoriaRepository.findAllByOrderByNombreCategoriaAsc()
+        List<OpcionCatalogo> opciones = categoriaRepository.findByActivaTrueOrderByNombreCategoriaAsc()
                 .stream()
                 .map(c -> new OpcionCatalogo(c.getIdCategoria(), c.getNombreCategoria()))
                 .toList();

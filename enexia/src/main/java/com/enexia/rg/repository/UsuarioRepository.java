@@ -157,6 +157,41 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             """)
     boolean cuentaHabilitada(@Param("email") String email);
 
+    /**
+     * Organizadores (rol ORGANIZADOR) para el control de suscripciones del
+     * administrador (RF-6.4): pagina de ids, con busqueda por nombre, nickname o
+     * email. Solo ids por la misma razon que {@link #buscarIdsParaAdmin}.
+     */
+    @Query(value = """
+            SELECT u.idUsuario FROM Usuario u
+            LEFT JOIN u.personaFisica pf
+            WHERE EXISTS (SELECT 1 FROM UsuarioRol ur WHERE ur.usuario = u AND ur.rol.nombreRol = 'ORGANIZADOR')
+              AND u.fechaBaja IS NULL
+              AND (:texto IS NULL
+                   OR LOWER(u.nickname) LIKE LOWER(CONCAT('%', :texto, '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :texto, '%'))
+                   OR LOWER(CONCAT(pf.nombre, ' ', pf.apellido)) LIKE LOWER(CONCAT('%', :texto, '%')))
+            """,
+            countQuery = """
+            SELECT COUNT(u) FROM Usuario u
+            LEFT JOIN u.personaFisica pf
+            WHERE EXISTS (SELECT 1 FROM UsuarioRol ur WHERE ur.usuario = u AND ur.rol.nombreRol = 'ORGANIZADOR')
+              AND u.fechaBaja IS NULL
+              AND (:texto IS NULL
+                   OR LOWER(u.nickname) LIKE LOWER(CONCAT('%', :texto, '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :texto, '%'))
+                   OR LOWER(CONCAT(pf.nombre, ' ', pf.apellido)) LIKE LOWER(CONCAT('%', :texto, '%')))
+            """)
+    Page<Long> buscarIdsOrganizadoresParaAdmin(@Param("texto") String texto, Pageable paginado);
+
+    /** Total de organizadores activos (base del plan Gratuito en el panel RF-6.4). */
+    @Query("""
+            SELECT COUNT(u) FROM Usuario u
+            WHERE u.fechaBaja IS NULL
+              AND EXISTS (SELECT 1 FROM UsuarioRol ur WHERE ur.usuario = u AND ur.rol.nombreRol = 'ORGANIZADOR')
+            """)
+    long contarOrganizadores();
+
     /** Total de cuentas en un estado del catalogo, para las tarjetas del panel (RF-6.2). */
     @Query("SELECT COUNT(u) FROM Usuario u WHERE u.estadoUsuario.estadoUsuario = :estado")
     long contarPorEstado(@Param("estado") String estado);

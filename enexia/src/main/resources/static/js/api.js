@@ -260,6 +260,44 @@ const API = {
         return this.patch('/api/admin/usuarios/' + idUsuario + '/estado', { accion });
     },
 
+    /** GET /api/admin/categorias -> { totalCategorias, categoriasActivas, eventosTotales, categorias[] } (RF-6.3) */
+    listarCategoriasAdmin() {
+        return this.get('/api/admin/categorias');
+    },
+
+    /** POST /api/admin/categorias -> 201 { mensaje, categoria } | 409 nombre repetido */
+    crearCategoriaAdmin(nombre) {
+        return this.post('/api/admin/categorias', { nombre });
+    },
+
+    /** PUT /api/admin/categorias/{id} -> 200 { mensaje, categoria } | 409 nombre repetido */
+    renombrarCategoriaAdmin(idCategoria, nombre) {
+        return this.put('/api/admin/categorias/' + idCategoria, { nombre });
+    },
+
+    /** PATCH /api/admin/categorias/{id}/estado -> { accion: 'DESACTIVAR' | 'ACTIVAR' } */
+    cambiarEstadoCategoriaAdmin(idCategoria, accion) {
+        return this.patch('/api/admin/categorias/' + idCategoria + '/estado', { accion });
+    },
+
+    /** GET /api/admin/suscripciones?... -> organizadores con su plan vigente, paginado (RF-6.4) */
+    listarSuscripcionesAdmin(parametros = {}) {
+        const query = new URLSearchParams(
+            Object.entries(parametros).filter(([, v]) => v !== null && v !== undefined && v !== '')
+        ).toString();
+        return this.get('/api/admin/suscripciones' + (query ? '?' + query : ''));
+    },
+
+    /** PATCH /api/admin/suscripciones/{id} -> { accion: REVOCAR | CAMBIAR_PLAN | RENOVAR, tipoPlan? } (RF-6.4) */
+    intervenirSuscripcionAdmin(idSuscripcion, datos) {
+        return this.patch('/api/admin/suscripciones/' + idSuscripcion, datos);
+    },
+
+    /** GET /api/admin/suscripciones/resumen -> { suscripcionesActivas, pagosVencidos, ingresosDelMes, planes[] } */
+    resumenSuscripcionesAdmin() {
+        return this.get('/api/admin/suscripciones/resumen');
+    },
+
     /* ===== Modulo 1: perfil propio ===== */
 
     /** GET /api/usuario/perfil -> datos de identidad del usuario autenticado */

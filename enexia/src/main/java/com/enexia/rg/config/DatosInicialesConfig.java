@@ -111,6 +111,7 @@ public class DatosInicialesConfig {
     private final EventoEstadoOrganizadorRepository eventoEstadoOrganizadorRepository;
     private final InscripcionEstadoRepository inscripcionEstadoRepository;
     private final PagoEstadoRepository pagoEstadoRepository;
+    private final com.enexia.rg.repository.SuscripcionEstadoRepository suscripcionEstadoRepository;
     private final CategoriaRepository categoriaRepository;
     private final TipoTicketRepository tipoTicketRepository;
     private final PaisRepository paisRepository;
@@ -293,10 +294,27 @@ public class DatosInicialesConfig {
             }
         }
 
+        // Estados de suscripcion (Modulo 8 / panel RF-6.4).
+        for (com.enexia.rg.model.SuscripcionEstadoNombre nombre
+                : com.enexia.rg.model.SuscripcionEstadoNombre.values()) {
+            if (suscripcionEstadoRepository.findByNombreEstadoIgnoreCase(nombre.name()).isEmpty()) {
+                com.enexia.rg.model.SuscripcionEstado estado = new com.enexia.rg.model.SuscripcionEstado();
+                estado.setNombreEstado(nombre.name());
+                suscripcionEstadoRepository.save(estado);
+                creados++;
+            }
+        }
+
         return creados;
     }
 
     private int cargarCategorias() {
+        // Solo en una base vacia. Desde que el administrador puede renombrar y
+        // dar de baja categorias (RF-6.3), sembrar "por nombre faltante" en cada
+        // arranque las resucitaria: renombrar "Musica" haria reaparecer "Musica".
+        if (categoriaRepository.count() > 0) {
+            return 0;
+        }
         int creados = 0;
         for (String nombre : CATEGORIAS) {
             if (categoriaRepository.findByNombreCategoriaIgnoreCase(nombre).isEmpty()) {

@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SuscripcionEstadoRepository extends JpaRepository<SuscripcionEstado, Long> {
 
+    java.util.Optional<SuscripcionEstado> findByNombreEstadoIgnoreCase(String nombreEstado);
+
 }
