@@ -59,6 +59,7 @@ Este archivo proporciona una guía en español sobre el proyecto Enexia. La vers
 - **PARTICIPANTE** (Persona Física): Recibe **solo el rol PARTICIPANTE** — puede explorar, registrarse y participar en eventos.
 - **ORGANIZADOR** (Persona Física): Recibe **los roles ORGANIZADOR + PARTICIPANTE** — puede crear/gestionar eventos Y participar en eventos de otros.
   - **Justificación:** Evita forzar a los organizadores a crear cuentas separadas para participar. Mantiene el sistema liviano para el MVP.
+- **ADMINISTRADOR** (2026-10-15): una cuenta de administrador es **solo de administración** — nunca puede tener PARTICIPANTE ni ORGANIZADOR. No se inscribe a eventos, no los valora ni organiza. Se aplica en un único lugar, `Usuario.getRoles()`, que reduce los roles a `["ADMINISTRADOR"]` (así el JWT y las autoridades de Spring nunca traen los otros), más `JwtAuthenticationFilter` para los tokens emitidos antes de la regla. No volver a agregar chequeos por endpoint; si algún día se construye un flujo para otorgar roles (RF-6.2+), también debe negarse a combinarlos.
 
 **Sprint 2: Personas Jurídicas como Contenedores Administrativos**
 - **Persona Jurídica** (Organización/Empresa): Creada por una Persona Física ORGANIZADOR; no es una entidad de login.

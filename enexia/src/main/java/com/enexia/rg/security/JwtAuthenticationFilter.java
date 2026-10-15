@@ -93,7 +93,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        List<SimpleGrantedAuthority> autoridades = jwtService.extraerRoles(token).stream()
+        // Una cuenta ADMINISTRADOR es solo de administracion. Los tokens
+        // emitidos antes de esa regla pueden traer ademas PARTICIPANTE u
+        // ORGANIZADOR; se descartan aca para no esperar a que venzan.
+        List<String> rolesToken = jwtService.extraerRoles(token);
+        if (rolesToken.contains("ADMINISTRADOR")) {
+            rolesToken = List.of("ADMINISTRADOR");
+        }
+        List<SimpleGrantedAuthority> autoridades = rolesToken.stream()
                 .map(rol -> new SimpleGrantedAuthority(PREFIJO_ROL + rol))
                 .toList();
 

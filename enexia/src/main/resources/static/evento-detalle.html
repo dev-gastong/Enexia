@@ -456,7 +456,9 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         }
 
         const usuario = Auth.usuario();
-        const esOrganizador = Auth.hasRole('ORGANIZADOR');
+        // Una cuenta con ADMINISTRADOR es solo de administracion: no participa ni organiza.
+        const esAdmin = Auth.hasRole('ADMINISTRADOR');
+        const esOrganizador = Auth.hasRole('ORGANIZADOR') && !esAdmin;
         const inicial = (usuario && usuario.email ? usuario.email.trim().charAt(0) : '?').toUpperCase();
         const etiqueta = (usuario && usuario.email) || 'Mi cuenta';
 
@@ -468,16 +470,16 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                         <span class="navbar__avatar-sub">Mi cuenta</span>
                     </span>
                </a>`
-            : `<a class="navbar__avatar-bloque" href="pages/participante/perfil.html">
+            : `<a class="navbar__avatar-bloque" href="${esAdmin ? 'pages/admin/moderacion-eventos.html' : 'pages/participante/perfil.html'}">
                     <span class="navbar__avatar">${inicial}<span class="navbar__avatar-punto"></span></span>
                     <span class="navbar__avatar-texto">
                         <span class="navbar__avatar-nombre">${etiqueta}</span>
-                        <span class="navbar__avatar-sub">Participante</span>
+                        <span class="navbar__avatar-sub">${esAdmin ? 'Administrador' : 'Participante'}</span>
                     </span>
                </a>`;
 
         cont.innerHTML = `
-            ${!esOrganizador ? '<a href="pages/participante/mis-inscripciones.html" style="font-size:13px;font-weight:500;color:var(--texto-secundario)">Mis Inscripciones</a>' : ''}
+            ${!esOrganizador && !esAdmin ? '<a href="pages/participante/mis-inscripciones.html" style="font-size:13px;font-weight:500;color:var(--texto-secundario)">Mis Inscripciones</a>' : ''}
             ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">+ Crear Evento</a>' : ''}
             <span class="navbar__divisor"></span>
             ${bloqueAvatar}
@@ -623,7 +625,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                 ${(ev.latitud != null && ev.longitud != null) ? `<div class="ubicacion-gps"><span><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.8" stroke="currentColor" stroke-width="1.2"/></svg>GPS: ${Number(ev.latitud).toFixed(4)}, ${Number(ev.longitud).toFixed(4)}</span></div>` : ''}
             </div>`;
 
-        const puedeInscribirse = Auth.autenticado() && Auth.hasRole('PARTICIPANTE');
+        const puedeInscribirse = Auth.autenticado() && Auth.hasRole('PARTICIPANTE') && !Auth.hasRole('ADMINISTRADOR');
 
         const accesoFilasHtml = (ev.cronogramas || []).flatMap(c => (c.tickets || []).map(t => {
             const pct = t.cupoMaximo ? Math.max(0, Math.min(100, Math.round((t.cupoDisponible / t.cupoMaximo) * 100))) : 0;
@@ -711,7 +713,9 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         const accesoAvisoHtml = puedeInscribirse ? '' : `
             <div class="aviso-info">
                 ${Auth.autenticado()
-                    ? 'Tu cuenta no tiene el rol de participante.'
+                    ? (Auth.hasRole('ADMINISTRADOR')
+                        ? 'Las cuentas de administración no se inscriben a eventos.'
+                        : 'Tu cuenta no tiene el rol de participante.')
                     : 'Iniciá sesión para inscribirte a este evento.'}
                 ${!Auth.autenticado()
                     ? ' <a href="pages/auth/login-desktop-claro.html">Iniciar sesión</a>'

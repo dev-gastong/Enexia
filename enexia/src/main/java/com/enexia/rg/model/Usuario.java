@@ -77,12 +77,23 @@ public class Usuario {
     @Column(name = "fecha_baja")
     private LocalDateTime fechaBaja;
 
+    private static final String ROL_ADMINISTRADOR = "ADMINISTRADOR";
+
+    /**
+     * Roles efectivos de la cuenta.
+     *
+     * Regla de negocio: una cuenta ADMINISTRADOR es solo de administracion.
+     * Aunque la base tenga filas de PARTICIPANTE u ORGANIZADOR para ella, aqui
+     * se descartan: asi ni el JWT ni las autoridades de Spring las incluyen y
+     * la regla no depende de que cada endpoint la recuerde.
+     */
     public List<String> getRoles() {
         if (usuarioRoles == null || usuarioRoles.isEmpty()) {
             return List.of();
         }
-        return usuarioRoles.stream()
+        List<String> roles = usuarioRoles.stream()
             .map(ur -> ur.getRol().getNombreRol())
             .collect(Collectors.toList());
+        return roles.contains(ROL_ADMINISTRADOR) ? List.of(ROL_ADMINISTRADOR) : roles;
     }
 }

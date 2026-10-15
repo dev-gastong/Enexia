@@ -179,12 +179,58 @@ a { color: var(--acento); text-decoration: none; }
 .opcion-plan__precio { font-family: var(--marca); font-size: 18px; font-weight: 700; color: var(--texto); }
 .opcion-plan__lista { margin: 0; padding: 8px 0 0; border-top: 1px solid var(--borde); list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--texto-secundario); }
 
-/* confirmacion (solo con el mensaje del backend) */
-.modal--confirmacion { max-width: 420px; padding: 30px 28px 26px; }
-.modal--confirmacion .modal__texto { margin-bottom: 0; }
-.modal__etiqueta { display: block; margin-bottom: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--m); }
-.modal__cerrar { position: absolute; top: 12px; right: 12px; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 1px solid var(--borde); border-radius: 50%; background: var(--superficie-alt); color: var(--texto-secundario); cursor: pointer; }
-.modal__cerrar svg { width: 11px; height: 11px; }
+/* Cambiar Plan: tarjeta oscura cian, con el filete de color al pie */
+.modal--cambiar { border: 1px solid #1E3A5F; background: linear-gradient(135deg, rgba(15,24,38,.93) 0%, rgba(10,17,32,.94) 100%); box-shadow: 0 0 48px rgba(0,212,255,.08), 0 24px 64px rgba(0,0,0,.5); overflow: hidden; }
+.modal--cambiar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; opacity: .85; background: linear-gradient(90deg, rgba(0,212,255,0) 0%, #00D4FF 40%, #277EFF 70%, rgba(39,126,255,0) 100%); }
+.modal--cambiar .modal__icono { border-radius: 24px; color: #00D4FF; background: linear-gradient(135deg, rgba(0,212,255,.09) 0%, rgba(39,126,255,.13) 100%); border: 1px solid rgba(0,212,255,.27); box-shadow: 0 0 24px 4px rgba(0,212,255,.15); }
+.modal--cambiar .modal__titulo { color: #F0F0F5; }
+.modal--cambiar .modal__texto { color: #6B7EA0; font-size: 13px; line-height: 1.65; }
+.modal--cambiar .modal__texto strong { color: inherit; font-weight: 400; }
+.modal--cambiar .opcion-plan { background: #0D1422; border-color: #1E2D45; }
+.modal--cambiar .opcion-plan:hover { border-color: rgba(0,212,255,.5); }
+.modal--cambiar .opcion-plan--sel { border-color: #00D4FF; background: #0D1422; box-shadow: 0 0 18px 2px rgba(0,212,255,.15); }
+.modal--cambiar .opcion-plan__etq { background: #00D4FF; color: #050D18; letter-spacing: .05em; }
+.modal--cambiar .opcion-plan__nombre, .modal--cambiar .opcion-plan__precio { color: #E8EAF2; }
+.modal--cambiar .opcion-plan--sel .opcion-plan__nombre, .modal--cambiar .opcion-plan--sel .opcion-plan__precio { color: #00D4FF; }
+.modal--cambiar .opcion-plan__lista { color: #6B7EA0; border-top-color: #1E2D45; }
+.modal--cambiar .opcion-plan--sel .opcion-plan__lista { border-top-color: rgba(0,212,255,.2); }
+.modal--cambiar .modal__divisor { background: #1E2D45; }
+.modal--cambiar .btn-confirmar { border: 1px solid rgba(0,212,255,.5); background: linear-gradient(90deg, #00D4FF 0%, #00AAEE 100%); color: #050D18; box-shadow: 0 0 24px 4px rgba(0,212,255,.2); }
+.modal--cambiar .btn-volver { border-color: #2A3A55; color: #E8EAF2; font-weight: 500; }
+.modal--cambiar .btn-volver:hover { background: rgba(255,255,255,.04); }
+
+/* Renovar: tarjeta oscura ambar, con el filete de color arriba */
+.modal--renovar { border: 1px solid #2E2210; background: linear-gradient(142deg, #181410 0%, #120E08 60%, #0D0A06 100%); box-shadow: 0 0 48px rgba(245,158,11,.08), 0 24px 64px rgba(0,0,0,.55); overflow: hidden; }
+.modal--renovar::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; opacity: .85; background: linear-gradient(90deg, rgba(245,158,11,0) 0%, #F59E0B 40%, #FBBF24 70%, rgba(251,191,36,0) 100%); }
+.modal--renovar .modal__icono { border-radius: 24px; color: #F59E0B; background: radial-gradient(ellipse 70.71% 70.71% at 50% 50%, rgba(245,158,11,.14) 0%, rgba(245,158,11,0) 100%); border: 1px solid rgba(245,158,11,.32); box-shadow: 0 0 24px 4px rgba(245,158,11,.15); }
+.modal--renovar .modal__titulo { color: #F0F0F5; }
+.modal--renovar .modal__texto { color: #9090B0; font-size: 13px; line-height: 1.65; }
+.modal--renovar .modal__texto strong { color: inherit; font-weight: 400; }
+.modal--renovar .caja-dato { background: #0A0704; border-color: #2A1A06; }
+.modal--renovar .caja-dato__cab { background: #100C06; border-bottom-color: #2A1A06; color: #A06020; }
+.modal--renovar .caja-dato__nombre { color: #E8EAF2; font-size: 12.9px; }
+.modal--renovar .caja-dato__detalle { color: #7A6040; font-size: 11px; }
+.modal--renovar .modal__divisor { background: #2A1A06; }
+.modal--renovar .btn-confirmar { border: 1px solid rgba(245,158,11,.5); background: linear-gradient(178deg, #D97706 0%, #B45309 100%); color: #fff; box-shadow: 0 0 20px rgba(245,158,11,.25); }
+.modal--renovar .btn-volver { border-color: #2A1E0E; color: #E8EAF2; font-weight: 500; }
+.modal--renovar .btn-volver:hover { background: rgba(255,255,255,.04); }
+
+/* Confirmacion compacta (solo con el mensaje del backend). Color por accion. */
+.modal--confirmacion { max-width: 431px; padding: 28px 24px 24px; border-radius: 24px; border: 1px solid color-mix(in srgb, var(--m) 27%, transparent); background: linear-gradient(172deg, rgba(15,24,38,.97) 0%, rgba(10,17,32,.98) 100%); backdrop-filter: blur(10px); overflow: hidden; }
+.modal--confirmacion.modal--rojo  { --m: #F43F5E; }
+.modal--confirmacion.modal--azul  { --m: #00D4FF; }
+.modal--confirmacion.modal--ambar { --m: #FACC15; }
+.modal--confirmacion.modal--verde { --m: #22C55E; }
+.modal--confirmacion::before { content: ""; position: absolute; top: 1px; left: 33px; right: 33px; height: 2px; opacity: .7; border-radius: 0 0 999px 999px; background: linear-gradient(90deg, transparent 0%, var(--m) 50%, transparent 100%); }
+.modal--confirmacion .modal__icono { width: 48px; height: 48px; margin: 4px auto 16px; border-radius: 50%; background: transparent; border: 1px solid color-mix(in srgb, var(--m) 27%, transparent); box-shadow: 0 0 16px 2px color-mix(in srgb, var(--m) 19%, transparent); }
+.modal--confirmacion .modal__icono svg { width: 20px; height: 20px; }
+.modal--confirmacion .modal__etiqueta { margin-bottom: 8px; font-size: 10px; line-height: 10px; letter-spacing: .12em; }
+.modal__trazo { display: block; width: 32px; height: 1.5px; margin: 0 auto 12px; border-radius: 2px; background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--m) 50%, transparent) 50%, transparent 100%); }
+.modal--confirmacion .modal__texto { margin: 0 auto; max-width: 376px; font-size: 13px; line-height: 1.55; color: #B0BDD4; }
+.modal__etiqueta { display: block; font-weight: 700; text-transform: uppercase; color: var(--m); }
+.modal__cerrar { position: absolute; top: 13px; right: 16px; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; background: rgba(255,255,255,.03); color: #6B7EA0; cursor: pointer; padding: 0; }
+.modal__cerrar svg { width: 10px; height: 10px; }
+.modal__cerrar:hover { color: #E8EAF2; }
 
 /* --- Aviso -------------------------------------------------------------------------------- */
 .toast-pila { position: fixed; top: 20px; right: 20px; z-index: 80; display: flex; flex-direction: column; gap: 10px; }
@@ -334,7 +380,7 @@ a { color: var(--acento); text-decoration: none; }
 
 <!-- Modal: cambiar plan -->
 <div class="modal-velo" id="modalCambiar">
-    <div class="modal modal--azul" role="dialog" aria-modal="true" aria-labelledby="modalCambiarTitulo">
+    <div class="modal modal--azul modal--cambiar" role="dialog" aria-modal="true" aria-labelledby="modalCambiarTitulo">
         <div class="modal__icono"><svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3.5" y="3.5" width="19" height="9" rx="2" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="13.5" width="19" height="9" rx="2" stroke="currentColor" stroke-width="2"/></svg></div>
         <h3 class="modal__titulo" id="modalCambiarTitulo">Cambiar Plan</h3>
         <p class="modal__texto"><strong>Aviso:</strong> Seleccione el nuevo nivel de acceso para el organizador. Esta acción modificará sus límites de publicaciones de forma inmediata.</p>
@@ -349,7 +395,7 @@ a { color: var(--acento); text-decoration: none; }
 
 <!-- Modal: renovar suscripcion -->
 <div class="modal-velo" id="modalRenovar">
-    <div class="modal modal--ambar" role="dialog" aria-modal="true" aria-labelledby="modalRenovarTitulo">
+    <div class="modal modal--ambar modal--renovar" role="dialog" aria-modal="true" aria-labelledby="modalRenovarTitulo">
         <div class="modal__icono"><svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21.5 13a8.5 8.5 0 1 1-2.5-6M21.5 4v4.5H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <h3 class="modal__titulo" id="modalRenovarTitulo">Renovar Suscripción</h3>
         <p class="modal__texto"><strong>Atención:</strong> Está a punto de forzar la renovación manual de este plan Pro vencido. Esto restaurará las estadísticas avanzadas omitiendo de forma temporal la pasarela de pagos.</p>
@@ -376,6 +422,7 @@ a { color: var(--acento); text-decoration: none; }
         </button>
         <div class="modal__icono"><svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="13" cy="13" r="9.5" stroke="currentColor" stroke-width="2"/><path d="M8.6 13.3 11.6 16.3 17.6 9.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <span class="modal__etiqueta" id="modalConfirmacionEtiqueta"></span>
+        <span class="modal__trazo" aria-hidden="true"></span>
         <p class="modal__texto" id="modalConfirmacionTexto"></p>
     </div>
 </div>
@@ -384,6 +431,7 @@ a { color: var(--acento); text-decoration: none; }
 
 <script src="../../js/api.js"></script>
 <script src="../../js/auth.js"></script>
+<script src="../../js/paneles.js"></script>
 <script src="../../js/utils.js"></script>
 
 <script>

@@ -59,6 +59,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **PARTICIPANTE** (Persona Física): Receives **PARTICIPANTE role only** — can browse, register, and participate in events.
 - **ORGANIZADOR** (Persona Física): Receives **ORGANIZADOR + PARTICIPANTE roles** — can create/manage events AND participate in others' events.
   - **Rationale:** Avoids forcing organizers to create separate accounts for participation. Keeps the system lightweight for MVP.
+- **ADMINISTRADOR** (2026-10-15): an administrator account is **admin-only** — it can never hold PARTICIPANTE or ORGANIZADOR. It cannot register for events, rate them, or organize. Enforced in one place, `Usuario.getRoles()`, which collapses the roles to `["ADMINISTRADOR"]` (so the JWT and Spring authorities never carry the others), plus `JwtAuthenticationFilter` for tokens issued before the rule. Don't re-add per-endpoint checks; if a role-granting flow is ever built (RF-6.2+), it must also refuse to combine them.
 
 **Sprint 2: Personas Jurídicas as Administrative Containers**
 - **Persona Jurídica** (Organization/Company): Created by an ORGANIZADOR Persona Física; not a login entity.

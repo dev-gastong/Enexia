@@ -192,7 +192,7 @@ public class AdminSuscripcionService {
                             "Solo se puede revocar una suscripcion activa o vencida");
                 }
                 estadoDestino = SuscripcionEstadoNombre.CANCELADA;
-                mensaje = "Suscripción revocada. El organizador volvió al plan Gratuito.";
+                mensaje = "Plan Pro revocado manualmente. Usuario degradado a cuenta Gratuita.";
                 accionAuditada = AuditoriaService.ACCION_SUSCRIPCION_REVOCADA_ADMIN;
                 motivoPorDefecto = MOTIVO_REVOCAR;
             }
@@ -208,8 +208,7 @@ public class AdminSuscripcionService {
                     throw new OperacionNoPermitidaException("La suscripcion ya tiene ese plan");
                 }
                 suscripcion.setTipoPlan(datos.getTipoPlan());
-                mensaje = "Plan actualizado correctamente a " + (PLAN_PRO.equals(datos.getTipoPlan())
-                        ? "Pro" : "Gratuito") + ".";
+                mensaje = "Nivel de suscripción actualizado con éxito para el organizador.";
                 accionAuditada = AuditoriaService.ACCION_SUSCRIPCION_PLAN_CAMBIADO_ADMIN;
                 motivoPorDefecto = MOTIVO_CAMBIAR_PLAN + ": " + planActual + " -> " + datos.getTipoPlan();
             }
@@ -221,8 +220,7 @@ public class AdminSuscripcionService {
                 }
                 estadoDestino = SuscripcionEstadoNombre.ACTIVA;
                 renovarCobertura(suscripcion);
-                mensaje = "Suscripción renovada. Cobertura vigente hasta el "
-                        + suscripcion.getFechaFin().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".";
+                mensaje = "Suscripción vencida renovada manualmente de forma excepcional.";
                 accionAuditada = AuditoriaService.ACCION_SUSCRIPCION_RENOVADA_ADMIN;
                 motivoPorDefecto = MOTIVO_RENOVAR;
             }
