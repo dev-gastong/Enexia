@@ -561,6 +561,15 @@ public class Usuario {
 - **RBAC (Backend)**: Always validate roles in service layer via `@PreAuthorize` or manual checks; frontend can render UI conditionally, but backend enforces
 - **Cloudinary Integration**: Planned for Sprint 2 (Module 2 - Event Images); for now skip image uploads
 - **Analytics** (Future): Aggregate visits (unique per user) and avg ratings from `Valoracion` table for event dashboards
+
+---
+
+## Design Rules (read before any frontend/CSS change)
+
+- **Square corners, everywhere (2026-10-16).** Borders must stay squarish, especially in `pages/admin/*`. Use ONLY the tokens from `pages/css/tokens.css` section 8: `--radio-campo` (4px), `--radio-tarjeta` (6px), `--radio-sm` (6px). Never hardcode `border-radius` values (12/14/16/20/24px) and never use `999px` pills or override `--radio-tarjeta` per page. `50%` is allowed only for avatars, status dots and round close/icon buttons.
+- No "+" icon or "+" text on any "Crear Evento" button/link.
+- Never show internal DB table names (`Tabla: ...`) in user-facing forms.
+- Admin accounts never see participant actions (inscription button or its notice) on the event detail page.
 
 ---
 

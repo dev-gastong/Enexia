@@ -153,12 +153,14 @@ public class AdminSuscripcionService {
                 inicioMes, inicioMes.plusMonths(1));
 
         long organizadores = usuarioRepository.contarOrganizadores();
+        // Las tarjetas de plan cuentan solo cuentas ACTIVAS: un bloqueado o dado de baja resta.
+        long proConCuentaActiva = suscripcionRepository.contarPorEstadoYPlanConCuentaActiva(activa, PLAN_PRO);
 
         return new AdminSuscripcionesResumenResponse(proActivas, vencidas, ingresos, List.of(
                 new AdminSuscripcionesResumenResponse.Plan(
-                        PLAN_GRATUITO, BigDecimal.ZERO, Math.max(0, organizadores - proActivas), eventosFree),
+                        PLAN_GRATUITO, BigDecimal.ZERO, Math.max(0, organizadores - proConCuentaActiva), eventosFree),
                 new AdminSuscripcionesResumenResponse.Plan(
-                        PLAN_PRO, precioPro, proActivas, null)));
+                        PLAN_PRO, precioPro, proConCuentaActiva, null)));
     }
 
     // ===================================================================

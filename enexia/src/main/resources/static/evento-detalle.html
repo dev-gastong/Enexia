@@ -480,7 +480,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
         cont.innerHTML = `
             ${!esOrganizador && !esAdmin ? '<a href="pages/participante/mis-inscripciones.html" style="font-size:13px;font-weight:500;color:var(--texto-secundario)">Mis Inscripciones</a>' : ''}
-            ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">+ Crear Evento</a>' : ''}
+            ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">Crear Evento</a>' : ''}
             <span class="navbar__divisor"></span>
             ${bloqueAvatar}
             <button class="navbar__salir" id="btnSalirNav" type="button">Salir</button>
@@ -709,8 +709,9 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
         }
 
         // Solo se muestra cuando hay algo que decir (sin sesion): con sesion de
-        // PARTICIPANTE cada ticket ya trae su propio boton, no hace falta aviso.
-        const accesoAvisoHtml = puedeInscribirse ? '' : `
+        // PARTICIPANTE cada ticket ya trae su propio boton, no hace falta aviso; para un
+        // ADMINISTRADOR la seccion de inscripcion no se muestra en absoluto.
+        const accesoAvisoHtml = (puedeInscribirse || Auth.hasRole('ADMINISTRADOR')) ? '' : `
             <div class="aviso-info">
                 ${Auth.autenticado()
                     ? (Auth.hasRole('ADMINISTRADOR')

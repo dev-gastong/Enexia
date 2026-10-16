@@ -573,6 +573,15 @@ public class Usuario {
 - **RBAC (Backend)**: Siempre validar roles en capa de servicio vía `@PreAuthorize` o verificaciones manuales; frontend puede renderizar UI condicionalmente, pero backend es la autoridad final
 - **Integración Cloudinary**: Planeada para Sprint 2 (Módulo 2 - Imágenes de Eventos); por ahora saltar cargas de imagen
 - **Analítica** (Futuro): Agregar visualizaciones (únicas por usuario) y calificación promedio de tabla `Valoracion` para dashboards de eventos
+
+---
+
+## Reglas de diseño (leer antes de cualquier cambio de frontend/CSS)
+
+- **Esquinas cuadradas, en todo (2026-10-16).** Los bordes deben mantenerse cuadrados, sobre todo en `pages/admin/*`. Usar SOLO los tokens de `pages/css/tokens.css` sección 8: `--radio-campo` (4px), `--radio-tarjeta` (6px), `--radio-sm` (6px). Nunca poner valores fijos de `border-radius` (12/14/16/20/24px), ni píldoras `999px`, ni redefinir `--radio-tarjeta` por página. `50%` solo para avatares, puntos de estado y botones redondos de cerrar/ícono.
+- Ningún botón/enlace "Crear Evento" lleva ícono "+" ni "+" en el texto.
+- Nunca mostrar nombres internos de tablas de BD (`Tabla: ...`) en formularios para el usuario.
+- Las cuentas admin no ven acciones de participante (botón de inscripción ni su aviso) en el detalle de evento.
 
 ---
 

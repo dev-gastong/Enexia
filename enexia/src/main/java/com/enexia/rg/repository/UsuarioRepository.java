@@ -184,10 +184,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             """)
     Page<Long> buscarIdsOrganizadoresParaAdmin(@Param("texto") String texto, Pageable paginado);
 
-    /** Total de organizadores activos (base del plan Gratuito en el panel RF-6.4). */
+    /**
+     * Total de organizadores con cuenta ACTIVA (base del plan Gratuito en el panel RF-6.4).
+     * Excluye bloqueados, suspendidos y dados de baja: "activo" es el estado de la cuenta.
+     */
     @Query("""
             SELECT COUNT(u) FROM Usuario u
             WHERE u.fechaBaja IS NULL
+              AND u.estadoUsuario.estadoUsuario = 'ACTIVO'
               AND EXISTS (SELECT 1 FROM UsuarioRol ur WHERE ur.usuario = u AND ur.rol.nombreRol = 'ORGANIZADOR')
             """)
     long contarOrganizadores();

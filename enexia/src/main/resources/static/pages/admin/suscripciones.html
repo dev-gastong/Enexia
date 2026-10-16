@@ -40,12 +40,12 @@ a { color: var(--acento); text-decoration: none; }
 .sidebar__rol { font-size: 11px; color: var(--texto-secundario); padding-left: 2px; }
 .sidebar__separador { margin: 4px 24px 12px; border: 0; border-top: 1px solid var(--borde); }
 .sidebar__nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; flex: 1; }
-.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
+.sidebar__item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-left: 3px solid transparent; border-radius: var(--radio-sm); color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
 .sidebar__item svg { display: block; width: 17px; height: 17px; flex: none; }
 .sidebar__item:hover { background: var(--superficie-alt); color: var(--texto); }
 .sidebar__item--activo { background: var(--acento-tinte); border-left-color: var(--acento); color: var(--acento-fuerte); }
 .sidebar__item--activo:hover { background: var(--acento-tinte); color: var(--acento-fuerte); }
-.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 16px 16px 20px; padding: 11px 14px; border-radius: var(--radio); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
+.sidebar__salir { display: flex; align-items: center; gap: 10px; margin: 16px 16px 20px; padding: 11px 14px; border-radius: var(--radio-sm); color: var(--error); font-size: 14px; font-weight: 500; background: transparent; border: 0; cursor: pointer; text-align: left; }
 .sidebar__salir:hover { background: var(--error-tinte); }
 .sidebar__salir svg { width: 16px; height: 16px; flex: none; }
 
@@ -85,7 +85,7 @@ a { color: var(--acento); text-decoration: none; }
 .tabla-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px 24px; border-bottom: 1px solid var(--borde); }
 .tabla-cabecera h2 { margin: 0; color: var(--texto); font-family: var(--marca); font-size: 17px; font-weight: 700; }
 .tabla-cabecera p { margin: 2px 0 0; font-size: 12.5px; color: var(--texto-secundario); }
-.buscador { display: flex; align-items: center; gap: 8px; min-width: 240px; padding: 9px 13px; border: 1px solid var(--borde-campo); border-radius: var(--radio); background: var(--superficie); }
+.buscador { display: flex; align-items: center; gap: 8px; min-width: 240px; padding: 9px 13px; border: 1px solid var(--borde-campo); border-radius: var(--radio-sm); background: var(--superficie); }
 .buscador svg { width: 14px; height: 14px; color: var(--texto-secundario); flex: none; }
 .buscador input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--texto); font-family: inherit; font-size: 13px; }
 .buscador:focus-within { border-color: var(--acento); box-shadow: var(--foco-accion); }
@@ -109,7 +109,7 @@ a { color: var(--acento); text-decoration: none; }
 .celda-plan--pro { color: var(--acento); }
 .celda-monto { font-weight: 700; color: var(--texto); font-size: 13px; }
 
-.chip-estado { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.chip-estado { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: var(--radio-sm); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .chip-estado__punto { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 .chip-estado--ok { background: var(--ok-tinte); color: var(--ok); }
 .chip-estado--alerta { background: var(--alerta-tinte); color: var(--alerta); }
@@ -142,25 +142,25 @@ a { color: var(--acento); text-decoration: none; }
 /* --- Modales -------------------------------------------------------------------------------- */
 .modal-velo { display: none; position: fixed; inset: 0; z-index: 70; background: rgba(31, 26, 46, .5); align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
 .modal-velo--visible { display: flex; }
-.modal { --m: var(--acento); position: relative; width: 100%; max-width: 460px; margin: auto; border-radius: 20px; border-top: 3px solid var(--m); background: var(--superficie); box-shadow: var(--sombra-tarjeta); padding: 32px; text-align: center; animation: entrar-modal .18s ease; }
+.modal { --m: var(--acento); position: relative; width: 100%; max-width: 460px; margin: auto; border-radius: var(--radio-tarjeta); border-top: 3px solid var(--m); background: var(--superficie); box-shadow: var(--sombra-tarjeta); padding: 32px; text-align: center; animation: entrar-modal .18s ease; }
 .modal--rojo { --m: var(--error); }
 .modal--ambar { --m: var(--alerta); }
 .modal--azul { --m: var(--acento); }
 .modal--verde { --m: var(--ok); }
 @keyframes entrar-modal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.modal__icono { width: 60px; height: 60px; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--m); background: color-mix(in srgb, var(--m) 12%, transparent); border: 1px solid color-mix(in srgb, var(--m) 32%, transparent); }
+.modal__icono { width: 60px; height: 60px; border-radius: var(--radio-tarjeta); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--m); background: color-mix(in srgb, var(--m) 12%, transparent); border: 1px solid color-mix(in srgb, var(--m) 32%, transparent); }
 .modal__icono svg { width: 26px; height: 26px; }
 .modal__titulo { margin: 0 0 12px; font-family: var(--marca); font-size: 24px; font-weight: 700; color: var(--texto); }
 .modal__texto { margin: 0 auto 22px; max-width: 360px; font-size: 13.5px; line-height: 1.65; color: var(--texto-secundario); }
 .modal__texto strong { color: var(--m); }
-.caja-dato { margin-bottom: 22px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--m) 28%, var(--borde)); border-radius: 16px; background: var(--superficie-alt); text-align: left; }
+.caja-dato { margin-bottom: 22px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--m) 28%, var(--borde)); border-radius: var(--radio-tarjeta); background: var(--superficie-alt); text-align: left; }
 .caja-dato__cab { padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--m); background: color-mix(in srgb, var(--m) 8%, var(--superficie)); border-bottom: 1px solid color-mix(in srgb, var(--m) 20%, var(--borde)); }
 .caja-dato__cuerpo { padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; }
 .caja-dato__nombre { font-size: 13.5px; font-weight: 700; color: var(--texto); overflow-wrap: anywhere; }
 .caja-dato__detalle { font-size: 12px; color: var(--texto-secundario); }
 .modal__divisor { height: 1px; margin: 0 0 22px; background: var(--borde); border: 0; }
 .modal__acciones { display: flex; flex-direction: column; gap: 12px; }
-.modal__acciones button { width: 100%; padding: 13px 16px; border-radius: 14px; font-family: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+.modal__acciones button { width: 100%; padding: 13px 16px; border-radius: var(--radio-tarjeta); font-family: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
 .btn-confirmar { border: 1px solid color-mix(in srgb, var(--m) 55%, transparent); background: var(--m); color: var(--blanco); }
 .btn-confirmar:hover { filter: brightness(.93); }
 .btn-confirmar:disabled { opacity: .55; cursor: not-allowed; filter: none; }
@@ -169,7 +169,7 @@ a { color: var(--acento); text-decoration: none; }
 
 /* selector de plan (Cambiar Plan) */
 .opciones-plan { display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px; text-align: left; }
-.opcion-plan { display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 16px; border: 1px solid var(--borde-fuerte); border-radius: 16px; background: var(--superficie-alt); font-family: inherit; cursor: pointer; text-align: left; }
+.opcion-plan { display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 16px; border: 1px solid var(--borde-fuerte); border-radius: var(--radio-tarjeta); background: var(--superficie-alt); font-family: inherit; cursor: pointer; text-align: left; }
 .opcion-plan:hover { border-color: var(--acento-borde); }
 .opcion-plan--sel { border-color: var(--acento); box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento) 16%, transparent); background: var(--superficie); }
 .opcion-plan__etq { align-self: stretch; padding: 2px 8px; border-radius: 6px; background: var(--acento); color: var(--blanco); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-align: center; }
@@ -182,7 +182,7 @@ a { color: var(--acento); text-decoration: none; }
 /* Cambiar Plan: tarjeta oscura cian, con el filete de color al pie */
 .modal--cambiar { border: 1px solid #1E3A5F; background: linear-gradient(135deg, rgba(15,24,38,.93) 0%, rgba(10,17,32,.94) 100%); box-shadow: 0 0 48px rgba(0,212,255,.08), 0 24px 64px rgba(0,0,0,.5); overflow: hidden; }
 .modal--cambiar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; opacity: .85; background: linear-gradient(90deg, rgba(0,212,255,0) 0%, #00D4FF 40%, #277EFF 70%, rgba(39,126,255,0) 100%); }
-.modal--cambiar .modal__icono { border-radius: 24px; color: #00D4FF; background: linear-gradient(135deg, rgba(0,212,255,.09) 0%, rgba(39,126,255,.13) 100%); border: 1px solid rgba(0,212,255,.27); box-shadow: 0 0 24px 4px rgba(0,212,255,.15); }
+.modal--cambiar .modal__icono { border-radius: var(--radio-tarjeta); color: #00D4FF; background: linear-gradient(135deg, rgba(0,212,255,.09) 0%, rgba(39,126,255,.13) 100%); border: 1px solid rgba(0,212,255,.27); box-shadow: 0 0 24px 4px rgba(0,212,255,.15); }
 .modal--cambiar .modal__titulo { color: #F0F0F5; }
 .modal--cambiar .modal__texto { color: #6B7EA0; font-size: 13px; line-height: 1.65; }
 .modal--cambiar .modal__texto strong { color: inherit; font-weight: 400; }
@@ -202,7 +202,7 @@ a { color: var(--acento); text-decoration: none; }
 /* Renovar: tarjeta oscura ambar, con el filete de color arriba */
 .modal--renovar { border: 1px solid #2E2210; background: linear-gradient(142deg, #181410 0%, #120E08 60%, #0D0A06 100%); box-shadow: 0 0 48px rgba(245,158,11,.08), 0 24px 64px rgba(0,0,0,.55); overflow: hidden; }
 .modal--renovar::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; opacity: .85; background: linear-gradient(90deg, rgba(245,158,11,0) 0%, #F59E0B 40%, #FBBF24 70%, rgba(251,191,36,0) 100%); }
-.modal--renovar .modal__icono { border-radius: 24px; color: #F59E0B; background: radial-gradient(ellipse 70.71% 70.71% at 50% 50%, rgba(245,158,11,.14) 0%, rgba(245,158,11,0) 100%); border: 1px solid rgba(245,158,11,.32); box-shadow: 0 0 24px 4px rgba(245,158,11,.15); }
+.modal--renovar .modal__icono { border-radius: var(--radio-tarjeta); color: #F59E0B; background: radial-gradient(ellipse 70.71% 70.71% at 50% 50%, rgba(245,158,11,.14) 0%, rgba(245,158,11,0) 100%); border: 1px solid rgba(245,158,11,.32); box-shadow: 0 0 24px 4px rgba(245,158,11,.15); }
 .modal--renovar .modal__titulo { color: #F0F0F5; }
 .modal--renovar .modal__texto { color: #9090B0; font-size: 13px; line-height: 1.65; }
 .modal--renovar .modal__texto strong { color: inherit; font-weight: 400; }
@@ -216,7 +216,7 @@ a { color: var(--acento); text-decoration: none; }
 .modal--renovar .btn-volver:hover { background: rgba(255,255,255,.04); }
 
 /* Confirmacion compacta (solo con el mensaje del backend). Color por accion. */
-.modal--confirmacion { max-width: 431px; padding: 28px 24px 24px; border-radius: 24px; border: 1px solid color-mix(in srgb, var(--m) 27%, transparent); background: linear-gradient(172deg, rgba(15,24,38,.97) 0%, rgba(10,17,32,.98) 100%); backdrop-filter: blur(10px); overflow: hidden; }
+.modal--confirmacion { max-width: 431px; padding: 28px 24px 24px; border-radius: var(--radio-tarjeta); border: 1px solid color-mix(in srgb, var(--m) 27%, transparent); background: linear-gradient(172deg, rgba(15,24,38,.97) 0%, rgba(10,17,32,.98) 100%); backdrop-filter: blur(10px); overflow: hidden; }
 .modal--confirmacion.modal--rojo  { --m: #F43F5E; }
 .modal--confirmacion.modal--azul  { --m: #00D4FF; }
 .modal--confirmacion.modal--ambar { --m: #FACC15; }

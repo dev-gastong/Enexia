@@ -42,4 +42,15 @@ public interface SuscripcionRepository extends JpaRepository<Suscripcion, Long> 
     long contarPorEstadoYPlan(@org.springframework.data.repository.query.Param("estado") String estado,
                               @org.springframework.data.repository.query.Param("plan") String plan);
 
+    /** Suscripciones en un estado y plan cuyo titular tiene la cuenta ACTIVA (tarjetas de plan, RF-6.4). */
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT COUNT(s) FROM Suscripcion s
+            WHERE s.estadoSuscripcion.nombreEstado = :estado AND s.tipoPlan = :plan
+              AND s.usuario.fechaBaja IS NULL
+              AND s.usuario.estadoUsuario.estadoUsuario = 'ACTIVO'
+            """)
+    long contarPorEstadoYPlanConCuentaActiva(
+            @org.springframework.data.repository.query.Param("estado") String estado,
+            @org.springframework.data.repository.query.Param("plan") String plan);
+
 }

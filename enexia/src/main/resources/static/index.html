@@ -206,14 +206,6 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
     <div class="busqueda">
         <div class="busqueda__caja">
-            <div class="busqueda__campo busqueda__texto">
-                <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6.5" cy="6.5" r="4.8" stroke="currentColor" stroke-width="1.3"/><path d="M13 13l-3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                <input type="search" id="filtroTexto" placeholder="Buscar eventos por nombre...">
-            </div>
-            <div class="busqueda__campo busqueda__select">
-                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1.5" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
-                <select id="filtroCategoria"><option value="">Categoría</option></select>
-            </div>
             <div class="busqueda__campo busqueda__fecha">
                 <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="11" height="10" rx="1.3" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 5.5h11M4.5 1.5v2M9.5 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                 <input type="date" id="filtroFecha" title="Desde esta fecha">
@@ -223,11 +215,19 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
                 <select id="filtroCiudad"><option value="">Ubicación</option></select>
             </div>
             <div class="busqueda__campo busqueda__select">
+                <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1.5" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+                <select id="filtroCategoria"><option value="">Categoría</option></select>
+            </div>
+            <div class="busqueda__campo busqueda__select">
                 <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4h10M4 7h6M5.5 10h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                 <select id="filtroOrden" title="Ordenar por">
                     <option value="recientes">Más nuevos primero</option>
                     <option value="antiguos">Más antiguos primero</option>
                 </select>
+            </div>
+            <div class="busqueda__campo busqueda__texto">
+                <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6.5" cy="6.5" r="4.8" stroke="currentColor" stroke-width="1.3"/><path d="M13 13l-3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                <input type="search" id="filtroTexto" placeholder="Buscar eventos por nombre...">
             </div>
             <button class="boton" id="btnBuscar" type="button">Buscar</button>
         </div>
@@ -345,7 +345,7 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
         cont.innerHTML = `
             ${!esOrganizador && !esAdmin ? '<a href="pages/participante/mis-inscripciones.html" style="font-size:13px;font-weight:500;color:var(--texto-secundario)">Mis Inscripciones</a>' : ''}
-            ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">+ Crear Evento</a>' : ''}
+            ${esOrganizador ? '<a href="pages/organizador/evento-form.html" class="boton boton--fantasma">Crear Evento</a>' : ''}
             ${Auth.hasRole('ADMINISTRADOR') ? '<a href="pages/admin/moderacion-eventos.html" class="boton boton--fantasma">Panel Admin</a>' : ''}
             <span class="navbar__divisor"></span>
             ${bloqueAvatar}
@@ -439,7 +439,18 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
     /* ------------------------------------------------------- Listado --- */
 
-    const TAMANO_PAGINA = 9;
+    // El tamano de pagina es siempre multiplo de las columnas visibles de la
+    // grilla: asi cada tanda llena filas completas y "Cargar mas" completa la
+    // ultima fila en vez de dejarla a medias. Se recalcula en cada busqueda nueva
+    // (con pagina fija durante el "cargar mas" para que el offset no se corra).
+    const MINIMO_POR_PAGINA = 9;
+    let tamanoPagina = MINIMO_POR_PAGINA;
+
+    function calcularTamanoPagina() {
+        const columnas = getComputedStyle(document.getElementById('grillaEventos'))
+            .gridTemplateColumns.split(' ').filter(Boolean).length || 1;
+        return columnas * Math.ceil(MINIMO_POR_PAGINA / columnas);
+    }
     let pagina = 0;
     let totalPaginas = 1;
 
@@ -460,13 +471,14 @@ footer { border-top: 1px solid var(--borde); background: var(--superficie); }
 
         if (reiniciar) {
             pagina = 0;
+            tamanoPagina = calcularTamanoPagina();
             grilla.innerHTML = '<div class="cargando">Cargando eventos...</div>';
         } else {
             btnMas.disabled = true;
             btnMas.querySelector('span').textContent = 'Cargando...';
         }
 
-        const parametros = Object.assign({}, parametrosActuales(), { pagina, tamano: TAMANO_PAGINA });
+        const parametros = Object.assign({}, parametrosActuales(), { pagina, tamano: tamanoPagina });
         const query = new URLSearchParams(
             Object.entries(parametros).filter(([, v]) => v !== null && v !== undefined && v !== '')
         ).toString();
