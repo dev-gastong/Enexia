@@ -102,6 +102,19 @@ const API = {
     },
 
     /**
+     * POST /api/auth/recuperacion  ->  202 | 400
+     * Siempre 202 para un email bien formado, exista la cuenta o no (RF-1.5).
+     */
+    solicitarRecuperacion(email) {
+        return this.peticion('POST', '/api/auth/recuperacion', { email });
+    },
+
+    /** POST /api/auth/recuperacion/confirmar  ->  200 | 400 (enlace invalido / politica de clave) */
+    confirmarRecuperacion(datos) {
+        return this.peticion('POST', '/api/auth/recuperacion/confirmar', datos);
+    },
+
+    /**
      * Sonda de disponibilidad del backend.
      *
      * Se pega a /api/auth/login con un cuerpo vacio a proposito: la respuesta

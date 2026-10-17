@@ -375,7 +375,7 @@ This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modul
 
 ## Sprint 2: Organizations, Events & Public Catalog (Current)
 
-**Status:** backend complete, frontend pending (waiting on Figma designs).
+**Status (2026-10-17):** backend complete; frontend built for the public site, organizer panel, admin panel (4 screens) and password recovery. Module 8 (memberships) is the main thing still unbuilt.
 
 | Module | Scope delivered |
 |---|---|
@@ -384,7 +384,8 @@ This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modul
 | **M2** — Events | Creation with async moderation pipeline (RF-2.1 to RF-2.6), Cloudinary integration (RF-2.3), organizer dashboard (RF-2.8), logical delete (RF-2.9), statistics (RF-2.10) |
 | **M4** — Public interface | Paginated catalog, text search, category/date/location filters, technical sheet, passive visit tracking (RF-4.1 to RF-4.5) |
 | **M5** — Moderation | Text phase + image phase, sequential and asynchronous (RF-5.1 to RF-5.3) |
-| **M6** — Admin panel | Started 2026-10-01: general event moderation (RF-6.1) — `AdminEventoService`/`EventoAdminController`, reversible disciplinary suspension of already-approved events in addition to the pre-existing 2nd-instance review. First admin screen (`pages/admin/moderacion-eventos.html`). **Not built yet:** any way to grant the `ADMINISTRADOR` role (RF-6.2 to RF-6.4 — user management, categories, subscriptions — remain inert sidebar items). |
+| **M6** — Admin panel | **Complete (2026-10-15).** RF-6.1 event moderation (reversible disciplinary suspension + 2nd-instance review), RF-6.2 account management (suspend/reactivate; admin accounts and one's own are protected), RF-6.3 category ABM (logical, reversible deactivation via `categoria.activa`, ADR-22), RF-6.4 subscription audit (`REVOCAR` / `CAMBIAR_PLAN` / `RENOVAR`, ADR-23/26/27). Four screens under `pages/admin/`: `moderacion-eventos`, `usuarios`, `categorias`, `suscripciones`. **Still open:** no way to grant the `ADMINISTRADOR` role from the app (only the SQL-promoted dev account). |
+| **M8** — Memberships | **Only the admin side exists** (RF-6.4, read + exceptional intervention). **Not built:** RF-8.1 upgrade flow with simulated payment, RF-8.2 Free-plan publication cap, RF-8.3 Pro-only advanced stats. The Free cap lives in two disconnected places: `enexia.planes.free.eventos-permitidos` (=2, shown by the admin panel) and `enexia.eventos.limite-plan-gratuito` (=20, the guard in `EventoService.verificarLimiteDePlan`, which ignores the subscription: it caps every organizer, Pro included, at 20 non-deleted events). To be unified when RF-8.2 is built. Specs: `docs/tempDFD/modulo_8_membresias/`. |
 
 **Key endpoints**
 
@@ -413,6 +414,11 @@ GET    /api/publico/provincias/{id}/ciudades anónimo
 
 GET    /api/admin/eventos                    ADMINISTRADOR cola de moderación (todos los organizadores, RF-6.1)
 PATCH  /api/admin/eventos/{id}                ADMINISTRADOR decisión: aprobar/ratificar/suspender/revertir (RF-6.1)
+GET    /api/admin/usuarios[/resumen]          ADMINISTRADOR cuentas + contadores (RF-6.2)
+PATCH  /api/admin/usuarios/{id}/estado        ADMINISTRADOR SUSPENDER / REACTIVAR (RF-6.2)
+GET    /api/admin/categorias                  ADMINISTRADOR + POST (alta) / PUT /{id} (edición) / PATCH /{id}/estado (DESACTIVAR/ACTIVAR) (RF-6.3)
+GET    /api/admin/suscripciones[/resumen]     ADMINISTRADOR organizadores con su plan vigente (RF-6.4)
+PATCH  /api/admin/suscripciones/{id}          ADMINISTRADOR REVOCAR / CAMBIAR_PLAN / RENOVAR (RF-6.4)
 ```
 
 **Event state machine** (two independent axes — the public catalog requires BOTH to allow):
@@ -439,7 +445,9 @@ estado_sistema (moderation)          estado_organizador (owner)
 - Catalog: RECUPERACION, BLOQUEO, PASSWORD_CAMBIADA, CUENTA_SUSPENDIDA, MODERACION_RESULTADO, EVENTO_SUSPENDIDO, EVENTO_REACTIVADO, INSCRIPCION_CONFIRMADA, EVENTO_CANCELADO, RECORDATORIO_10MIN, INVITACION_VALORAR, AGREGADO_A_EQUIPO.
 - **Two code paths set `FINALIZADO`** (`FinalizacionEventoService` scheduler and `FinalizacionEventosService`, which also runs when the organizer lists their events); both call `AvisoInscriptosService.invitarAValorar`, and the ledger prevents a double send.
 - Reminder lead time: `enexia.notificaciones.recordatorio.segundos-antes` (600 default; use 30 + `intervalo-ms=5000` to test). Clock uses `enexia.zona-horaria` (Ushuaia), not the JVM zone.
-- **Known gap:** `FinalizacionEventoScheduler` still uses `LocalDateTime.now()` (JVM zone) — on a UTC host it finalizes events 3 h early.
+- **Known gap (accepted until deploy, 2026-10-17):** `FinalizacionEventoScheduler` still uses `LocalDateTime.now()` (JVM zone) — on a UTC host it finalizes events 3 h early. Fix before the first deploy.
+- **Level-2 DFDs** `N.1` to `N.5` are now all in `docs/diagrams/notificaciones/` (N.2 moderation and N.4 team added 2026-10-17). Moderation/team notices use `despachar` (no ledger); only the clock-driven ones use `despacharUnico`.
+- **Recovery screens (2026-10-17):** `pages/auth/password-reset.html` (request the link + "email sent" state, 2-min client cooldown mirroring the server) and `pages/auth/recuperar.html?token=` (new password; same policy as registration: 8-72 chars, lower, upper, digit). The token is removed from the address bar on load; success does **not** log in (the endpoint returns no JWT), it links to the login. Built on `tokens.css` (light palette, square corners) with shared `pages/css/recuperacion.css`.
 
 ---
 

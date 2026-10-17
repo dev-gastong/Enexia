@@ -14,5 +14,7 @@
 ## Notificaciones por correo
 * ### [Nivel 1 - Notificaciones](./notificaciones/nivel1_notificaciones.md)
 * ### [N.1 Recuperacion de contrasena](./notificaciones/N.1_recuperacion_password.md)
+* ### [N.2 Moderacion de eventos](./notificaciones/N.2_moderacion_de_eventos.md)
 * ### [N.3 Recordatorio, invitacion a valorar, cancelacion e inscripcion](./notificaciones/N.3_recordatorio_e_invitacion.md)
+* ### [N.4 Equipo de organizacion](./notificaciones/N.4_equipo_de_organizacion.md)
 * ### [N.5 Despachador de correo](./notificaciones/N.5_despachador_de_correo.md)

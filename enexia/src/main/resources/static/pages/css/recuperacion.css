@@ -1,0 +1,479 @@
+/* =====================================================================
+   Enexia - Recuperacion de contrasena (RF-1.5)
+   Estilos compartidos por password-reset.html (pedir el enlace) y
+   recuperar.html (fijar la contrasena nueva).
+
+   El color, la forma y la tipografia vienen de tokens.css. Aca solo hay
+   layout y los componentes de estas dos pantallas. Esquinas cuadradas: solo
+   --radio-campo y --radio-tarjeta (ver "Design Rules" de CLAUDE.md).
+   ===================================================================== */
+
+:root {
+    --login-bg-image: url('../assets/login-bg.png');
+}
+
+* { box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--lienzo);
+    color: var(--texto-secundario);
+    -webkit-font-smoothing: antialiased;
+}
+
+[hidden] { display: none !important; }
+
+/* ---------------------------------------------------------------------
+   Escenario: la misma foto lavada del login
+   --------------------------------------------------------------------- */
+
+.pantalla {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.pantalla__foto {
+    position: absolute;
+    inset: 0;
+    background-image: var(--login-bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: var(--foto-filtro);
+    pointer-events: none;
+}
+
+.pantalla__velo {
+    position: absolute;
+    inset: 0;
+    background: var(--velo);
+    pointer-events: none;
+}
+
+.halo { position: absolute; border-radius: 50%; pointer-events: none; }
+.halo--sup-izq { top: -120px; left: -100px; width: 600px; height: 600px; background: var(--halo-1); }
+.halo--inf-der { right: -60px; bottom: -80px; width: 500px; height: 500px; background: var(--halo-2); }
+
+/* ---------------------------------------------------------------------
+   Barra superior, centro y pie
+   --------------------------------------------------------------------- */
+
+.barra {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px clamp(20px, 4vw, 40px);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+}
+
+.logo__marca { display: block; width: 20px; height: 20px; }
+
+.logo__texto {
+    color: var(--texto);
+    font-family: var(--marca);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 28px;
+}
+
+.volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--acento-fuerte);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    text-decoration: none;
+}
+
+.volver:hover { text-decoration: underline; }
+.volver svg { display: block; width: 14px; height: 14px; }
+
+.centro {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+}
+
+.pie {
+    position: relative;
+    z-index: 1;
+    padding: 0 16px 28px;
+    color: var(--texto-sobre-foto);
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+}
+
+/* ---------------------------------------------------------------------
+   Cabecera de la pantalla y tarjeta
+   --------------------------------------------------------------------- */
+
+.encabezado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    text-align: center;
+}
+
+.encabezado__icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--acento-borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--acento-tinte);
+    color: var(--acento);
+}
+
+.encabezado__icono svg { display: block; width: 26px; height: 26px; }
+
+.encabezado__titulo {
+    margin: 0;
+    color: var(--texto);
+    font-family: var(--marca);
+    font-size: clamp(24px, 4vw, 30px);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.encabezado__sub {
+    max-width: 384px;
+    margin: 0;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.tarjeta {
+    width: 100%;
+    max-width: 448px;
+    padding: clamp(24px, 5vw, 32px);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--superficie);
+    box-shadow: var(--sombra-tarjeta);
+}
+
+.tarjeta__nota {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 24px 0 0;
+    color: var(--texto-secundario);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.tarjeta__nota svg { display: block; width: 13px; height: 13px; }
+
+/* ---------------------------------------------------------------------
+   Avisos, campos y botones
+   --------------------------------------------------------------------- */
+
+.aviso {
+    margin: 0 0 20px;
+    padding: 12px 14px;
+    border: 1px solid var(--error-borde);
+    border-radius: var(--radio-campo);
+    background: var(--error-tinte);
+    color: var(--error);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 18px;
+    text-align: center;
+}
+
+.campo { margin-bottom: 20px; }
+
+.campo__etiqueta {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    line-height: 16px;
+}
+
+.entrada {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 17px;
+    border: 1px solid var(--borde-campo);
+    border-radius: var(--radio-campo);
+    background: var(--superficie);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.entrada:focus-within {
+    border-color: var(--acento);
+    box-shadow: var(--foco-accion);
+}
+
+.campo--invalido .entrada { border-color: var(--error); }
+
+.entrada__icono {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    display: block;
+    color: var(--acento);
+}
+
+.entrada input {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    outline: none;
+}
+
+.entrada input::placeholder { color: var(--texto-secundario); }
+
+.entrada__accion {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    line-height: 0;
+    color: var(--acento);
+}
+
+.entrada__accion svg { display: block; width: 16px; height: 16px; }
+
+.campo__error {
+    display: none;
+    margin-top: 6px;
+    color: var(--error);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.campo--invalido .campo__error { display: block; }
+
+.boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 0;
+    border: 0;
+    border-radius: var(--radio-campo);
+    background: var(--accion);
+    color: var(--sobre-accion);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: .16px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: var(--sombra-accion);
+    transition: background .15s ease, transform .15s ease;
+}
+
+.boton:hover { background: var(--accion-hover); }
+.boton:active { transform: translateY(1px); }
+.boton:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.boton svg { display: block; width: 16px; height: 16px; }
+
+.boton--secundario {
+    background: var(--superficie);
+    border: 1px solid var(--acento);
+    color: var(--texto);
+    box-shadow: none;
+}
+
+.boton--secundario:hover { background: var(--acento-tinte); }
+
+.separador {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: var(--texto-secundario);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.separador::before,
+.separador::after {
+    content: "";
+    flex: 1 1 0;
+    height: 1px;
+    background: var(--borde);
+}
+
+.enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--acento-fuerte);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.enlace:hover { text-decoration: underline; }
+.enlace:disabled { color: var(--texto-secundario); cursor: default; text-decoration: none; }
+.enlace svg { display: block; width: 13px; height: 13px; }
+
+.centrado { display: flex; justify-content: center; }
+
+/* ---------------------------------------------------------------------
+   Estado "correo enviado" y "contrasena actualizada"
+   --------------------------------------------------------------------- */
+
+.resultado { text-align: center; }
+
+.resultado__icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;
+    border: 1px solid var(--ok-borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--ok-tinte);
+    color: var(--ok);
+}
+
+.resultado__icono svg { display: block; width: 24px; height: 24px; }
+
+.resultado__titulo {
+    margin: 0 0 10px;
+    color: var(--texto);
+    font-family: var(--marca);
+    font-size: clamp(24px, 4vw, 30px);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.resultado__texto {
+    max-width: 340px;
+    margin: 0 auto 20px;
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.recuadro {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-campo);
+    background: var(--superficie-alt);
+    color: var(--texto-secundario);
+    font-size: 12px;
+    line-height: 19px;
+    text-align: left;
+}
+
+.recuadro svg { flex: 0 0 14px; width: 14px; height: 14px; margin-top: 3px; display: block; }
+
+/* ---------------------------------------------------------------------
+   Requisitos de la contrasena (misma politica que el registro)
+   --------------------------------------------------------------------- */
+
+.requisitos {
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-campo);
+    background: var(--superficie-alt);
+}
+
+.requisitos__titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    color: var(--texto-secundario);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+}
+
+.requisitos__titulo svg { display: block; width: 13px; height: 13px; }
+
+.requisitos ul {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0 0 0 20px;
+    list-style: none;
+}
+
+.requisito {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--texto-secundario);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+/* El punto pasa a verde (con un tilde implicito en el color del texto)
+   cuando la regla se cumple. */
+.requisito::before {
+    content: "";
+    flex: 0 0 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--borde-fuerte);
+}
+
+.requisito--ok { color: var(--ok); }
+.requisito--ok::before { background: var(--ok); }
+
+@media (max-width: 560px) {
+    .barra { padding: 16px 20px; }
+    .volver span { display: none; }
+}

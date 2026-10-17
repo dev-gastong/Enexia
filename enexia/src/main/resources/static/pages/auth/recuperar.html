@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>Restablecer contrase&ntilde;a</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/recuperacion.css">
+</head>
+
+<body>
+<div class="pantalla">
+
+    <div class="pantalla__foto" role="presentation"></div>
+    <div class="pantalla__velo" role="presentation"></div>
+    <div class="halo halo--sup-izq" role="presentation"></div>
+    <div class="halo halo--inf-der" role="presentation"></div>
+
+    <header class="barra">
+        <a class="logo" href="../../index.html" aria-label="Enexia, ir al inicio">
+            <svg class="logo__marca" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M0.0694441 0H10L0.0694441 6.66666V0Z" fill="#F28C1E"/>
+                <path d="M10 0V6.66666H0.0694441L10 0Z" fill="#E05F0A"/>
+                <path d="M10 0H19.9306L10 6.66666V0Z" fill="#F7D000"/>
+                <path d="M19.9306 0V6.66666H10L19.9306 0Z" fill="#E8B400"/>
+                <path d="M0.0694441 6.66667H10L0.0694441 13.3333V6.66667Z" fill="#9B3FB5"/>
+                <path d="M10 6.66667V13.3333H0.0694441L10 6.66667Z" fill="#7A2A90"/>
+                <path d="M10 6.66667H19.9306L10 13.3333V6.66667Z" fill="#00B8D4"/>
+                <path d="M19.9306 6.66667V13.3333H10L19.9306 6.66667Z" fill="#0088AA"/>
+                <path d="M0.0694441 13.3333H10L0.0694441 20V13.3333Z" fill="#43C46A"/>
+                <path d="M10 13.3333V20H0.0694441L10 13.3333Z" fill="#2A9A4A"/>
+                <path d="M10 13.3333H19.9306L10 20V13.3333Z" fill="#1A6FCC"/>
+                <path d="M19.9306 13.3333V20H10L19.9306 13.3333Z" fill="#0E50A0"/>
+                <path d="M19.9306 3.66667H3.68056V8.16667H19.9306V3.66667Z" fill="#ffffff"/>
+                <path d="M19.9306 11.8333H3.68056V16.3333H19.9306V11.8333Z" fill="#ffffff"/>
+                <path d="M19.9306 8.16667H13.6111V11.8333H19.9306V8.16667Z" fill="#ffffff"/>
+            </svg>
+            <span class="logo__texto">NEXIA</span>
+        </a>
+
+        <a class="volver" href="login-desktop-claro.html">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12.6667 8H3.33333M8 12.6667L3.33333 8L8 3.33333" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Volver al inicio de sesi&oacute;n</span>
+        </a>
+    </header>
+
+    <main class="centro">
+
+        <!-- ============ Estado 1: formulario ============ -->
+        <section id="vistaForm" aria-labelledby="tituloForm">
+            <div class="encabezado">
+                <div class="encabezado__icono">
+                    <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="13" cy="13" r="10.85"/>
+                            <path d="M13 8.67v4.33M13 17.33h.01"/>
+                        </g>
+                    </svg>
+                </div>
+                <h1 class="encabezado__titulo" id="tituloForm">Restablecer contrase&ntilde;a</h1>
+                <p class="encabezado__sub">Ingres&aacute; y confirm&aacute; la nueva contrase&ntilde;a de acceso a tu cuenta.</p>
+            </div>
+
+            <div class="tarjeta">
+                <div id="aviso" class="aviso" role="alert" hidden></div>
+
+                <form id="formClave" novalidate>
+
+                    <div class="campo" id="campoPassword">
+                        <label class="campo__etiqueta" for="password">Nueva contrase&ntilde;a</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3.33333 7.33333H12.6667C13.4025 7.33333 14 7.93078 14 8.66667V13.3333C14 14.0692 13.4025 14.6667 12.6667 14.6667H3.33333C2.59745 14.6667 2 14.0692 2 13.3333V8.66667C2 7.93078 2.59745 7.33333 3.33333 7.33333Z"/>
+                                    <path d="M4.66667 7.33333V4.66667C4.66667 2.82695 6.16028 1.33333 8 1.33333C9.83972 1.33333 11.3333 2.82695 11.3333 4.66667V7.33333"/>
+                                </g>
+                            </svg>
+                            <input type="password" id="password" name="password" maxlength="72"
+                                   placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password" required>
+                            <button type="button" class="entrada__accion" data-ver="password" aria-label="Mostrar contrase&ntilde;a">
+                                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1.375 8C2.6 5.2 5.1 3.33 8 3.33S13.4 5.2 14.625 8C13.4 10.8 10.9 12.67 8 12.67S2.6 10.8 1.375 8Z"/>
+                                        <circle cx="8" cy="8" r="2"/>
+                                    </g>
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="campo__error"></span>
+                    </div>
+
+                    <div class="campo" id="campoConfirmacion">
+                        <label class="campo__etiqueta" for="passwordConfirmacion">Confirmar nueva contrase&ntilde;a</label>
+                        <div class="entrada">
+                            <svg class="entrada__icono" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3.33333 7.33333H12.6667C13.4025 7.33333 14 7.93078 14 8.66667V13.3333C14 14.0692 13.4025 14.6667 12.6667 14.6667H3.33333C2.59745 14.6667 2 14.0692 2 13.3333V8.66667C2 7.93078 2.59745 7.33333 3.33333 7.33333Z"/>
+                                    <path d="M4.66667 7.33333V4.66667C4.66667 2.82695 6.16028 1.33333 8 1.33333C9.83972 1.33333 11.3333 2.82695 11.3333 4.66667V7.33333"/>
+                                </g>
+                            </svg>
+                            <input type="password" id="passwordConfirmacion" name="passwordConfirmacion" maxlength="72"
+                                   placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password" required>
+                            <button type="button" class="entrada__accion" data-ver="passwordConfirmacion" aria-label="Mostrar contrase&ntilde;a">
+                                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <g stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1.375 8C2.6 5.2 5.1 3.33 8 3.33S13.4 5.2 14.625 8C13.4 10.8 10.9 12.67 8 12.67S2.6 10.8 1.375 8Z"/>
+                                        <circle cx="8" cy="8" r="2"/>
+                                    </g>
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="campo__error"></span>
+                    </div>
+
+                    <div class="requisitos" aria-live="polite">
+                        <p class="requisitos__titulo">
+                            <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="6.5" cy="6.5" r="5.4"/>
+                                    <path d="M6.5 4.3V6.5M6.5 8.7h.01"/>
+                                </g>
+                            </svg>
+                            Requisitos de seguridad
+                        </p>
+                        <ul>
+                            <li class="requisito" data-regla="largo">M&iacute;nimo 8 caracteres</li>
+                            <li class="requisito" data-regla="minuscula">Al menos una letra min&uacute;scula</li>
+                            <li class="requisito" data-regla="mayuscula">Al menos una letra may&uacute;scula</li>
+                            <li class="requisito" data-regla="numero">Al menos un n&uacute;mero</li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" class="boton" id="btnGuardar">
+                        Actualizar contrase&ntilde;a
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3.33333 8H12.6667M8 3.33333L12.6667 8L8 12.6667" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ============ Estado 2: enlace inexistente, vencido o usado ============ -->
+        <section id="vistaInvalido" aria-labelledby="tituloInvalido" hidden>
+            <div class="tarjeta resultado">
+                <h1 class="resultado__titulo" id="tituloInvalido">Enlace no v&aacute;lido</h1>
+                <p class="resultado__texto" id="textoInvalido">
+                    El enlace de recuperaci&oacute;n no es v&aacute;lido, venci&oacute; o ya fue utilizado.
+                </p>
+                <a class="boton" href="password-reset.html">Pedir un enlace nuevo</a>
+            </div>
+        </section>
+
+        <!-- ============ Estado 3: contrasena actualizada ============ -->
+        <section id="vistaListo" aria-labelledby="tituloListo" hidden>
+            <div class="tarjeta resultado">
+                <div class="resultado__icono">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1 class="resultado__titulo" id="tituloListo">Contrase&ntilde;a actualizada</h1>
+                <p class="resultado__texto">
+                    Ya pod&eacute;s iniciar sesi&oacute;n con tu nueva contrase&ntilde;a. Si tu cuenta
+                    estaba bloqueada por intentos fallidos, qued&oacute; habilitada de nuevo.
+                </p>
+                <a class="boton" href="login-desktop-claro.html">Ir a iniciar sesi&oacute;n</a>
+            </div>
+        </section>
+
+        <p class="tarjeta__nota" id="notaSeguridad">
+            <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M2.17 5.42h8.66v5.5H2.17zM4.33 5.42V3.79a2.17 2.17 0 0 1 4.34 0v1.63" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            El enlace solo se puede usar una vez.
+        </p>
+    </main>
+
+    <footer class="pie">&copy; 2025 Enexia &middot; Tierra del Fuego &middot; Todos los derechos reservados</footer>
+</div>
+
+<script src="../../js/api.js"></script>
+<script src="../../js/auth.js"></script>
+
+<script>
+/* Misma politica que RegistroRequest / RecuperacionConfirmarRequest:
+   8 a 72 caracteres, con minuscula, mayuscula y numero. El backend la repite;
+   esto solo avisa antes y marca los requisitos en vivo. */
+const REGLAS = {
+    largo:     (c) => c.length >= 8 && c.length <= 72,
+    minuscula: (c) => /[a-z]/.test(c),
+    mayuscula: (c) => /[A-Z]/.test(c),
+    numero:    (c) => /\d/.test(c)
+};
+
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+
+const form        = document.getElementById('formClave');
+const inputClave  = document.getElementById('password');
+const inputRepite = document.getElementById('passwordConfirmacion');
+const btnGuardar  = document.getElementById('btnGuardar');
+const aviso       = document.getElementById('aviso');
+
+function mostrarVista(id) {
+    ['vistaForm', 'vistaInvalido', 'vistaListo'].forEach((v) => {
+        document.getElementById(v).hidden = (v !== id);
+    });
+    document.getElementById('notaSeguridad').hidden = (id !== 'vistaForm');
+}
+
+function avisar(mensaje) {
+    aviso.textContent = mensaje || '';
+    aviso.hidden = !mensaje;
+}
+
+function errorCampo(idCampo, mensaje) {
+    const campo = document.getElementById(idCampo);
+    campo.classList.toggle('campo--invalido', !!mensaje);
+    campo.querySelector('.campo__error').textContent = mensaje || '';
+}
+
+function pintarRequisitos() {
+    Object.entries(REGLAS).forEach(([nombre, cumple]) => {
+        document.querySelector(`[data-regla="${nombre}"]`)
+            .classList.toggle('requisito--ok', cumple(inputClave.value));
+    });
+}
+
+/* Sin token no hay nada que consumir: se evita pedirle la clave al usuario
+   para despues rechazarla. */
+if (!token) {
+    mostrarVista('vistaInvalido');
+} else {
+    // El token ya esta en memoria; se lo saca de la barra de direcciones para
+    // que no quede en el historial ni se copie sin querer al compartir la URL.
+    try { history.replaceState(null, '', window.location.pathname); } catch (e) { /* sin historial */ }
+}
+
+document.querySelectorAll('[data-ver]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+        const campo = document.getElementById(boton.dataset.ver);
+        const oculto = campo.type === 'password';
+        campo.type = oculto ? 'text' : 'password';
+        boton.setAttribute('aria-label', oculto ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+});
+
+inputClave.addEventListener('input', () => {
+    pintarRequisitos();
+    errorCampo('campoPassword', '');
+});
+inputRepite.addEventListener('input', () => errorCampo('campoConfirmacion', ''));
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    avisar('');
+    errorCampo('campoPassword', '');
+    errorCampo('campoConfirmacion', '');
+
+    const password = inputClave.value;
+    const passwordConfirmacion = inputRepite.value;
+
+    if (!Object.values(REGLAS).every((cumple) => cumple(password))) {
+        errorCampo('campoPassword', 'La contraseña no cumple los requisitos de seguridad.');
+        return;
+    }
+    if (password !== passwordConfirmacion) {
+        errorCampo('campoConfirmacion', 'Las contraseñas no coinciden.');
+        return;
+    }
+
+    btnGuardar.disabled = true;
+    const respuesta = await API.confirmarRecuperacion({ token, password, passwordConfirmacion });
+    btnGuardar.disabled = false;
+
+    if (respuesta.errorRed) {
+        avisar('No se pudo conectar al servidor. Intentá de nuevo en unos minutos.');
+        return;
+    }
+    if (respuesta.ok) {
+        inputClave.value = '';
+        inputRepite.value = '';
+        mostrarVista('vistaListo');
+        return;
+    }
+
+    const cuerpo = respuesta.cuerpo || {};
+
+    // 400 de validacion de campos (politica de clave): el detalle va por campo.
+    if (cuerpo.errores) {
+        if (cuerpo.errores.password) errorCampo('campoPassword', cuerpo.errores.password);
+        if (cuerpo.errores.passwordConfirmacion) errorCampo('campoConfirmacion', cuerpo.errores.passwordConfirmacion);
+        if (!cuerpo.errores.password && !cuerpo.errores.passwordConfirmacion) {
+            // El unico otro campo posible es el token: el enlace llego mal armado.
+            mostrarVista('vistaInvalido');
+        }
+        return;
+    }
+
+    // REGLA_NEGOCIO: enlace invalido/vencido/usado, o claves que no coinciden.
+    if (cuerpo.error === 'REGLA_NEGOCIO' && /enlace/i.test(cuerpo.mensaje || '')) {
+        mostrarVista('vistaInvalido');
+        return;
+    }
+
+    avisar(cuerpo.mensaje || 'No pudimos actualizar la contraseña. Intentá de nuevo.');
+});
+</script>
+</body>
+</html>

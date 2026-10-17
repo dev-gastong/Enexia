@@ -129,7 +129,7 @@ class EventoServiceTest {
 
         when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL))
                 .thenReturn(Optional.of(organizador()));
-        when(categoriaRepository.existsById(anyLong())).thenReturn(true);
+        when(categoriaRepository.existsByIdCategoriaAndActivaTrue(anyLong())).thenReturn(true);
         when(eventoRepository.contarVigentesDeOrganizador(anyLong(), anyString())).thenReturn(0L);
         when(estadoSistemaRepository.buscarPorEstadoYMotivo(
                 EstadoEventoSistemaNombre.EN_PROCESO.name(), null))
@@ -278,7 +278,7 @@ class EventoServiceTest {
         @Test
         @DisplayName("Categoria inexistente -> 400 con mensaje accionable")
         void categoriaInexistente() {
-            when(categoriaRepository.existsById(anyLong())).thenReturn(false);
+            when(categoriaRepository.existsByIdCategoriaAndActivaTrue(anyLong())).thenReturn(false);
 
             assertThatThrownBy(() -> servicio.crear(EMAIL, datos, imagenes, request))
                     .isInstanceOf(ReglaNegocioException.class)

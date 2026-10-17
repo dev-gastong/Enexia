@@ -344,7 +344,7 @@ backend/src/main/java/com/enexia/
 
 ## Sprint 2: Organizaciones, Eventos y Catálogo Público (Actual)
 
-**Estado:** backend completo; frontend pendiente (a la espera de los diseños de Figma).
+**Estado (2026-10-17):** backend completo; frontend construido para el sitio público, el panel de organizador, el panel admin (4 pantallas) y la recuperación de contraseña. Lo principal sin construir es el Módulo 8 (membresías).
 
 | Módulo | Alcance entregado |
 |---|---|
@@ -353,7 +353,8 @@ backend/src/main/java/com/enexia/
 | **M2** — Eventos | Creación con pipeline asíncrono de moderación (RF-2.1 a RF-2.6), integración Cloudinary (RF-2.3), dashboard del organizador (RF-2.8), baja lógica (RF-2.9), estadísticas (RF-2.10) |
 | **M4** — Interfaz pública | Catálogo paginado, búsqueda por texto, filtros por categoría/fecha/ubicación, ficha técnica, registro pasivo de visitas (RF-4.1 a RF-4.5) |
 | **M5** — Moderación | Fase de texto + fase de imágenes, secuencial y asíncrona (RF-5.1 a RF-5.3) |
-| **M6** — Panel de administración | Arrancado el 2026-10-01: moderación administrativa general de eventos (RF-6.1) — `AdminEventoService`/`EventoAdminController`, suspensión disciplinaria reversible de eventos ya aprobados, además de la revisión de 2.ª instancia que ya existía. Primera pantalla admin (`pages/admin/moderacion-eventos.html`). **Todavía sin construir:** ninguna forma de otorgar el rol `ADMINISTRADOR` (RF-6.2 a RF-6.4 — usuarios, categorías, suscripciones — siguen como ítems inertes del sidebar). |
+| **M6** — Panel de administración | **Completo (2026-10-15).** RF-6.1 moderación de eventos (suspensión disciplinaria reversible + revisión de 2.ª instancia), RF-6.2 gestión de cuentas (suspender/reactivar; las cuentas admin y la propia están protegidas), RF-6.3 ABM de categorías (baja lógica y reversible con `categoria.activa`, ADR-22), RF-6.4 auditoría de suscripciones (`REVOCAR` / `CAMBIAR_PLAN` / `RENOVAR`, ADR-23/26/27). Cuatro pantallas en `pages/admin/`: `moderacion-eventos`, `usuarios`, `categorias`, `suscripciones`. **Sigue abierto:** no hay forma de otorgar el rol `ADMINISTRADOR` desde la app (solo la cuenta de desarrollo promovida por SQL). |
+| **M8** — Membresías | **Solo existe el lado admin** (RF-6.4, lectura + intervención excepcional). **Sin construir:** RF-8.1 flujo de upgrade con pago simulado, RF-8.2 tope de publicaciones del plan Free, RF-8.3 métricas avanzadas solo Pro. El tope Free vive en dos lugares desconectados: `enexia.planes.free.eventos-permitidos` (=2, lo muestra el panel admin) y `enexia.eventos.limite-plan-gratuito` (=20, la guarda de `EventoService.verificarLimiteDePlan`, que ignora la suscripción: topea a todo organizador, Pro incluido, en 20 eventos no dados de baja). Se unifican al construir RF-8.2. Especificaciones: `docs/tempDFD/modulo_8_membresias/`. |
 
 ### ⚠️ Cambio de política de fallos de login (2026-09-08, decisión del usuario)
 
@@ -455,6 +456,11 @@ GET    /api/publico/provincias/{id}/ciudades anónimo
 
 GET    /api/admin/eventos                    ADMINISTRADOR cola de moderación (todos los organizadores, RF-6.1)
 PATCH  /api/admin/eventos/{id}                ADMINISTRADOR decisión: aprobar/ratificar/suspender/revertir (RF-6.1)
+GET    /api/admin/usuarios[/resumen]          ADMINISTRADOR cuentas + contadores (RF-6.2)
+PATCH  /api/admin/usuarios/{id}/estado        ADMINISTRADOR SUSPENDER / REACTIVAR (RF-6.2)
+GET    /api/admin/categorias                  ADMINISTRADOR + POST (alta) / PUT /{id} (edición) / PATCH /{id}/estado (DESACTIVAR/ACTIVAR) (RF-6.3)
+GET    /api/admin/suscripciones[/resumen]     ADMINISTRADOR organizadores con su plan vigente (RF-6.4)
+PATCH  /api/admin/suscripciones/{id}          ADMINISTRADOR REVOCAR / CAMBIAR_PLAN / RENOVAR (RF-6.4)
 ```
 
 ### Máquina de estados del evento
@@ -582,7 +588,9 @@ public class Usuario {
 - Catálogo: RECUPERACION, BLOQUEO, PASSWORD_CAMBIADA, CUENTA_SUSPENDIDA, MODERACION_RESULTADO, EVENTO_SUSPENDIDO, EVENTO_REACTIVADO, INSCRIPCION_CONFIRMADA, EVENTO_CANCELADO, RECORDATORIO_10MIN, INVITACION_VALORAR, AGREGADO_A_EQUIPO.
 - **Dos caminos pasan eventos a `FINALIZADO`** (el scheduler de `FinalizacionEventoService` y `FinalizacionEventosService`, que además corre cuando el organizador lista sus eventos); ambos llaman a `AvisoInscriptosService.invitarAValorar` y el libro evita el doble envío.
 - Adelanto del recordatorio: `enexia.notificaciones.recordatorio.segundos-antes` (600 por defecto; para probar, 30 + `intervalo-ms=5000`). El reloj usa `enexia.zona-horaria` (Ushuaia), no la zona de la JVM.
-- **Deuda conocida:** `FinalizacionEventoScheduler` sigue usando `LocalDateTime.now()` (zona de la JVM): en un servidor UTC finaliza los eventos 3 h antes.
+- **Deuda conocida (aceptada hasta el despliegue, 2026-10-17):** `FinalizacionEventoScheduler` sigue usando `LocalDateTime.now()` (zona de la JVM): en un servidor UTC finaliza los eventos 3 h antes. Corregir antes del primer despliegue.
+- **DFD de nivel 2** `N.1` a `N.5` ya están todos en `docs/diagrams/notificaciones/` (N.2 moderación y N.4 equipo agregados el 2026-10-17). Los avisos de moderación y de equipo usan `despachar` (sin libro); solo los disparados por reloj usan `despacharUnico`.
+- **Pantallas de recuperación (2026-10-17):** `pages/auth/password-reset.html` (pedir el enlace + estado "correo enviado", espera de 2 min en el cliente que replica la del servidor) y `pages/auth/recuperar.html?token=` (contraseña nueva; misma política que el registro: 8-72 caracteres, minúscula, mayúscula y número). El token se borra de la barra de direcciones al cargar; el éxito **no** inicia sesión (el endpoint no devuelve JWT), enlaza al login. Hechas sobre `tokens.css` (paleta clara, esquinas cuadradas) con `pages/css/recuperacion.css` compartido.
 - **Analítica** (Futuro): Agregar visualizaciones (únicas por usuario) y calificación promedio de tabla `Valoracion` para dashboards de eventos
 
 

@@ -165,6 +165,7 @@ class RegistroInscripcionServiceTest {
         void rechazaEventoFinalizado() {
             CronogramaTicket ticket = ticket(BigDecimal.ZERO, 10, 3);
             ticket.getCronograma().setFecha(LocalDate.now().minusDays(1));
+            ticket.getCronograma().setHoraInicio(LocalTime.of(18, 0));
             ticket.getCronograma().setHoraFin(LocalTime.of(20, 0));
             when(ticketRepository.bloquearParaActualizar(ID_TICKET)).thenReturn(Optional.of(ticket));
 
@@ -232,6 +233,8 @@ class RegistroInscripcionServiceTest {
         // Vigente por defecto: la mayoria de los tests no le interesa la fecha,
         // solo al de rechazaEventoFinalizado, que la pisa explicitamente.
         cronograma.setFecha(LocalDate.now().plusDays(1));
+        // El corte de inscripcion se compara contra hora_inicio.
+        cronograma.setHoraInicio(LocalTime.of(20, 0));
         cronograma.setHoraFin(LocalTime.of(23, 0));
 
         CronogramaTicket ticket = new CronogramaTicket();

@@ -97,3 +97,20 @@
 ---
 
 <!-- Las próximas sesiones se agregan debajo de esta línea -->
+
+#### 2026-10-14 → 2026-10-16 — Panel admin completo, correcciones y módulo de correos
+
+* **⚙️ Backend / 🎨 Frontend**: se cierra el módulo 6 — RF-6.2 gestión de cuentas, RF-6.3 ABM de categorías (baja lógica), RF-6.4 control de suscripciones; cuatro pantallas en `pages/admin/`. Fix crítico: el estado de la cuenta se consulta en cada request (ADR-20) y `FINALIZADO` pasa a ser estado persistido (ADR-21).
+  - *Detalle completo*: [sprint_2/2026-10-14_15_panel_admin_completo_y_correcciones.md](./sprint_2/2026-10-14_15_panel_admin_completo_y_correcciones.md), [sprint_2/2026-10-16_correcciones_admin_y_catalogo.md](./sprint_2/2026-10-16_correcciones_admin_y_catalogo.md)
+* **⚙️ Backend / 🗄️ Base de Datos** (`b914fab`, hecho desde la notebook): módulo de correos — 12 tipos de aviso por la API HTTPS de Brevo, libro `notificacion_enviada`, recordatorio de 10 min, invitación a valorar. Migración `2026-10-16_notificacion_enviada.sql`.
+* **📄 Doc**: DFD de notificaciones (Nivel 1, N.1, N.3, N.5).
+
+#### 2026-10-17 — Recuperación de contraseña, DFD N.2/N.4 y estado real de suscripciones
+
+* **📄 Doc**: DFD `N.2` (moderación de eventos) y `N.4` (equipo de organización) escritos leyendo el código; nivel 2 de notificaciones completo.
+  - *Archivos clave*: `docs/diagrams/notificaciones/N.2_moderacion_de_eventos.md`, `N.4_equipo_de_organizacion.md`
+* **🎨 Frontend**: pantallas de recuperación (RF-1.5) — `password-reset.html` (pedir enlace + "correo enviado") y `recuperar.html` (contraseña nueva); paleta clara y esquinas cuadradas sobre `tokens.css`. El token sale de la barra de direcciones al cargar; el éxito lleva al login (ADR-30/31/32).
+* **🧪 Tests**: corregidos 3 tests de unidad desactualizados (`EventoServiceTest`, `InscripcionServiceTest$Historial`, `RegistroInscripcionServiceTest`); no eran del módulo de correos.
+* **📄 Doc**: auditoría de suscripciones — RF-6.4 completo, Módulo 8 sin construir y el tope Free duplicado (2 vs 20); 6 decisiones pendientes. `CLAUDE.md`/`CLAUDE_es-ES.md` actualizados (M6 completo, M8 parcial).
+  - *Detalle completo*: [sprint_2/2026-10-17_correos_recuperacion_y_suscripciones.md](./sprint_2/2026-10-17_correos_recuperacion_y_suscripciones.md)
+

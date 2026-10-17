@@ -51,6 +51,7 @@ import com.enexia.rg.repository.InscripcionRepository;
 import com.enexia.rg.repository.PagoEstadoRepository;
 import com.enexia.rg.repository.PagoRepository;
 import com.enexia.rg.repository.UsuarioRepository;
+import com.enexia.rg.repository.ValoracionRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -74,6 +75,7 @@ class InscripcionServiceTest {
     @Mock private PagoEstadoRepository pagoEstadoRepository;
     @Mock private HistorialEstadoInscripcionRepository historialRepository;
     @Mock private UsuarioRepository usuarioRepository;
+    @Mock private ValoracionRepository valoracionRepository;
     @Mock private AuditoriaService auditoriaService;
     @Mock private RegistroInscripcionService registroInscripcionService;
     @Mock private HttpServletRequest request;
