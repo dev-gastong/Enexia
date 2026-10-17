@@ -22,9 +22,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	// Envio de correo (RF-1.5 y aviso de bloqueo silencioso). Si no hay SMTP
-	// configurado, EmailService cae solo al modo log: ver esa clase.
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// Correo saliente: va por la API HTTPS de Brevo (BrevoClient, con RestClient de
+	// Spring), asi que no hace falta el starter de JavaMail ni abrir puertos SMTP.
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'

@@ -64,6 +64,7 @@ public class MiembrosOrganizacionService {
     private final PersonaJuridicaRepository personaJuridicaRepository;
     private final UsuarioRepository usuarioRepository;
     private final AuditoriaService auditoriaService;
+    private final EmailService emailService;
 
     /**
      * Lista el equipo completo de una organizacion.
@@ -120,6 +121,8 @@ public class MiembrosOrganizacionService {
         auditoriaService.registrar(solicitante, AuditoriaService.ACCION_MIEMBRO_AGREGADO,
                 "Se agrego a " + nuevoMiembro.getEmail() + " como " + rol
                         + " de la organizacion " + organizacion.getRazonSocial(), request);
+
+        emailService.enviarAgregadoAEquipo(nuevoMiembro.getEmail(), organizacion.getRazonSocial(), rol);
 
         log.info("Usuario {} agregado como {} de la organizacion {} por el usuario {}",
                 nuevoMiembro.getIdUsuario(), rol, idPersonaJuridica, solicitante.getIdUsuario());

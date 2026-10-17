@@ -77,6 +77,7 @@ public class AdminUsuarioService {
     private final EventoRepository eventoRepository;
     private final EventoService eventoService;
     private final AuditoriaService auditoriaService;
+    private final EmailService emailService;
 
     @Transactional(readOnly = true)
     public Page<AdminUsuarioResponse> listar(String emailAdmin, String texto, String estado, Pageable paginado) {
@@ -169,6 +170,12 @@ public class AdminUsuarioService {
                           : AuditoriaService.ACCION_USUARIO_REACTIVADO_ADMIN,
                 "Usuario " + idUsuario + ": " + estadoActual + " -> " + destino.name(),
                 request);
+
+        // El titular se entera por la unica casilla que controla; el login sigue
+        // respondiendo igual para todos (ver AuthService). Sale tras el commit.
+        if (suspender) {
+            emailService.enviarCuentaSuspendida(objetivo.getEmail());
+        }
 
         log.info("Cuenta {} pasada de {} a {} por el administrador {}",
                 idUsuario, estadoActual, destino, administrador.getIdUsuario());

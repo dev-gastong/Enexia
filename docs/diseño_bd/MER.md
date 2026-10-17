@@ -171,6 +171,15 @@ erDiagram
         varchar estado_organizador
     }
 
+    Notificacion_Enviada{
+        int id_notificacion PK
+        varchar tipo "Código del aviso (RECUPERACION, RECORDATORIO_10MIN, ...)"
+        int id_usuario "Destinatario. Sin FK a propósito: registro de auditoría liviano"
+        int id_referencia "Evento o inscripción que originó el aviso; NULL si no aplica. UNIQUE con tipo + id_usuario"
+        varchar estado "PENDIENTE, ENVIADO o FALLIDO"
+        timestamp fecha
+    }
+
     Historial_Estado_Evento{
         int id_historial PK
         int id_evento FK

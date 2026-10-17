@@ -116,4 +116,51 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
      * igual que una CONFIRMADA.
      */
     boolean existsByCronogramaTicketIdCronogramaTicket(Long idCronogramaTicket);
+
+    /**
+     * A quien avisar cuando le pasa algo a un evento entero (cancelacion,
+     * invitacion a valorar): cada persona con al menos una inscripcion
+     * CONFIRMADA en cualquiera de sus funciones, UNA sola vez aunque tenga
+     * varias. Devuelve pares {@code [idUsuario, email]}.
+     *
+     * Solo CONFIRMADA: quien cancelo su lugar o nunca lo pago no tiene por que
+     * enterarse de la suerte del evento.
+     */
+    @Query("""
+            SELECT DISTINCT i.usuario.idUsuario, i.usuario.email FROM Inscripcion i
+            WHERE i.cronogramaTicket.cronograma.evento.idEvento = :idEvento
+              AND i.estadoInscripcion.nombreEstado = 'CONFIRMADA'
+            """)
+    List<Object[]> destinatariosConfirmadosDeEvento(@Param("idEvento") Long idEvento);
+
+    /**
+     * Candidatas al recordatorio de inicio: inscripciones CONFIRMADAS de eventos
+     * visibles al publico, en las fechas indicadas y a las que todavia no se les
+     * reservo un aviso de ese tipo.
+     *
+     * Filtra por FECHA y no por hora: la comparacion fina contra el reloj (la
+     * ventana de 10 minutos, que puede cruzar la medianoche) se hace en Java,
+     * donde es legible y comprobable. El NOT EXISTS evita cargar en cada tick
+     * las que ya recibieron su aviso, que con un tick por minuto seria la gran
+     * mayoria de la ventana.
+     */
+    @EntityGraph(attributePaths = {
+            "cronogramaTicket", "cronogramaTicket.tipoTicket", "cronogramaTicket.cronograma",
+            "cronogramaTicket.cronograma.evento", "usuario"})
+    @Query("""
+            SELECT i FROM Inscripcion i
+            WHERE i.estadoInscripcion.nombreEstado = 'CONFIRMADA'
+              AND i.cronogramaTicket.cronograma.fecha IN :fechas
+              AND i.cronogramaTicket.cronograma.evento.estadoOrganizador.estadoOrganizador = :estadoPublicado
+              AND i.cronogramaTicket.cronograma.evento.estadoSistema.estadoSistema IN :estadosAprobados
+              AND NOT EXISTS (
+                    SELECT 1 FROM NotificacionEnviada n
+                    WHERE n.tipo = :tipoAviso
+                      AND n.idUsuario = i.usuario.idUsuario
+                      AND n.idReferencia = i.idInscripcion)
+            """)
+    List<Inscripcion> candidatasARecordatorio(@Param("fechas") List<java.time.LocalDate> fechas,
+                                              @Param("estadoPublicado") String estadoPublicado,
+                                              @Param("estadosAprobados") List<String> estadosAprobados,
+                                              @Param("tipoAviso") String tipoAviso);
 }

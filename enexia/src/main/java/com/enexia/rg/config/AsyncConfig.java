@@ -53,4 +53,27 @@ public class AsyncConfig {
         ejecutor.initialize();
         return ejecutor;
     }
+
+    /**
+     * Pool EXCLUSIVO del correo.
+     *
+     * Esta separado de {@code ejecutorEnexia} a proposito: la recuperacion de
+     * contrasena es un endpoint publico, y si compartiera pool con el pipeline
+     * de moderacion, una rafaga de pedidos de recuperacion llenaria la cola y los
+     * eventos nuevos quedarian EN_PROCESO para siempre. Aislados, lo peor que
+     * provoca esa rafaga es perder correos de recuperacion (que el servicio
+     * descarta con un log, sin enumerar nada).
+     */
+    @Bean(name = "ejecutorCorreo")
+    public Executor ejecutorCorreo() {
+        ThreadPoolTaskExecutor ejecutor = new ThreadPoolTaskExecutor();
+        ejecutor.setCorePoolSize(2);
+        ejecutor.setMaxPoolSize(3);
+        ejecutor.setQueueCapacity(200);
+        ejecutor.setThreadNamePrefix("enexia-correo-");
+        ejecutor.setWaitForTasksToCompleteOnShutdown(true);
+        ejecutor.setAwaitTerminationSeconds(30);
+        ejecutor.initialize();
+        return ejecutor;
+    }
 }

@@ -66,6 +66,7 @@ public class InscripcionService {
     private final ValoracionRepository valoracionRepository;
     private final AuditoriaService auditoriaService;
     private final RegistroInscripcionService registroInscripcionService;
+    private final EmailService emailService;
 
     // =====================================================================
     // RF-3.1 / RF-3.2: alta e inscripcion transaccional
@@ -101,6 +102,14 @@ public class InscripcionService {
 
         log.info("Inscripcion {} resuelta para el usuario {}",
                 resultado.idInscripcion(), participante.getIdUsuario());
+
+        // Confirmacion al participante. La transaccion de registro ya cerro, asi
+        // que el envio se encola de inmediato; la clave (usuario, inscripcion)
+        // impide un segundo correo si el metodo se reintentara.
+        emailService.enviarInscripcionConfirmada(
+                new EmailService.Destinatario(participante.getIdUsuario(), participante.getEmail()),
+                respuesta.getIdInscripcion(), respuesta.getEventoNombre(),
+                respuesta.getFechaCronograma(), respuesta.getHoraInicio(), respuesta.getTipoTicket());
 
         return respuesta;
     }

@@ -45,6 +45,8 @@ class FinalizacionEventoServiceTest {
     @Mock private EventoEstadoOrganizadorRepository estadoOrganizadorRepository;
     @Mock private HistorialEstadoEventoRepository historialRepository;
 
+    @Mock private AvisoInscriptosService avisoInscriptosService;
+
     @InjectMocks private FinalizacionEventoService servicio;
 
     private static final Long ID_EVENTO = 5L;
@@ -107,6 +109,8 @@ class FinalizacionEventoServiceTest {
         assertThat(captor.getValue().getUsuario()).isNull();
         assertThat(captor.getValue().getEstadoOrganizador()).isSameAs(finalizado);
         assertThat(captor.getValue().getFechaCambio()).isEqualTo(AHORA);
+        // RF-3.4: al terminar, se invita a valorar a los inscriptos confirmados.
+        verify(avisoInscriptosService).invitarAValorar(eq(ID_EVENTO), any());
     }
 
     @Test

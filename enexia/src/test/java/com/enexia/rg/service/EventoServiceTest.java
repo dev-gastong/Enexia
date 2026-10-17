@@ -3,6 +3,7 @@ package com.enexia.rg.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -102,6 +103,8 @@ class EventoServiceTest {
     @Mock private HttpServletRequest request;
 
     private final EventoMapper eventoMapper = new EventoMapper();
+
+    @Mock private AvisoInscriptosService avisoInscriptosService;
 
     @InjectMocks private EventoService servicio;
 
@@ -395,6 +398,8 @@ class EventoServiceTest {
             // apuntan a este evento.
             verify(eventoRepository, never()).delete(any());
             verify(historialRepository).save(any());
+            // Sin este aviso el participante se entera el dia del evento.
+            verify(avisoInscriptosService).avisarEventoCancelado(eq(99L), any());
         }
 
         @Test

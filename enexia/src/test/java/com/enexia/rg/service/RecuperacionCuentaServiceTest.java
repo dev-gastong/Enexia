@@ -3,6 +3,8 @@ package com.enexia.rg.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -10,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,9 +25,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.enexia.rg.exception.ReglaNegocioException;
 import com.enexia.rg.model.EstadoUsuarioNombre;
+import com.enexia.rg.model.NotificacionTipo;
 import com.enexia.rg.model.PasswordResetToken;
 import com.enexia.rg.model.Usuario;
 import com.enexia.rg.model.UsuarioEstado;
@@ -59,6 +66,8 @@ class RecuperacionCuentaServiceTest {
     @Mock private HistorialEstadoUsuarioRepository historialRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private EmailService emailService;
+    @Mock private NotificacionService notificaciones;
+    @Mock private PlatformTransactionManager transactionManager;
 
     private RecuperacionCuentaService servicio;
 
@@ -69,9 +78,19 @@ class RecuperacionCuentaServiceTest {
     void prepararEscenario() {
         // Constructor explicito por el @Value: se instancia a mano en vez de con
         // @InjectMocks para poder fijar la vigencia.
+        //
+        // El ejecutor corre en el mismo hilo (Runnable::run): en produccion la
+        // solicitud se procesa en otro hilo para que la respuesta no dependa de
+        // si la cuenta existe, y aca eso solo estorbaria para verificar.
+        Executor sincrono = Runnable::run;
+        when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
         servicio = new RecuperacionCuentaService(
                 usuarioRepository, tokenRepository, usuarioEstadoRepository,
-                historialRepository, passwordEncoder, emailService, 30);
+                historialRepository, passwordEncoder, emailService, notificaciones,
+                sincrono, new TransactionTemplate(transactionManager), 30);
+
+        when(notificaciones.reservarConLimite(any(), anyLong(), anyInt(), any(), any()))
+                .thenReturn(Optional.of(1L));
 
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$12$hashNuevo");
         when(tokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -157,6 +176,51 @@ class RecuperacionCuentaServiceTest {
             verify(tokenRepository, never()).save(any());
             verify(emailService, never()).enviarRecuperacionPassword(anyString(), anyString());
         }
+
+        @Test
+        @DisplayName("Email registrado: emite el token y manda el enlace")
+        void emailRegistrado() {
+            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL))
+                    .thenReturn(Optional.of(usuario(EstadoUsuarioNombre.ACTIVO)));
+
+            servicio.solicitarRestablecimiento(EMAIL);
+
+            verify(tokenRepository).save(any());
+            verify(emailService).enviarRecuperacionPassword(anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Limite por destinatario alcanzado: no emite token ni manda correo")
+        void limitePorDestinatario() {
+            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL))
+                    .thenReturn(Optional.of(usuario(EstadoUsuarioNombre.ACTIVO)));
+            when(notificaciones.reservarConLimite(any(), anyLong(), anyInt(), any(), any()))
+                    .thenReturn(Optional.empty());
+
+            servicio.solicitarRestablecimiento(EMAIL);
+
+            // Sin este tope, cualquiera puede llenar la casilla de otra persona
+            // y gastar la cuota diaria del proveedor pidiendo enlaces en bucle.
+            // Se cuenta por cuenta, no por IP (el limite por IP se retiro por el CGNAT).
+            verify(notificaciones).reservarConLimite(
+                    org.mockito.ArgumentMatchers.eq(NotificacionTipo.RECUPERACION),
+                    anyLong(), anyInt(), any(), any());
+            verify(tokenRepository, never()).save(any());
+            verify(emailService, never()).enviarRecuperacionPassword(anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Un fallo interno no escapa: el endpoint no puede responder distinto")
+        void falloInternoNoEscapa() {
+            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL))
+                    .thenThrow(new IllegalStateException("base caida"));
+
+            // Si lanzara, la respuesta seria un 500 y no el 202 uniforme: otra
+            // forma de distinguir un caso de otro.
+            servicio.solicitarRestablecimiento(EMAIL);
+
+            verify(emailService, never()).enviarRecuperacionPassword(anyString(), anyString());
+        }
     }
 
     // =====================================================================
@@ -185,6 +249,32 @@ class RecuperacionCuentaServiceTest {
             // Un solo uso: si el enlace queda en el historial del navegador o se
             // reenvia, ya no sirve.
             verify(tokenRepository).delete(token);
+        }
+
+        @Test
+        @DisplayName("Cambiada la contrasena, avisa al titular por correo")
+        void avisaContrasenaCambiada() {
+            Usuario usuario = usuario(EstadoUsuarioNombre.ACTIVO);
+            when(tokenRepository.buscarPorHashConUsuario(anyString()))
+                    .thenReturn(Optional.of(tokenVigente(usuario)));
+
+            servicio.confirmarRestablecimiento("tokenPlano", PASSWORD_NUEVA, PASSWORD_NUEVA);
+
+            // Si alguien tomo la cuenta, el titular se entera por la unica
+            // casilla que el atacante no controla.
+            verify(emailService).enviarPasswordCambiada(usuario.getEmail());
+        }
+
+        @Test
+        @DisplayName("Token invalido: no se avisa de ningun cambio")
+        void sinAvisoSiFalla() {
+            when(tokenRepository.buscarPorHashConUsuario(anyString())).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    servicio.confirmarRestablecimiento("inventado", PASSWORD_NUEVA, PASSWORD_NUEVA))
+                    .isInstanceOf(ReglaNegocioException.class);
+
+            verify(emailService, never()).enviarPasswordCambiada(anyString());
         }
 
         @Test

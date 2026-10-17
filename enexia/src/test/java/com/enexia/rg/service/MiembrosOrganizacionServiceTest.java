@@ -3,6 +3,7 @@ package com.enexia.rg.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,6 +55,8 @@ class MiembrosOrganizacionServiceTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private AuditoriaService auditoriaService;
     @Mock private HttpServletRequest request;
+
+    @Mock private EmailService emailService;
 
     @InjectMocks private MiembrosOrganizacionService servicio;
 
@@ -175,6 +178,18 @@ class MiembrosOrganizacionServiceTest {
             ArgumentCaptor<MiembrosOrganizacion> captor = ArgumentCaptor.forClass(MiembrosOrganizacion.class);
             verify(miembrosRepository).save(captor.capture());
             assertThat(captor.getValue().getRolEnEmpresa()).isEqualTo("MIEMBRO");
+        }
+
+        @Test
+        @DisplayName("El nuevo miembro recibe un correo avisandole que lo sumaron")
+        void avisaAlNuevoMiembro() {
+            Usuario nuevo = usuario(3L, EMAIL_NUEVO);
+            when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL_NUEVO)).thenReturn(Optional.of(nuevo));
+            when(miembrosRepository.buscarMembresia(3L, ID_ORGANIZACION)).thenReturn(Optional.empty());
+
+            servicio.agregar(EMAIL_ADMIN, ID_ORGANIZACION, peticion, request);
+
+            verify(emailService).enviarAgregadoAEquipo(eq(EMAIL_NUEVO), any(), eq("MIEMBRO"));
         }
 
         @Test

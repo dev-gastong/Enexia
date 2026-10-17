@@ -430,6 +430,17 @@ estado_sistema (moderation)          estado_organizador (owner)
 
 **Cloudinary**: without `CLOUDINARY_CLOUD_NAME` the service runs in **simulated mode** — validates format/size, uploads nothing, approves by default. A filename containing `rechazar` is rejected, which is how the rejection branch is tested without credentials.
 
+**Email notifications (2026-10-16)** — DFDs in `docs/diagrams/notificaciones/` (prefix `N`, because "Module 7" is Organizations). `EmailService` composes each notice; `BrevoClient` is the only exit to the provider (Brevo HTTPS API, `POST /v3/smtp/email` — SMTP is blocked on free hosting like Render). Without `BREVO_API_KEY` it runs in **simulated mode** (logs the email, sends nothing). Sender must be a verified sender: `EMAIL_REMITENTE`.
+
+- **Always after commit, always async, never propagates a failure.** `EmailService` registers the send as `afterCommit` and runs it on its own pool (`ejecutorCorreo`, separate from the moderation pool so a burst of public recovery requests cannot starve it). Don't call the provider from a request thread: the login attempt that triggers the block would take longer and leak account existence by timing.
+- **`notificacion_enviada` is the mail ledger** (migration `2026-10-16_notificacion_enviada.sql`): UNIQUE `(tipo, id_usuario, id_referencia)` gives idempotency (reminder every minute, two finalization paths) and counting recent rows gives the **per-recipient** recovery limit (3/24 h, 2 min apart — never per IP).
+- **`solicitarRestablecimiento` only enqueues**: everything that depends on whether the account exists runs after the response, so neither body nor timing distinguishes the two cases.
+- **User text is escaped** (`CorreoHtml`); URLs in user text are never made clickable — the only link is the one the system builds.
+- Catalog: RECUPERACION, BLOQUEO, PASSWORD_CAMBIADA, CUENTA_SUSPENDIDA, MODERACION_RESULTADO, EVENTO_SUSPENDIDO, EVENTO_REACTIVADO, INSCRIPCION_CONFIRMADA, EVENTO_CANCELADO, RECORDATORIO_10MIN, INVITACION_VALORAR, AGREGADO_A_EQUIPO.
+- **Two code paths set `FINALIZADO`** (`FinalizacionEventoService` scheduler and `FinalizacionEventosService`, which also runs when the organizer lists their events); both call `AvisoInscriptosService.invitarAValorar`, and the ledger prevents a double send.
+- Reminder lead time: `enexia.notificaciones.recordatorio.segundos-antes` (600 default; use 30 + `intervalo-ms=5000` to test). Clock uses `enexia.zona-horaria` (Ushuaia), not the JVM zone.
+- **Known gap:** `FinalizacionEventoScheduler` still uses `LocalDateTime.now()` (JVM zone) — on a UTC host it finalizes events 3 h early.
+
 ---
 
 ## Sprint 1: Backend Authentication MVP (completed)
@@ -561,7 +572,8 @@ public class Usuario {
 - **RBAC (Backend)**: Always validate roles in service layer via `@PreAuthorize` or manual checks; frontend can render UI conditionally, but backend enforces
 - **Cloudinary Integration**: Planned for Sprint 2 (Module 2 - Event Images); for now skip image uploads
 - **Analytics** (Future): Aggregate visits (unique per user) and avg ratings from `Valoracion` table for event dashboards
-
+
+
 ---
 
 ## Design Rules (read before any frontend/CSS change)
@@ -569,7 +581,8 @@ public class Usuario {
 - **Square corners, everywhere (2026-10-16).** Borders must stay squarish, especially in `pages/admin/*`. Use ONLY the tokens from `pages/css/tokens.css` section 8: `--radio-campo` (4px), `--radio-tarjeta` (6px), `--radio-sm` (6px). Never hardcode `border-radius` values (12/14/16/20/24px) and never use `999px` pills or override `--radio-tarjeta` per page. `50%` is allowed only for avatars, status dots and round close/icon buttons.
 - No "+" icon or "+" text on any "Crear Evento" button/link.
 - Never show internal DB table names (`Tabla: ...`) in user-facing forms.
-- Admin accounts never see participant actions (inscription button or its notice) on the event detail page.
+- Admin accounts never see participant actions (inscription button or its notice) on the event detail page.
+
 
 ---
 

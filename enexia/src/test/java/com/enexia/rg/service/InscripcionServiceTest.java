@@ -78,6 +78,8 @@ class InscripcionServiceTest {
     @Mock private RegistroInscripcionService registroInscripcionService;
     @Mock private HttpServletRequest request;
 
+    @Mock private EmailService emailService;
+
     @InjectMocks private InscripcionService servicio;
 
     private static final String EMAIL = "participante@enexia.test";
@@ -121,6 +123,10 @@ class InscripcionServiceTest {
             assertThat(respuesta.getIdInscripcion()).isEqualTo(ID_INSCRIPCION);
             assertThat(respuesta.getEstado()).isEqualTo("CONFIRMADA");
             assertThat(respuesta.getCodigoQr()).isEqualTo("ENEXIA-INSC-" + ID_INSCRIPCION);
+            verify(emailService).enviarInscripcionConfirmada(
+                    org.mockito.ArgumentMatchers.argThat(d -> d.idUsuario().equals(ID_USUARIO)
+                            && d.email().equals(EMAIL)),
+                    eq(ID_INSCRIPCION), any(), any(), any(), any());
         }
 
         @Test

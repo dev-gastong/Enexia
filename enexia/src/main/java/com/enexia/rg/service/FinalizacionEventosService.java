@@ -45,6 +45,7 @@ public class FinalizacionEventosService {
     private final EventoEstadoOrganizadorRepository estadoOrganizadorRepository;
     private final HistorialEstadoEventoRepository historialRepository;
     private final com.enexia.rg.repository.UsuarioRepository usuarioRepository;
+    private final AvisoInscriptosService avisoInscriptosService;
 
     /**
      * Variante por email, para llamarla ANTES de la primera lectura de la
@@ -106,6 +107,11 @@ public class FinalizacionEventosService {
             historial.setUsuario(null); // lo decide el sistema, no una persona
             historial.setFechaCambio(LocalDateTime.now());
             historialRepository.save(historial);
+
+            // Mismo aviso que FinalizacionEventoService: dos caminos finalizan
+            // eventos y los dos tienen que invitar. La clave (usuario, evento)
+            // del libro de correos evita que se mande dos veces.
+            avisoInscriptosService.invitarAValorar(evento.getIdEvento(), evento.getNombre());
             cambiados++;
         }
         return cambiados;

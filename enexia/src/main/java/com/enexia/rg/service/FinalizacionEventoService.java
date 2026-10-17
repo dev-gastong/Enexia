@@ -55,6 +55,7 @@ public class FinalizacionEventoService {
     private final EventoRepository eventoRepository;
     private final EventoEstadoOrganizadorRepository estadoOrganizadorRepository;
     private final HistorialEstadoEventoRepository historialRepository;
+    private final AvisoInscriptosService avisoInscriptosService;
 
     /** Ids de los eventos publicados y aprobados cuya ultima funcion ya paso. */
     @Transactional(readOnly = true)
@@ -104,6 +105,11 @@ public class FinalizacionEventoService {
         historial.setUsuario(null);
         historial.setFechaCambio(ahora);
         historialRepository.save(historial);
+
+        // RF-3.4: se invita a valorar a quienes tenian lugar confirmado. Sale
+        // despues del commit; si otro camino de finalizacion ya lo hizo, la
+        // idempotencia por (usuario, evento) evita el segundo correo.
+        avisoInscriptosService.invitarAValorar(idEvento, evento.getNombre());
 
         log.info("Evento {} finalizado automaticamente (ultima funcion ya termino)", idEvento);
         return true;

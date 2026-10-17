@@ -1,5 +1,6 @@
 package com.enexia.rg.service;
 
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,10 +68,13 @@ class AdminEventoServiceTest {
     @Mock private AuditoriaService auditoriaService;
     @Mock private HttpServletRequest request;
 
+    @Mock private EmailService emailService;
+
     @InjectMocks private AdminEventoService servicio;
 
     private static final String EMAIL_ADMIN = "admin@enexia.test";
     private static final Long ID_EVENTO = 42L;
+    private static final String EMAIL_ORGANIZADOR = "organizador@enexia.test";
     private static final String OBSERVACION_VALIDA = "Denuncia verificada por el equipo de moderacion";
 
     private Usuario administrador;
@@ -97,6 +101,10 @@ class AdminEventoServiceTest {
     private Evento eventoEn(String estado, String motivo) {
         Evento evento = new Evento();
         evento.setIdEvento(ID_EVENTO);
+        evento.setNombre("Recital");
+        Usuario organizador = new Usuario();
+        organizador.setEmail(EMAIL_ORGANIZADOR);
+        evento.setOrganizador(organizador);
         evento.setEstadoSistema(fila(estado, motivo));
         EventoEstadoOrganizador publicado = new EventoEstadoOrganizador();
         publicado.setEstadoOrganizador("PUBLICADO");
@@ -138,6 +146,29 @@ class AdminEventoServiceTest {
             verify(historialRepository).save(captor.capture());
             assertThat(captor.getValue().getObservacion()).isEqualTo(OBSERVACION_VALIDA);
             assertThat(captor.getValue().getUsuario()).isSameAs(administrador);
+        }
+
+        @Test
+        @DisplayName("Suspender le avisa al organizador, con motivo y observacion")
+        void suspensionAvisaAlOrganizador() {
+            eventoEn("APROBADO_SISTEMA", null);
+
+            servicio.decidir(EMAIL_ADMIN, ID_EVENTO, rechazar("FRAUDE_DETECTADO", OBSERVACION_VALIDA), request);
+
+            verify(emailService).enviarEventoSuspendido(
+                    EMAIL_ORGANIZADOR, "Recital", "FRAUDE_DETECTADO", OBSERVACION_VALIDA);
+        }
+
+        @Test
+        @DisplayName("Si la suspension es invalida (sin observacion), no sale ningun correo")
+        void suspensionInvalidaNoAvisa() {
+            eventoEn("APROBADO_SISTEMA", null);
+
+            assertThatThrownBy(() -> servicio.decidir(EMAIL_ADMIN, ID_EVENTO,
+                    rechazar("DENUNCIA_FUNDADA", null), request))
+                    .isInstanceOf(ReglaNegocioException.class);
+
+            verifyNoInteractions(emailService);
         }
 
         @Test
@@ -280,6 +311,10 @@ class AdminEventoServiceTest {
 
             assertThat(evento.getEstadoSistema().getEstadoSistema()).isEqualTo("APROBADO_MANUAL");
             assertThat(evento.getEstadoSistema().getMotivoCodigo()).isNull();
+            // Nunca estuvo al aire: es la misma noticia que el resultado de la
+            // moderacion automatica, no una "reactivacion".
+            verify(emailService).enviarResultadoModeracionEvento(EMAIL_ORGANIZADOR, "Recital", true, null);
+            verify(emailService, never()).enviarEventoReactivado(any(), any());
         }
 
         @Test
@@ -290,6 +325,7 @@ class AdminEventoServiceTest {
             servicio.decidir(EMAIL_ADMIN, ID_EVENTO, aprobar(), request);
 
             assertThat(evento.getEstadoSistema().getEstadoSistema()).isEqualTo("APROBADO_MANUAL");
+            verify(emailService).enviarEventoReactivado(EMAIL_ORGANIZADOR, "Recital");
         }
 
         @Test

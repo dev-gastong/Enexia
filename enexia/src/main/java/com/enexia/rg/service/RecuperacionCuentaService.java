@@ -4,19 +4,25 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.enexia.rg.exception.ReglaNegocioException;
 import com.enexia.rg.model.EstadoUsuarioNombre;
 import com.enexia.rg.model.HistorialEstadoUsuario;
+import com.enexia.rg.model.NotificacionTipo;
 import com.enexia.rg.model.PasswordResetToken;
 import com.enexia.rg.model.Usuario;
 import com.enexia.rg.model.UsuarioEstado;
@@ -58,6 +64,16 @@ public class RecuperacionCuentaService {
 
     private static final SecureRandom ALEATORIO = new SecureRandom();
 
+    /**
+     * Tope de enlaces por cuenta: 3 cada 24 h y al menos 2 minutos entre uno y
+     * otro. Se cuenta por DESTINATARIO y no por IP (ver CLAUDE.md: el limite por
+     * IP se retiro por el CGNAT). Frena el "email bombing" a una casilla ajena
+     * y el consumo de la cuota diaria del proveedor de correo.
+     */
+    private static final int MAXIMO_ENLACES_POR_VENTANA = 3;
+    private static final Duration VENTANA_ENLACES = Duration.ofHours(24);
+    private static final Duration ESPERA_ENTRE_ENLACES = Duration.ofMinutes(2);
+
     /** Mismo texto para token inexistente, vencido o ya usado. Ver confirmarRestablecimiento(). */
     private static final String ENLACE_INVALIDO =
             "El enlace de recuperacion no es valido o ya fue utilizado";
@@ -68,6 +84,9 @@ public class RecuperacionCuentaService {
     private final HistorialEstadoUsuarioRepository historialEstadoRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final NotificacionService notificaciones;
+    private final Executor ejecutorCorreo;
+    private final TransactionTemplate transaccion;
     private final int vigenciaMinutos;
 
     public RecuperacionCuentaService(
@@ -77,6 +96,9 @@ public class RecuperacionCuentaService {
             HistorialEstadoUsuarioRepository historialEstadoRepository,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
+            NotificacionService notificaciones,
+            @Qualifier("ejecutorCorreo") Executor ejecutorCorreo,
+            TransactionTemplate transaccion,
             @Value("${enexia.security.recuperacion.vigencia-minutos}") int vigenciaMinutos) {
         this.usuarioRepository = usuarioRepository;
         this.tokenRepository = tokenRepository;
@@ -84,6 +106,9 @@ public class RecuperacionCuentaService {
         this.historialEstadoRepository = historialEstadoRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.notificaciones = notificaciones;
+        this.ejecutorCorreo = ejecutorCorreo;
+        this.transaccion = transaccion;
         this.vigenciaMinutos = vigenciaMinutos;
     }
 
@@ -111,23 +136,52 @@ public class RecuperacionCuentaService {
     /**
      * Restablecimiento pedido por el propio usuario (RF-1.5).
      *
-     * NO informa si el email existe: el controller responde siempre lo mismo.
+     * NO INFORMA SI EL EMAIL EXISTE, NI POR EL CUERPO NI POR EL TIEMPO
      * Un "ese email no esta registrado" convertiria este endpoint publico en un
-     * enumerador de cuentas mas comodo todavia que el login.
+     * enumerador de cuentas. Pero igualar solo el cuerpo no alcanza: con cuenta
+     * se hacen escrituras (borrar y guardar el token) y sin cuenta no, y esa
+     * diferencia de milisegundos tambien enumera. Por eso este metodo SOLO
+     * encola el trabajo y vuelve: todo lo que depende de si la cuenta existe
+     * ocurre en otro hilo, despues de que la respuesta ya salio.
+     *
+     * Si la cola esta llena se descarta el pedido con un log; no se responde
+     * distinto, porque eso tambien revelaria algo.
      */
-    @Transactional
     public void solicitarRestablecimiento(String email) {
-        Optional<Usuario> encontrado = usuarioRepository.buscarActivoPorEmailConRoles(email);
-
-        if (encontrado.isEmpty()) {
-            // Se deja rastro del lado del servidor y se corta en silencio.
-            log.info("Solicitud de restablecimiento para un email no registrado");
-            return;
+        try {
+            ejecutorCorreo.execute(() -> procesarSolicitud(email));
+        } catch (RejectedExecutionException ex) {
+            log.warn("Cola de correo llena: se descarto una solicitud de restablecimiento");
         }
+    }
 
-        Usuario usuario = encontrado.get();
-        String tokenPlano = emitirToken(usuario);
-        emailService.enviarRecuperacionPassword(usuario.getEmail(), tokenPlano);
+    private void procesarSolicitud(String email) {
+        try {
+            transaccion.executeWithoutResult(estado -> {
+                Optional<Usuario> encontrado = usuarioRepository.buscarActivoPorEmailConRoles(email);
+
+                if (encontrado.isEmpty()) {
+                    // Se deja rastro del lado del servidor y se corta en silencio.
+                    log.info("Solicitud de restablecimiento para un email no registrado");
+                    return;
+                }
+
+                Usuario usuario = encontrado.get();
+
+                if (notificaciones.reservarConLimite(NotificacionTipo.RECUPERACION,
+                        usuario.getIdUsuario(), MAXIMO_ENLACES_POR_VENTANA,
+                        VENTANA_ENLACES, ESPERA_ENTRE_ENLACES).isEmpty()) {
+                    log.warn("Limite de enlaces de recuperacion alcanzado para el usuario {}",
+                            usuario.getIdUsuario());
+                    return;
+                }
+
+                String tokenPlano = emitirToken(usuario);
+                emailService.enviarRecuperacionPassword(usuario.getEmail(), tokenPlano);
+            });
+        } catch (RuntimeException ex) {
+            log.error("No se pudo procesar la solicitud de restablecimiento", ex);
+        }
     }
 
     /** Crea el token, guarda su hash y devuelve el valor que viaja por email. */
@@ -196,6 +250,10 @@ public class RecuperacionCuentaService {
         reactivarSiEstabaBloqueada(usuario);
 
         usuarioRepository.save(usuario);
+
+        // Si alguien tomo la cuenta, el titular se entera por la unica casilla
+        // que el atacante no controla. Sale despues del commit.
+        emailService.enviarPasswordCambiada(usuario.getEmail());
 
         // Un solo uso: el token desaparece apenas se consume. Si el enlace se
         // reenvia o queda en el historial del navegador, ya no sirve.

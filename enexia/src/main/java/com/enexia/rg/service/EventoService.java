@@ -98,6 +98,7 @@ public class EventoService {
     private final ApplicationEventPublisher publicadorDeEventos;
     private final AuditoriaService auditoriaService;
     private final EventoMapper eventoMapper;
+    private final AvisoInscriptosService avisoInscriptosService;
     private final ModeracionEventoService moderacionEventoService;
     private final PublicacionEventoService publicacionEventoService;
 
@@ -621,6 +622,10 @@ public class EventoService {
 
         auditoriaService.registrar(organizador, AuditoriaService.ACCION_EVENTO_DADO_DE_BAJA,
                 "Baja logica del evento " + idEvento, request);
+
+        // Sin este aviso el participante se entera el dia del evento. El envio
+        // real sale despues del commit de esta transaccion.
+        avisoInscriptosService.avisarEventoCancelado(idEvento, evento.getNombre());
 
         log.info("Evento {} dado de baja por el usuario {}", idEvento, organizador.getIdUsuario());
 

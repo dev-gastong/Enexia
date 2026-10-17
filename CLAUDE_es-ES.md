@@ -572,8 +572,20 @@ public class Usuario {
 - **Eliminación Lógica**: Usar campo `fecha_baja`; nunca hard-delete usuarios o eventos
 - **RBAC (Backend)**: Siempre validar roles en capa de servicio vía `@PreAuthorize` o verificaciones manuales; frontend puede renderizar UI condicionalmente, pero backend es la autoridad final
 - **Integración Cloudinary**: Planeada para Sprint 2 (Módulo 2 - Imágenes de Eventos); por ahora saltar cargas de imagen
+
+**Notificaciones por correo (2026-10-16)** — DFD en `docs/diagrams/notificaciones/` (prefijo `N`, porque el "Módulo 7" es Organizaciones). `EmailService` compone cada aviso; `BrevoClient` es la única salida al proveedor (API HTTPS de Brevo, `POST /v3/smtp/email`; el SMTP está bloqueado en hostings gratuitos como Render). Sin `BREVO_API_KEY` corre en **modo simulado** (escribe el correo en el log y no envía). El remitente debe estar verificado: `EMAIL_REMITENTE`.
+
+- **Siempre después del commit, siempre asíncrono, nunca propaga un fallo.** `EmailService` registra el envío como `afterCommit` y lo corre en su propio pool (`ejecutorCorreo`, separado del de moderación para que una ráfaga de pedidos públicos de recuperación no lo sature). No llamar al proveedor desde el hilo de la petición: el intento de login que dispara el bloqueo tardaría más y filtraría por tiempo que la cuenta existe.
+- **`notificacion_enviada` es el libro de correos** (migración `2026-10-16_notificacion_enviada.sql`): el UNIQUE `(tipo, id_usuario, id_referencia)` da idempotencia (recordatorio cada minuto, dos caminos de finalización) y contar filas recientes da el límite **por destinatario** de la recuperación (3 cada 24 h, 2 min entre uno y otro; nunca por IP).
+- **`solicitarRestablecimiento` solo encola**: todo lo que depende de si la cuenta existe ocurre después de responder, así ni el cuerpo ni el tiempo distinguen los dos casos.
+- **El texto del usuario se escapa** (`CorreoHtml`); las URL escritas por un usuario nunca se vuelven clickeables: el único enlace es el que arma el sistema.
+- Catálogo: RECUPERACION, BLOQUEO, PASSWORD_CAMBIADA, CUENTA_SUSPENDIDA, MODERACION_RESULTADO, EVENTO_SUSPENDIDO, EVENTO_REACTIVADO, INSCRIPCION_CONFIRMADA, EVENTO_CANCELADO, RECORDATORIO_10MIN, INVITACION_VALORAR, AGREGADO_A_EQUIPO.
+- **Dos caminos pasan eventos a `FINALIZADO`** (el scheduler de `FinalizacionEventoService` y `FinalizacionEventosService`, que además corre cuando el organizador lista sus eventos); ambos llaman a `AvisoInscriptosService.invitarAValorar` y el libro evita el doble envío.
+- Adelanto del recordatorio: `enexia.notificaciones.recordatorio.segundos-antes` (600 por defecto; para probar, 30 + `intervalo-ms=5000`). El reloj usa `enexia.zona-horaria` (Ushuaia), no la zona de la JVM.
+- **Deuda conocida:** `FinalizacionEventoScheduler` sigue usando `LocalDateTime.now()` (zona de la JVM): en un servidor UTC finaliza los eventos 3 h antes.
 - **Analítica** (Futuro): Agregar visualizaciones (únicas por usuario) y calificación promedio de tabla `Valoracion` para dashboards de eventos
-
+
+
 ---
 
 ## Reglas de diseño (leer antes de cualquier cambio de frontend/CSS)
@@ -581,7 +593,8 @@ public class Usuario {
 - **Esquinas cuadradas, en todo (2026-10-16).** Los bordes deben mantenerse cuadrados, sobre todo en `pages/admin/*`. Usar SOLO los tokens de `pages/css/tokens.css` sección 8: `--radio-campo` (4px), `--radio-tarjeta` (6px), `--radio-sm` (6px). Nunca poner valores fijos de `border-radius` (12/14/16/20/24px), ni píldoras `999px`, ni redefinir `--radio-tarjeta` por página. `50%` solo para avatares, puntos de estado y botones redondos de cerrar/ícono.
 - Ningún botón/enlace "Crear Evento" lleva ícono "+" ni "+" en el texto.
 - Nunca mostrar nombres internos de tablas de BD (`Tabla: ...`) en formularios para el usuario.
-- Las cuentas admin no ven acciones de participante (botón de inscripción ni su aviso) en el detalle de evento.
+- Las cuentas admin no ven acciones de participante (botón de inscripción ni su aviso) en el detalle de evento.
+
 
 ---
 

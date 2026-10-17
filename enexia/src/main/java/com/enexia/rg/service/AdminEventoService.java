@@ -82,6 +82,7 @@ public class AdminEventoService {
     private final EventoService eventoService;
     private final EventoMapper eventoMapper;
     private final AuditoriaService auditoriaService;
+    private final EmailService emailService;
 
     @Transactional(readOnly = true)
     public Page<EventoResponse> listarParaModeracion(String texto, Pageable paginado) {
@@ -182,7 +183,35 @@ public class AdminEventoService {
         log.info("Evento {} moderado por el administrador {} ({} -> {})",
                 idEvento, administrador.getIdUsuario(), estadoActual, nuevoEstado.getEstadoSistema());
 
+        avisarAlOrganizador(evento, estadoActual, esAprobar, nuevoEstado, observacion);
+
         return eventoMapper.aTarjeta(evento, null, null);
+    }
+
+    /**
+     * Cuenta al organizador lo que decidio el administrador sobre su evento.
+     *
+     *   - Suspender: motivo y observacion, para que sepa que corregir o apelar.
+     *   - Aprobar sobre una SUSPENSION: "volvio a estar publicado".
+     *   - Aprobar sobre un rechazo del sistema: es la misma noticia que el
+     *     resultado de la moderacion automatica ("ya esta publicado"), no una
+     *     reactivacion, porque nunca estuvo al aire.
+     */
+    private void avisarAlOrganizador(Evento evento, String estadoAnterior, boolean esAprobar,
+                                     EventoEstadoSistema nuevoEstado, String observacion) {
+        if (evento.getOrganizador() == null || evento.getOrganizador().getEmail() == null) {
+            return;
+        }
+        String email = evento.getOrganizador().getEmail();
+
+        if (!esAprobar) {
+            emailService.enviarEventoSuspendido(
+                    email, evento.getNombre(), nuevoEstado.getMotivoCodigo(), observacion);
+        } else if (EstadoEventoSistemaNombre.RECHAZADO_MANUAL.name().equals(estadoAnterior)) {
+            emailService.enviarEventoReactivado(email, evento.getNombre());
+        } else {
+            emailService.enviarResultadoModeracionEvento(email, evento.getNombre(), true, null);
+        }
     }
 
     /** En moderacion no hay nada que aprobar todavia; ya aprobado no admite aprobarse de nuevo. */
