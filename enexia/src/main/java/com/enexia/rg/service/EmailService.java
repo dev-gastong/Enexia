@@ -103,13 +103,14 @@ public class EmailService {
                 "Enexia - Actividad inusual en tu cuenta",
                 """
                 Detectamos varios intentos fallidos de inicio de sesion en tu cuenta de Enexia.
-                Por seguridad, la bloqueamos temporalmente.
+                Por seguridad, la bloqueamos.
 
-                Si fuiste vos, podes recuperar el acceso definiendo una contrasena nueva desde
-                el enlace de abajo (vence en 30 minutos y sirve una sola vez).
+                Solo un administrador de Enexia puede desbloquearla: comunicate con la
+                administracion para pedirlo. Cambiar la contrasena NO desbloquea la cuenta.
 
-                Si NO fuiste vos, alguien esta intentando entrar a tu cuenta. Usa igualmente el
-                enlace para cambiar tu contrasena por una que no uses en ningun otro sitio.
+                Si NO fuiste vos, alguien esta intentando entrar. Mientras tanto podes usar el
+                enlace de abajo para definir una contrasena nueva que no uses en ningun otro
+                sitio (vence en 30 minutos y sirve una sola vez).
 
                 No respondas a este correo.""",
                 enlaceRecuperacion(tokenRecuperacion)));

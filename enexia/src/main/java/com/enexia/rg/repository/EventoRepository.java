@@ -278,19 +278,4 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
             """)
     List<Object[]> contarPorOrganizador(@Param("ids") java.util.Collection<Long> ids,
                                         @Param("estadoBaja") String estadoBaja);
-
-    /**
-     * Cuenta los eventos vigentes de un organizador (RF-2.1 / DFD 2.1, limite de plan).
-     *
-     * Excluye los dados de baja: si contaran, un organizador que limpia su
-     * historial quedaria bloqueado para siempre por eventos que ya no existen
-     * para nadie.
-     */
-    @Query("""
-            SELECT COUNT(e) FROM Evento e
-            WHERE e.organizador.idUsuario = :idOrganizador
-              AND e.estadoOrganizador.estadoOrganizador <> :estadoBaja
-            """)
-    long contarVigentesDeOrganizador(@Param("idOrganizador") Long idOrganizador,
-                                     @Param("estadoBaja") String estadoBaja);
 }

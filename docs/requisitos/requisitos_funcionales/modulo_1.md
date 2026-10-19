@@ -25,7 +25,7 @@ El sistema debe interceptar cada petición dirigida a endpoints protegidos del b
 * #### **RF-1.4: Bloqueo Automático y Silencioso de Cuenta por Intentos Fallidos**
 
 
-El sistema debe contabilizar los intentos consecutivos de inicio de sesión fallidos para un mismo nickname. Al alcanzar el **tercer (3°) intento fallido**, el backend debe mutar el estado del usuario a `BLOQUEADO` de forma automática y denegar todo acceso posterior a esa cuenta en la API hasta que se ejecute el flujo de desbloqueo de RF-1.5.
+El sistema debe contabilizar los intentos consecutivos de inicio de sesión fallidos para un mismo nickname. Al alcanzar el **tercer (3°) intento fallido**, el backend debe mutar el estado del usuario a `BLOQUEADO` de forma automática y denegar todo acceso posterior a esa cuenta en la API hasta que **un administrador la reactive desde el panel de administración (RF-6.2)**. Es la **única** vía de desbloqueo: ni el correo ni ningún otro flujo la reactivan (decisión del 2026-10-19).
 
   * **Conteo por cuenta, no por IP.** La contabilidad es **exclusivamente por cuenta** (`usuario.intentos_fallidos`). El sistema **no** aplica límites por dirección IP: detrás de una CGNAT o del wifi de una institución, cientos de dispositivos legítimos comparten una misma IP pública, de modo que bloquearla dejaría fuera de servicio a toda esa población por causa de un único atacante — una denegación de servicio que el atacante podría provocar a voluntad.
   * **El contador se reinicia a 0** ante cualquier inicio de sesión exitoso.
@@ -42,22 +42,18 @@ El sistema debe contabilizar los intentos consecutivos de inicio de sesión fall
   * **El único canal de aviso es el correo del titular.** Al producirse el bloqueo, el sistema debe notificar por email a la persona propietaria de la cuenta (ver RF-1.5). El email sigue siendo el dato de contacto de la cuenta aunque ya no sea el identificador de login (RF-1.2): es el único canal que el atacante no controla, y por lo tanto el único por el que es seguro informar el bloqueo.
 
   * **Riesgo residual aceptado — *password spraying*.** Sin control por IP, un ataque de contraseña única contra miles de nicknames distintos no acumula fallos en ninguna cuenta y, por lo tanto, no dispara esta escalera. La mitigación prevista **no** consiste en rechazar peticiones, sino en **alertar sobre volumen anómalo** a partir de `Historial_Interacciones`. Queda registrado como trabajo diferido.
-* #### **RF-1.5: Recuperación de Cuenta y Desbloqueo por Correo (Asíncrono)**
+* #### **RF-1.5: Restablecimiento de Contraseña por Correo (Asíncrono)**
 
 
 El sistema debe permitir a los usuarios solicitar el restablecimiento de sus credenciales mediante el ingreso de su email registrado. El backend debe generar un token único, de un solo uso y con tiempo de expiración acotado (almacenado en `PasswordResetToken`), y enviarlo de forma asíncrona por correo electrónico a través de un enlace seguro hipervinculado.
 
-  * **Desbloqueo directo desde el correo.** El mismo mecanismo cubre el desbloqueo de la cuenta bloqueada por RF-1.4. El email disparado por el bloqueo debe incluir un **enlace de desbloqueo directo** de la forma:
+  * **El restablecimiento NO desbloquea la cuenta (decisión del 2026-10-19).** Consumir el enlace fija la contraseña nueva, pone `intentos_fallidos = 0` e invalida el token, pero **no modifica `estado_usuario`**, sea cual sea (`ACTIVO`, `BLOQUEADO`, `SUSPENDIDO` o `DE_BAJA`). Una cuenta bloqueada por RF-1.4 **solo la reactiva un administrador** desde el panel (RF-6.2, acción *Reactivar*). Se descartó el enlace de desbloqueo directo (`/unlock-account?token=...`) que esta especificación describía antes: una única puerta de entrada al desbloqueo es una única puerta que auditar, y evita que cambiar la contraseña levante una sanción.
 
-    ```
-    https://<dominio>/unlock-account?token=<token-de-un-solo-uso>
-    ```
-
-    Al consumir ese enlace, el sistema debe: validar que el token exista, no esté vencido y no haya sido usado; **revertir `estado_usuario` a `ACTIVO`**; poner `intentos_fallidos = 0`; e invalidar el token. A partir de ese momento la persona vuelve a iniciar sesión **con sus credenciales habituales**, sin necesidad de cambiar la contraseña.
+  * **El correo de bloqueo informa y orienta.** El aviso que dispara RF-1.4 le dice al titular que la cuenta fue bloqueada, que solo la administración puede desbloquearla y que cambiar la contraseña no la desbloquea. Incluye igualmente el enlace de restablecimiento, útil si sospecha que alguien adivinó su clave: la renueva mientras espera la reactivación.
 
   * **La solicitud de recuperación también es opaca.** El endpoint que pide el enlace debe responder siempre lo mismo ("si el email está registrado, recibirás un correo"), exista o no la cuenta, para no convertirse en un oráculo de enumeración de usuarios que RF-1.4 justamente evita.
 
-  * **Ámbito de implementación.** El bloqueo automático de RF-1.4 es de implementación inmediata; el flujo de desbloqueo por enlace descrito aquí queda especificado y pendiente de implementación.
+  * **Aviso de cambio.** Al consumir el enlace se envía un correo "tu contraseña fue cambiada" al titular: si alguien tomó la cuenta, se entera por el único canal que el atacante no controla.
 * #### **RF-1.6: Control de Estado de Cuenta (Borrado Lógico)**
 
 

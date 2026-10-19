@@ -56,7 +56,7 @@
 * **Generación y Persistencia de Identidad (JWT):** Ante una autenticación exitosa, el backend generará un **Token JWT** firmado que encapsule el `id_usuario`, `nickname` y `rol`. El cliente lo almacenará de forma segura en las cabeceras de sus peticiones.
 
 
-* **Control de Intentos Fallidos (Bloqueo Automático):** El backend llevará un contador síncrono de intentos consecutivos por nickname. Al alcanzar el **tercer (3°) intento fallido**, mutará automáticamente el estado del usuario a `"BLOQUEADO"`, denegando accesos posteriores y redirigiendo al flujo de desbloqueo.
+* **Control de Intentos Fallidos (Bloqueo Automático):** El backend llevará un contador síncrono de intentos consecutivos por nickname. Al alcanzar el **tercer (3°) intento fallido**, mutará automáticamente el estado del usuario a `"BLOQUEADO"`, denegando accesos posteriores hasta que un administrador reactive la cuenta desde su panel.
 
 
 * **Control de Estado de Cuenta:** El sistema impedirá el inicio de sesión a cualquier cuenta cuyo estado sea diferente de `"ACTIVO"` (rebota usuarios en estado `"SUSPENDIDO"`, `"BLOQUEADO"` o `"DE_BAJA"`).
@@ -89,7 +89,7 @@
 
 
 * **Regla de Consistencia en Ediciones:** El backend bloqueará la modificación de precios o la reducción de `cupo_maximo` en aquellos tickets que ya cuenten con inscripciones activas (`cupo_actual > 0`).
-* **Control de Límites por Suscripción (Plan Free):** Al intentar guardar un evento, el backend comprobará en la tabla `Suscripcion` el plan del organizador. Si posee el **Plan Free** y alcanzó la cuota máxima de publicaciones permitidas, bloqueará la acción y solicitará un upgrade.
+* **Sin límite de eventos (decisión del 2026-10-19):** ni el Plan Free ni el Plan Pro limitan la cantidad de eventos que un organizador puede publicar. Se eliminó el control de cuota que existía al guardar un evento.
 
 * **Validación de Archivos Multimedia (Imágenes):**
   * El sistema debe permitir la subida de una o varias imagenes promocionales (Maximo 3 por evento).
@@ -147,16 +147,16 @@
 
 > **Como** Organizador
 > **Quiero** adquirir la suscripción premium
-> **Para** remover los límites de publicación y habilitar analíticas avanzadas.
+> **Para** habilitar las analíticas avanzadas por cronograma de mis eventos.
 
 #### Criterios de Aceptación:
 
 * **Proceso Transaccional Automatizado:** Al confirmarse la simulación del pago, el backend creará el registro en la tabla `Pago` y mutará síncronamente la tabla `Suscripcion` definiendo el `tipo_plan = 'PRO'`, calculando los tiempos de vigencia.
 
-* Los usuarios en **Plan Free** solo visualizarán el conteo simple de visitas únicas y la puntuación promedio.
+* Los usuarios en **Plan Free** visualizarán las estadísticas básicas por cronograma: visitas del evento, cupo, inscriptos y ocupación, y promedio de valoraciones de cada cronograma finalizado.
 
 
-* Los usuarios en **Plan Pro** desbloquearán el acceso a los endpoints de estadísticas avanzadas y gráficos analíticos aggregate.
+* Los usuarios en **Plan Pro** desbloquearán las estadísticas avanzadas por cronograma (distribución de puntajes, cancelaciones, ingresos, series diarias, conversión y exportación de asistentes). Podrán **cancelar** su plan cuando quieran; la suscripción es mensual y vence sin renovarse sola.
 
 
 

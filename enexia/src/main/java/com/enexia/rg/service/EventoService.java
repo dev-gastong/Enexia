@@ -102,17 +102,6 @@ public class EventoService {
     private final ModeracionEventoService moderacionEventoService;
     private final PublicacionEventoService publicacionEventoService;
 
-    /**
-     * Tope de eventos vigentes del plan gratuito (DFD 2.1).
-     *
-     * El control de suscripciones completo es el Modulo 8, todavia sin
-     * implementar. Se deja el limite como propiedad para que el paso 2.1 del DFD
-     * exista de verdad desde ahora: cuando llegue el Modulo 8, lo unico que
-     * cambia es de donde sale el numero.
-     */
-    @Value("${enexia.eventos.limite-plan-gratuito:20}")
-    private int limitePlanGratuito;
-
     @Value("${enexia.multimedia.max-imagenes:3}")
     private int maxImagenes;
 
@@ -142,8 +131,9 @@ public class EventoService {
         PersonaJuridica organizacion =
                 personaJuridicaService.resolverOrganizacionHabilitada(organizador, datos.getIdPersonaJuridica());
 
-        // --- Paso 2.1: limites del plan.
-        verificarLimiteDePlan(organizador);
+        // --- Paso 2.1: sin tope de eventos (decision del 2026-10-19). Ni el plan
+        // gratuito ni el Pro limitan cuantos eventos se publican: el plan solo
+        // diferencia las estadisticas avanzadas (Modulo 8, RF-8.3).
 
         // --- Paso 2.2: fechas y horarios.
         validarAgenda(datos.getCronogramas());
@@ -475,17 +465,6 @@ public class EventoService {
         if (imagenes.size() > maxImagenes) {
             throw new ReglaNegocioException(
                     "Se admiten como maximo " + maxImagenes + " imagenes por evento");
-        }
-    }
-
-    private void verificarLimiteDePlan(Usuario organizador) {
-        long vigentes = eventoRepository.contarVigentesDeOrganizador(
-                organizador.getIdUsuario(), EstadoEventoOrganizadorNombre.DADO_DE_BAJA.name());
-
-        if (vigentes >= limitePlanGratuito) {
-            throw new OperacionNoPermitidaException(
-                    "Alcanzaste el limite de " + limitePlanGratuito
-                    + " eventos activos de tu plan. Da de baja alguno o mejora tu suscripcion.");
         }
     }
 

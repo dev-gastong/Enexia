@@ -56,7 +56,7 @@ graph TD
     C_Tok -->|Sí| P9[N.1.9 Aplicar nueva contraseña]
 
     P9 -->|BCrypt, intentos_fallidos = 0| D1
-    P9 -->|Si estaba BLOQUEADA pasa a ACTIVA. SUSPENDIDA y DE_BAJA no se tocan| D1
+    P9 -->|El estado de la cuenta NO se toca: una BLOQUEADA solo la reactiva un administrador| D1
     P9 -->|Borrar token: un solo uso| D6T
     P9 -->|Auditoría| D6H
     P9 -->|Orden PASSWORD_CAMBIADA| P10[N.1.10 Despachar aviso de seguridad]
@@ -83,7 +83,7 @@ graph TD
 | **Un token vigente por cuenta** | Enlaces viejos reenviados o filtrados dejan de servir apenas se pide uno nuevo. |
 | **Token fuera de la barra de direcciones** (`replaceState`) y `Referrer-Policy: no-referrer` | Filtración por historial del navegador o cabecera `Referer`. |
 | **Mismo error** para token inexistente, vencido o usado | No ayudar a distinguir un token inventado de uno caducado. |
-| **Reactivar solo `BLOQUEADA`** | Que una sanción administrativa (`SUSPENDIDA`) se levante pidiendo un reset. |
+| **No tocar el estado de la cuenta** (desde el 2026-10-19) | Una sola puerta para desbloquear (el panel de administración, auditada) y que ninguna sanción (`SUSPENDIDA`) ni bloqueo se levante pidiendo un reset. |
 | **N.1.10 aviso "contraseña cambiada"** | Si alguien tomó la cuenta, el titular legítimo se entera por el único canal que el atacante no controla. |
 | **URL base desde configuración**, no del header `Host` | *Host header poisoning*: un enlace de recuperación apuntando a un dominio del atacante. |
 

@@ -1,56 +1,40 @@
+# DFD — Consulta de estadísticas de un evento (estado actual del código)
+
+> **Qué describe:** lo que **existe hoy** (`GET /api/organizador/eventos/{id}/estadisticas`, `EventoService.estadisticas`). Las métricas son **del evento completo**. Lo que falta —estadísticas **por cronograma** y las avanzadas del plan Pro— está especificado en [tempDFD](../../tempDFD/README.md): [2.10](../../tempDFD/modulo_2_estadisticas/2.10_estadisticas_por_cronograma.md) y [8.3](../../tempDFD/modulo_8_membresias/8.3_restriccion_features_pro.md).
+>
+> Reescrito el 2026-10-19: la versión anterior mostraba una bifurcación por plan Pro que nunca se programó.
+
 ```mermaid
 graph TD
-    %% Puntos de Control de Extremos (Inicio/Fin Únicos)
-    INICIO([INICIO: Solicitud de Métricas]) --> Org([Organizador en su Panel])
-    Org -->|Petición GET /api/estadisticas con JWT + TipoConsulta| P2_6_0[2.6.0: Validar Firma y Vigencia del Token JWT]
-    
-    %% Almacenes de Datos (Tu Base de Datos Relacional)
-    subgraph Almacenes de Datos y Seguridad
-        D20_Sus[(Suscripcion)]
+    INICIO([INICIO: Solicitud de métricas de un evento]) --> Org([Organizador en su panel])
+    Org -->|GET /api/organizador/eventos/id/estadisticas + JWT| P2_6_0[2.6.0: Validar JWT y rol ORGANIZADOR]
+
+    subgraph Almacenes
         D10_Ev[(Evento)]
-        D6_Logs[(Historial_Interacciones)]
+        D5_Vis[(Visita)]
+        D12_Tic[(Cronograma_Ticket)]
+        D11_Cro[(Evento_Cronograma)]
     end
 
-    %% 0. CONTROL DE AUTENTICACIÓN Y PRIVACIDAD
-    P2_6_0 --> C_Token{¿El JWT es Válido,<br>Firmado y Vigente?}
-    C_Token -->|No| Err_Auth([Error 401: Token Inválido o Expirado])
-    C_Token -->|Sí| P2_6_1[2.6.1: Verificar Propiedad del Evento / Acceso]
+    P2_6_0 --> C_Token{¿JWT válido<br>y rol ORGANIZADOR?}
+    C_Token -->|No| Err_Auth([Error 401 / 403])
+    C_Token -->|Sí| P2_6_1[2.6.1: Verificar propiedad del evento]
+    P2_6_1 -->|Evento con su organizador| D10_Ev
+    P2_6_1 --> C_Dueno{¿El evento existe<br>y es del organizador?}
+    C_Dueno -->|No| Err_404([Error 404: no se distingue ajeno de inexistente])
+    C_Dueno -->|Sí| P2_6_2[2.6.2: Calcular métricas del evento]
+    P2_6_2 -->|COUNT DISTINCT usuario y COUNT total| D5_Vis
+    P2_6_2 -->|COUNT de cronogramas| D11_Cro
+    P2_6_2 -->|SUM de cupo máximo y cupo actual| D12_Tic
+    P2_6_2 --> Ok([Response 200: visitas únicas y totales, cronogramas, cupo ofrecido y ocupado])
 
-    P2_6_1 -->|1. Consultar id_organizador| D10_Ev
-    D10_Ev -->|2. Retornar Dueño| P2_6_1
-    
-    P2_6_1 --> C_Dueno{¿El id_usuario del JWT<br>es el Dueño o ADMIN?}
-    C_Dueno -->|No| Err_Permiso([Error 403: Prohibido. No podés ver estas métricas])
-    C_Dueno -->|Sí| P2_6_2[2.6.2: Evaluar Tipo de Consulta]
-
-    %% 1. BIFURCACIÓN DE PANTALLA (Generales/Detalle vs Sección Pro)
-    P2_6_2 --> C_TipoVista{¿Solicita sección de<br>Analítica Avanzada / Pro?}
-    
-    %% CAMINO BÁSICO (Dashboard General o Detalle de un Evento)
-    C_TipoVista -->|No: Dashboard/Detalle| P2_6_3[2.6.3: Calcular Métricas Básicas]
-    P2_6_3 -->|1. SELECT COUNT/SUM Visitas y Cupos| D6_Logs
-    P2_6_3 -->|2. SELECT AVG Estrellas Reseñas| D10_Ev
-    P2_6_3 --> Success_Basic([Response 200 OK: Retornar Números Netos de Visitas, Cupos y Estrellas])
-
-    %% CAMINO AVANZADO (Sección de Gráficos y Tasas)
-    C_TipoVista -->|Sí: Sección Pro| P2_6_4[2.6.4: Verificar Nivel de Plan del Usuario]
-    P2_6_4 -->|1. Consultar Nivel de Plan| D20_Sus
-    D20_Sus -->|2. Retornar Tipo de Plan| P2_6_4
-    
-    P2_6_4 --> C_Plan{¿El Plan del Organizador<br>es PLAN PRO?}
-    
-    %% REBOTE PLAN GRATIS (Candado en la UI)
-    C_Plan -->|No: Plan Gratis| Err_Pro([Error 403: Acción Bloqueada. Requiere Plan Pro])
-    
-    %% ACCESO CONFIGURADO PARA PLAN PRO
-    C_Plan -->|Sí: Plan Pro| P2_6_5[2.6.5: Procesar Agregaciones Complejas]
-    P2_6_5 -->|1. Consultar Serie Temporal de Tráfico| D6_Logs
-    P2_6_5 -->|2. Calcular Tasa de Conversión y Velocidad| D10_Ev
-    P2_6_5 --> Success_Pro([Response 200 OK: Retornar Arreglos de Gráficos y Métricas Avanzadas])
-
-    %% Embudo de Unificación de Salidas (Punto de Fin Único)
     Err_Auth --> FIN([FIN])
-    Err_Permiso --> FIN
-    Err_Pro --> FIN
-    Success_Basic --> FIN
-    Success_Pro --> FIN
+    Err_404 --> FIN
+    Ok --> FIN
+```
+
+## Notas
+
+- **No hay valoraciones en esta respuesta.** El promedio por función es justamente lo que agrega 2.10.
+- **No hay bifurcación por plan:** hoy cualquier organizador ve estas métricas. La restricción Pro aplicará solo a las **avanzadas** (8.3).
+- **Evento ajeno = 404**, no 403, para no revelar qué ids existen.

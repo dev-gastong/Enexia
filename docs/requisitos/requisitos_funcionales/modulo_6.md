@@ -21,7 +21,7 @@ Para decidir con información, el administrador podrá consultar el **detalle** 
 * #### **RF-6.2: Gestión Disciplinaria y Control de Estados de Cuentas de Usuario**
 
 
-El sistema debe proveer al administrador herramientas de supervisión de identidades en la tabla `Usuario`. Ante reportes de comportamiento malicioso, fraudes o violaciones reiteradas a los términos de servicio detectadas por las APIs, el administrador podrá modificar manualmente el campo `estado` de cualquier cuenta (*Organizador* o *Participante*) a valores como "SUSPENDIDO" o "BANEADO", inhabilitando de inmediato su capacidad para emitir JWT válidos en el endpoint de login. Asimismo, contará con la opción de reversión a estado "ACTIVO".
+El sistema debe proveer al administrador herramientas de supervisión de identidades en la tabla `Usuario`. Ante reportes de comportamiento malicioso, fraudes o violaciones reiteradas a los términos de servicio detectadas por las APIs, el administrador podrá modificar manualmente el campo `estado` de cualquier cuenta (*Organizador* o *Participante*) a valores como "SUSPENDIDO" o "BANEADO", inhabilitando de inmediato su capacidad para emitir JWT válidos en el endpoint de login. Asimismo, contará con la opción de reversión a estado "ACTIVO". **Esta reversión es la única vía para desbloquear una cuenta "BLOQUEADA" por intentos fallidos (RF-1.4)**: ni el correo del titular ni ningún otro flujo la reactivan (decisión del 2026-10-19). Al reactivar se pone `intentos_fallidos = 0`. Las cuentas de otros administradores, la propia y las dadas de baja por su titular no son gestionables.
 * #### **RF-6.3: Administración del Catálogo de Clasificación (ABM de Categorías)**
 
 

@@ -119,9 +119,7 @@ class EventoServiceTest {
         // mock. Mockearlo obligaria a repetir en cada test que devuelve, y no
         // detectaria un error en el armado de la respuesta.
         ReflectionTestUtils.setField(servicio, "eventoMapper", eventoMapper);
-        // Los @Value no los resuelve Mockito: sin esto quedarian en 0 y el
-        // limite de plan rechazaria hasta el primer evento.
-        ReflectionTestUtils.setField(servicio, "limitePlanGratuito", 20);
+        // Los @Value no los resuelve Mockito: sin esto quedarian en 0.
         ReflectionTestUtils.setField(servicio, "maxImagenes", 3);
 
         datos = peticionValida();
@@ -130,7 +128,6 @@ class EventoServiceTest {
         when(usuarioRepository.buscarActivoPorEmailConRoles(EMAIL))
                 .thenReturn(Optional.of(organizador()));
         when(categoriaRepository.existsByIdCategoriaAndActivaTrue(anyLong())).thenReturn(true);
-        when(eventoRepository.contarVigentesDeOrganizador(anyLong(), anyString())).thenReturn(0L);
         when(estadoSistemaRepository.buscarPorEstadoYMotivo(
                 EstadoEventoSistemaNombre.EN_PROCESO.name(), null))
                 .thenReturn(Optional.of(estadoSistema(EstadoEventoSistemaNombre.EN_PROCESO)));
@@ -286,13 +283,14 @@ class EventoServiceTest {
         }
 
         @Test
-        @DisplayName("Limite del plan alcanzado -> 409 (paso 2.1 del DFD)")
-        void limiteDePlan() {
-            when(eventoRepository.contarVigentesDeOrganizador(anyLong(), anyString())).thenReturn(20L);
+        @DisplayName("Sin tope de eventos: el mismo organizador puede crear 25 seguidos (paso 2.1 del DFD)")
+        void sinLimiteDePlan() {
+            // Decision del 2026-10-19: ni Free ni Pro limitan los eventos.
+            for (int i = 0; i < 25; i++) {
+                servicio.crear(EMAIL, datos, imagenes, request);
+            }
 
-            assertThatThrownBy(() -> servicio.crear(EMAIL, datos, imagenes, request))
-                    .isInstanceOf(OperacionNoPermitidaException.class)
-                    .hasMessageContaining("limite");
+            verify(eventoRepository, org.mockito.Mockito.times(25)).save(any());
         }
     }
 

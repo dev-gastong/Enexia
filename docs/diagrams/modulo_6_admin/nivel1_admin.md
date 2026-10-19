@@ -27,17 +27,16 @@ graph TD
 
     %% --- FLUJOS RF-6.2 ---
     Admin -->|Reporte de Comportamiento Malicioso| P6_2
-    P6_2 -->|Mutar estado a SUSPENDIDO/BANEADO/ACTIVO| D1_Usr
+    P6_2 -->|SUSPENDER o REACTIVAR: unica via de desbloqueo| D1_Usr
     P6_2 -.->|Inhabilita Emisión de JWT en Login| D1_Usr
 
     %% --- FLUJOS RF-6.3 ---
     Admin -->|ABM de Categoría| P6_3
-    P6_3 -->|Verificar Integridad Referencial| D2_Ev
-    P6_3 -->|Alta/Baja/Modificación| D2_Cat
+    P6_3 -->|Alta / Edicion / DESACTIVAR y ACTIVAR: baja logica, los eventos conservan su categoria| D2_Cat
 
     %% --- FLUJOS RF-6.4 ---
     Admin -->|Intervención Manual de Plan| P6_4
-    P6_4 -->|Forzar tipo_plan, vigencia o estado| D4_Sus
+    P6_4 -->|REVOCAR / CAMBIAR_PLAN / RENOVAR + historial con motivo| D4_Sus
 
     %% --- AUDITORÍA GLOBAL ---
     P6_1 -.->|Auditoría Pasiva| D6_Logs

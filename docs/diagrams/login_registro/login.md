@@ -73,9 +73,9 @@ graph TD
     C_Tres -->|Sí| P1_2_5[1.2.5: Cambiar estado_usuario a BLOQUEADO]
     P1_2_5 -->|Actualizar Estado de Cuenta| D2_User
     P1_2_5 -->|Emitir token de un solo uso| D7_Tokens
-    P1_2_5 -->|Disparar Hilo Asíncrono de Aviso| P1_2_5A["1.2.5A: Enviar Email de Seguridad<br>con enlace /unlock-account?token=XYZ"]
+    P1_2_5 -->|Disparar Hilo Asíncrono de Aviso| P1_2_5A["1.2.5A: Enviar Email de Seguridad<br>cuenta bloqueada: solo un administrador la desbloquea<br>+ enlace opcional para cambiar la contraseña"]
     P1_2_5A -->|Enviar Alerta| Email_Sys
-    Email_Sys -.->|Enlace de desbloqueo| Titular([Titular de la Cuenta])
+    Email_Sys -.->|Aviso de bloqueo| Titular([Titular de la Cuenta])
     P1_2_5 --> M_Bloqueo[/motivo interno:<br>CUENTA_BLOQUEADA/]
 
     %% CONVERGENCIA DE MOTIVOS: al log, NO a la respuesta
@@ -100,33 +100,29 @@ graph TD
     Success_JWT --> FIN
 ```
 
-## DFD 1.5 — Desbloqueo de Cuenta por Enlace de Correo
+## DFD 1.5 — Desbloqueo de cuenta: exclusivo del panel de administración
 
-> **Especificado, pendiente de implementación.** Cubre el consumo del enlace que RF-1.4 envía al titular.
+> **Decisión del 2026-10-19: nadie más puede desbloquear una cuenta.** Se descartó el enlace `/unlock-account?token=` del correo. El titular puede cambiar su contraseña con el enlace de restablecimiento (RF-1.5), pero la cuenta sigue `BLOQUEADA` hasta que un administrador la reactive. El detalle de la reactivación está en el [DFD 6.2](../modulo_6_admin/6.2_gestion_cuentas_usuario.md).
 
 ```mermaid
 graph TD
-    INICIO([INICIO: Clic en enlace del correo]) --> P1_5_1[1.5.1: Recibir token desde /unlock-account]
+    INICIO([INICIO: El titular escribe a la administración]) --> Admin([Administrador])
 
     subgraph Almacenes
         D2_User[(Usuario)]
-        D7_Tokens[(PasswordResetToken)]
+        D2_Hist[(Historial_Estado_Usuario)]
         D6_Logs[(Historial_Interacciones)]
     end
 
-    P1_5_1 -->|1. Consultar token| D7_Tokens
-    D7_Tokens -->|2. Retornar token, expiración y uso| P1_5_1
-
-    P1_5_1 --> C_Token{¿Token existe,<br>vigente y sin usar?}
-    C_Token -->|No| Err_Token([Error: Enlace inválido o vencido])
-
-    C_Token -->|Sí| P1_5_2["1.5.2: Reactivar Cuenta<br>estado_usuario = ACTIVO<br>intentos_fallidos = 0"]
+    Admin -->|Panel de usuarios: acción Reactivar sobre la cuenta BLOQUEADA| P1_5_1[1.5.1: PATCH /api/admin/usuarios/id/estado]
+    P1_5_1 --> C_Admin{¿JWT con rol ADMINISTRADOR<br>y cuenta gestionable?}
+    C_Admin -->|No| Err_Perm([Error 403 / 409: sin cambios])
+    C_Admin -->|Sí| P1_5_2["1.5.2: Reactivar Cuenta<br>estado_usuario = ACTIVO<br>intentos_fallidos = 0"]
     P1_5_2 -->|Actualizar Usuario| D2_User
-    P1_5_2 --> P1_5_3[1.5.3: Invalidar Token de un Solo Uso]
-    P1_5_3 -->|Marcar token como consumido| D7_Tokens
-    P1_5_3 -->|Registrar desbloqueo| D6_Logs
-    P1_5_3 --> Ok([Cuenta reactivada: iniciar sesión con las credenciales habituales])
+    P1_5_2 -->|Asentar transición con el administrador| D2_Hist
+    P1_5_2 -->|Auditoría USUARIO_REACTIVADO_ADMIN| D6_Logs
+    P1_5_2 --> Ok([Cuenta reactivada: el titular inicia sesión con su contraseña vigente])
 
-    Err_Token --> FIN([FIN])
+    Err_Perm --> FIN([FIN])
     Ok --> FIN
 ```

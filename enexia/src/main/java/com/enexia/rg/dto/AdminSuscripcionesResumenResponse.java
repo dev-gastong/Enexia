@@ -25,7 +25,7 @@ public class AdminSuscripcionesResumenResponse {
         private BigDecimal precioMensual;
         private long usuariosActivos;
 
-        /** Tope de eventos activos; {@code null} = ilimitado (RF-8.2: Plan Pro). */
+        /** Tope de eventos activos; {@code null} = ilimitado. Hoy ningun plan tiene tope (2026-10-19). */
         private Integer eventosPermitidos;
     }
 }

@@ -85,7 +85,6 @@ public class AdminSuscripcionService {
     private final EventoService eventoService;
     private final AuditoriaService auditoriaService;
 
-    private final int eventosFree;
     private final BigDecimal precioPro;
 
     public AdminSuscripcionService(
@@ -96,7 +95,6 @@ public class AdminSuscripcionService {
             PagoRepository pagoRepository,
             EventoService eventoService,
             AuditoriaService auditoriaService,
-            @Value("${enexia.planes.free.eventos-permitidos:2}") int eventosFree,
             @Value("${enexia.planes.pro.precio-mensual:9.99}") BigDecimal precioPro) {
         this.usuarioRepository = usuarioRepository;
         this.suscripcionRepository = suscripcionRepository;
@@ -105,7 +103,6 @@ public class AdminSuscripcionService {
         this.pagoRepository = pagoRepository;
         this.eventoService = eventoService;
         this.auditoriaService = auditoriaService;
-        this.eventosFree = eventosFree;
         this.precioPro = precioPro;
     }
 
@@ -158,7 +155,7 @@ public class AdminSuscripcionService {
 
         return new AdminSuscripcionesResumenResponse(proActivas, vencidas, ingresos, List.of(
                 new AdminSuscripcionesResumenResponse.Plan(
-                        PLAN_GRATUITO, BigDecimal.ZERO, Math.max(0, organizadores - proConCuentaActiva), eventosFree),
+                        PLAN_GRATUITO, BigDecimal.ZERO, Math.max(0, organizadores - proConCuentaActiva), null),
                 new AdminSuscripcionesResumenResponse.Plan(
                         PLAN_PRO, precioPro, proConCuentaActiva, null)));
     }

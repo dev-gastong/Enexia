@@ -35,14 +35,13 @@ import com.enexia.rg.model.NotificacionTipo;
 import com.enexia.rg.model.PasswordResetToken;
 import com.enexia.rg.model.Usuario;
 import com.enexia.rg.model.UsuarioEstado;
-import com.enexia.rg.repository.HistorialEstadoUsuarioRepository;
 import com.enexia.rg.repository.PasswordResetTokenRepository;
-import com.enexia.rg.repository.UsuarioEstadoRepository;
 import com.enexia.rg.repository.UsuarioRepository;
 
 /**
- * Pruebas de la recuperacion de acceso (RF-1.5) y del desbloqueo de cuentas
- * bloqueadas por intentos fallidos (RF-1.4).
+ * Pruebas de la recuperacion de acceso (RF-1.5) y del aviso de cuentas
+ * bloqueadas por intentos fallidos (RF-1.4). El desbloqueo NO es de este
+ * servicio: es exclusivo del panel de administracion.
  *
  * Este servicio es la CONTRAPARTE de la respuesta HTTP uniforme del login: como
  * el login ya no le dice a nadie que la cuenta quedo bloqueada, el email es el
@@ -53,7 +52,7 @@ import com.enexia.rg.repository.UsuarioRepository;
  *   1. En la base se guarda el HASH, nunca el token que viaja por mail.
  *   2. Un solo uso: al consumirse, desaparece.
  *   3. Vencido = invalido, y con el MISMO mensaje que uno inexistente.
- *   4. Solo reactiva cuentas BLOQUEADAS, jamas una SUSPENDIDA.
+ *   4. Cambiar la contrasena jamas toca el estado de la cuenta (ni BLOQUEADA ni SUSPENDIDA).
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -62,8 +61,6 @@ class RecuperacionCuentaServiceTest {
 
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private PasswordResetTokenRepository tokenRepository;
-    @Mock private UsuarioEstadoRepository usuarioEstadoRepository;
-    @Mock private HistorialEstadoUsuarioRepository historialRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private EmailService emailService;
     @Mock private NotificacionService notificaciones;
@@ -85,8 +82,7 @@ class RecuperacionCuentaServiceTest {
         Executor sincrono = Runnable::run;
         when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
         servicio = new RecuperacionCuentaService(
-                usuarioRepository, tokenRepository, usuarioEstadoRepository,
-                historialRepository, passwordEncoder, emailService, notificaciones,
+                usuarioRepository, tokenRepository, passwordEncoder, emailService, notificaciones,
                 sincrono, new TransactionTemplate(transactionManager), 30);
 
         when(notificaciones.reservarConLimite(any(), anyLong(), anyInt(), any(), any()))
@@ -278,19 +274,19 @@ class RecuperacionCuentaServiceTest {
         }
 
         @Test
-        @DisplayName("Cuenta BLOQUEADA: se reactiva y queda asentado en el historial")
-        void desbloqueaCuentaBloqueada() {
+        @DisplayName("Cuenta BLOQUEADA: cambia la contrasena pero NO se desbloquea (solo el admin puede)")
+        void noDesbloqueaCuentaBloqueada() {
             Usuario usuario = usuario(EstadoUsuarioNombre.BLOQUEADO);
             when(tokenRepository.buscarPorHashConUsuario(anyString()))
                     .thenReturn(Optional.of(tokenVigente(usuario)));
-            when(usuarioEstadoRepository.findByEstadoUsuarioIgnoreCase(EstadoUsuarioNombre.ACTIVO.name()))
-                    .thenReturn(Optional.of(estado(EstadoUsuarioNombre.ACTIVO)));
 
             servicio.confirmarRestablecimiento("tokenPlano", PASSWORD_NUEVA, PASSWORD_NUEVA);
 
+            // La clave si cambia (el titular puede renovarla si sospecha de un intruso)...
+            assertThat(usuario.getPassword()).isEqualTo("$2a$12$hashNuevo");
+            // ...pero el estado queda como estaba: el desbloqueo es del panel de administracion.
             assertThat(usuario.getEstadoUsuario().getEstadoUsuario())
-                    .isEqualTo(EstadoUsuarioNombre.ACTIVO.name());
-            verify(historialRepository).save(any());
+                    .isEqualTo(EstadoUsuarioNombre.BLOQUEADO.name());
         }
 
         @Test
@@ -306,7 +302,6 @@ class RecuperacionCuentaServiceTest {
             // sancionado la esquivaria pidiendo un restablecimiento.
             assertThat(usuario.getEstadoUsuario().getEstadoUsuario())
                     .isEqualTo(EstadoUsuarioNombre.SUSPENDIDO.name());
-            verify(historialRepository, never()).save(any());
         }
 
         @Test

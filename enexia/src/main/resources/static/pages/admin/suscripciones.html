@@ -555,9 +555,9 @@ a { color: var(--acento); text-decoration: none; }
         const pro = planes.find(p => p.plan === 'PRO') || {};
         const definicion = [
             { clave: 'FREE', nombre: 'Plan Gratuito', precio: dinero(free.precioMensual || 0) + '/mes',
-              items: ['Límite de ' + (free.eventosPermitidos == null ? 'varios' : free.eventosPermitidos) + ' eventos activos', 'Estadísticas simples'] },
+              items: ['Eventos ilimitados', 'Estadísticas básicas por cronograma'] },
             { clave: 'PRO', nombre: 'Plan Pro', precio: dinero(pro.precioMensual || 0) + '/mes',
-              items: ['Eventos ilimitados', 'Estadísticas avanzadas'] }
+              items: ['Eventos ilimitados', 'Estadísticas avanzadas por cronograma'] }
         ];
 
         const contenedor = $('opcionesPlan');

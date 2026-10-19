@@ -66,7 +66,7 @@ El sistema debe permitir al organizador dar de baja un evento activo. Esta acci�
 * #### **RF-2.10: Consulta de Estadísticas y Analíticas de Rendimiento**
 
 
-El sistema debe recopilar, procesar y exponer al organizador las métricas de rendimiento de sus eventos. Esto incluye el conteo acumulado de visualizaciones provenientes de la tabla `Visita` (filtrando por visitas únicas por usuario) y el cálculo del promedio aritmético de las puntuaciones cualitativas recolectadas en la tabla `Valoracion` para cada uno de sus cronogramas finalizados.
+El sistema debe recopilar, procesar y exponer al organizador las métricas de rendimiento de sus eventos, **desglosadas por cronograma** (decisión del 2026-10-19). Para el evento: el conteo acumulado de visualizaciones provenientes de la tabla `Visita`, únicas por usuario y totales (las visitas son del evento porque se registran al abrir la ficha, antes de elegir una función). Para **cada cronograma**: el cupo total, las inscripciones confirmadas, el cupo disponible y el porcentaje de ocupación, el detalle por tipo de ticket y, si el cronograma ya finalizó, el promedio aritmético y la cantidad de las valoraciones de la tabla `Valoracion`. Las valoraciones pertenecen siempre a **un cronograma** (restricción única `id_usuario` + `id_cronograma`); el promedio del evento que se muestra en la ficha pública es un agregado derivado de las valoraciones de todos sus cronogramas. Un cronograma sin valoraciones muestra *sin calificar*, nunca cero estrellas. Estas métricas básicas están disponibles para todos los planes; las avanzadas son exclusivas del Plan Pro (RF-8.3). Estado: la versión por evento está implementada; el desglose por cronograma está especificado en `docs/tempDFD/modulo_2_estadisticas/`.
 
 ---
 

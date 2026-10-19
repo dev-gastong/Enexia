@@ -20,22 +20,24 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.enexia.rg.exception.ReglaNegocioException;
-import com.enexia.rg.model.EstadoUsuarioNombre;
-import com.enexia.rg.model.HistorialEstadoUsuario;
 import com.enexia.rg.model.NotificacionTipo;
 import com.enexia.rg.model.PasswordResetToken;
 import com.enexia.rg.model.Usuario;
-import com.enexia.rg.model.UsuarioEstado;
-import com.enexia.rg.repository.HistorialEstadoUsuarioRepository;
 import com.enexia.rg.repository.PasswordResetTokenRepository;
-import com.enexia.rg.repository.UsuarioEstadoRepository;
 import com.enexia.rg.repository.UsuarioRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Recuperacion de acceso por correo (RF-1.5) y desbloqueo de cuentas bloqueadas
- * por intentos fallidos (RF-1.4).
+ * Recuperacion de acceso por correo (RF-1.5) y aviso de bloqueo por intentos
+ * fallidos (RF-1.4).
+ *
+ * DESBLOQUEAR NO ES COSA DE ESTE SERVICIO (decision del 2026-10-19)
+ * Cambiar la contrasena con el enlace del correo NUNCA reactiva una cuenta
+ * BLOQUEADA: el desbloqueo es exclusivo del panel de administracion
+ * (AdminUsuarioService, accion REACTIVAR). Quien controla la casilla puede
+ * renovar su clave -- util si sospecha que alguien la adivino --, pero la
+ * cuenta sigue bloqueada hasta que un administrador la habilite.
  *
  * PIEZA CENTRAL DE LA POLITICA DE BLOQUEO SILENCIOSO (2026-09-08)
  * Desde que el login responde 401 generico ante una cuenta bloqueada, el titular
@@ -80,8 +82,6 @@ public class RecuperacionCuentaService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordResetTokenRepository tokenRepository;
-    private final UsuarioEstadoRepository usuarioEstadoRepository;
-    private final HistorialEstadoUsuarioRepository historialEstadoRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final NotificacionService notificaciones;
@@ -92,8 +92,6 @@ public class RecuperacionCuentaService {
     public RecuperacionCuentaService(
             UsuarioRepository usuarioRepository,
             PasswordResetTokenRepository tokenRepository,
-            UsuarioEstadoRepository usuarioEstadoRepository,
-            HistorialEstadoUsuarioRepository historialEstadoRepository,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
             NotificacionService notificaciones,
@@ -102,8 +100,6 @@ public class RecuperacionCuentaService {
             @Value("${enexia.security.recuperacion.vigencia-minutos}") int vigenciaMinutos) {
         this.usuarioRepository = usuarioRepository;
         this.tokenRepository = tokenRepository;
-        this.usuarioEstadoRepository = usuarioEstadoRepository;
-        this.historialEstadoRepository = historialEstadoRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.notificaciones = notificaciones;
@@ -209,15 +205,14 @@ public class RecuperacionCuentaService {
     // =====================================================================
 
     /**
-     * Consume el token, fija la contrasena nueva y, si la cuenta estaba
-     * BLOQUEADA por intentos fallidos, la reactiva.
+     * Consume el token y fija la contrasena nueva.
      *
-     * QUE ESTADOS SE REACTIVAN Y CUALES NO
-     * Solo BLOQUEADO, porque es un estado que puso el sistema y que el titular
-     * legitimo tiene derecho a revertir. SUSPENDIDO (sancion de un
-     * administrador) y DE_BAJA (baja voluntaria) NO se tocan: si cambiar la
-     * contrasena levantara una suspension, cualquier sancionado la esquivaria
-     * pidiendo un restablecimiento.
+     * EL ESTADO DE LA CUENTA NO SE TOCA, sea cual sea (ACTIVO, BLOQUEADO,
+     * SUSPENDIDO o DE_BAJA). Antes una cuenta BLOQUEADA se reactivaba aca; desde
+     * el 2026-10-19 solo un administrador puede hacerlo desde su panel. Dos
+     * razones: (1) una sola puerta de entrada al desbloqueo es una sola puerta
+     * que auditar, y (2) si cambiar la contrasena levantara una suspension,
+     * cualquier sancionado la esquivaria pidiendo un restablecimiento.
      */
     @Transactional
     public void confirmarRestablecimiento(String tokenPlano, String passwordNueva,
@@ -247,8 +242,6 @@ public class RecuperacionCuentaService {
         // la casilla no debe arrastrar los fallos que dejo el atacante.
         usuario.setIntentosFallidos(0);
 
-        reactivarSiEstabaBloqueada(usuario);
-
         usuarioRepository.save(usuario);
 
         // Si alguien tomo la cuenta, el titular se entera por la unica casilla
@@ -260,35 +253,6 @@ public class RecuperacionCuentaService {
         tokenRepository.delete(registro);
 
         log.info("Contrasena restablecida para el usuario {}", usuario.getIdUsuario());
-    }
-
-    private void reactivarSiEstabaBloqueada(Usuario usuario) {
-        UsuarioEstado estadoActual = usuario.getEstadoUsuario();
-        String nombre = estadoActual != null ? estadoActual.getEstadoUsuario() : null;
-
-        if (!EstadoUsuarioNombre.BLOQUEADO.name().equalsIgnoreCase(nombre)) {
-            return;
-        }
-
-        Optional<UsuarioEstado> activo = usuarioEstadoRepository
-                .findByEstadoUsuarioIgnoreCase(EstadoUsuarioNombre.ACTIVO.name());
-
-        if (activo.isEmpty()) {
-            log.error("El catalogo usuario_estado no tiene la fila ACTIVO. "
-                    + "La cuenta {} queda BLOQUEADA pese al restablecimiento.", usuario.getIdUsuario());
-            return;
-        }
-
-        usuario.setEstadoUsuario(activo.get());
-
-        HistorialEstadoUsuario historial = new HistorialEstadoUsuario();
-        historial.setUsuario(usuario);
-        historial.setEstadoUsuario(activo.get());
-        historial.setEstadoUsuarioSistema(usuario.getEstadoUsuarioSistema());
-        historial.setFechaCambio(LocalDateTime.now());
-        historialEstadoRepository.save(historial);
-
-        log.info("Cuenta {} desbloqueada por recuperacion via email", usuario.getIdUsuario());
     }
 
     /** SHA-256 en hexadecimal. Determinista y sin sal: hay que poder buscarlo. */

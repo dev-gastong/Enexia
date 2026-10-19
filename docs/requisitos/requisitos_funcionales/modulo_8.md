@@ -1,21 +1,19 @@
 ## Módulo 8: Gestión de Membresías y Niveles de Acceso
 
-* #### **RF-8.1: Actualización Automatizada de Nivel de Cuenta (Transacción de Suscripción)**
+> **Alcance (decisión del 2026-10-19): suscripción básica.** Hay **dos planes**: *Gratuito* (por defecto) y *Pro* (de pago simulado, mensual). **Ningún plan limita la cantidad de eventos.** Lo que el plan Pro agrega son las **estadísticas avanzadas por cronograma**. El plan pertenece al usuario organizador, no a la organización. Los DFD de lo que falta programar están en `docs/tempDFD/modulo_8_membresias/`.
+
+* #### **RF-8.1: Contratación, Cancelación y Vencimiento de la Suscripción Pro**
 
 
-El sistema debe procesar las solicitudes de ascenso de nivel de cuenta (*Upgrade*) para los organizadores de forma automatizada. Al iniciar la solicitud de suscripción al *Plan Pro*, el backend creará un registro con estado "PENDIENTE" en la tabla `Suscripcion`. Tras la confirmación exitosa de la transacción mediante el módulo de simulación de pagos, el sistema actualizará de forma síncrona el estado de la suscripción a "ACTIVO", definirá el campo `tipo_plan` como "PRO", calculará los campos `fecha_inicio` y `fecha_fin` de la cobertura, e impactará el registro correspondiente en la tabla `Pago`.
-* #### **RF-8.2: Control de Cuotas y Límites de Publicación (Plan Free vs. Plan Pro)**
+El sistema debe permitir al organizador contratar el *Plan Pro* de forma automatizada. Al iniciar el pedido, el backend creará un registro con estado "PENDIENTE" en la tabla `Suscripcion`; tras la confirmación de la transacción mediante el módulo de simulación de pagos, actualizará de forma síncrona el estado a "ACTIVA", definirá `tipo_plan` como "PRO", fijará `fecha_inicio` en la fecha de hoy y `fecha_fin` un mes después, e impactará el registro correspondiente en la tabla `Pago`. Un pago rechazado deja la suscripción en "PENDIENTE" y registra el pago como fallido. El organizador podrá **cancelar** su Plan Pro (vuelve al plan Gratuito de inmediato) y consultar su plan vigente. Un proceso diario marcará como "VENCIDA" toda suscripción activa cuya `fecha_fin` haya pasado. No hay renovación automática: renovar es volver a contratar.
+* #### **RF-8.2: Resolución del Plan Vigente (sin tope de eventos)**
 
 
-El backend debe actuar como un interceptor de negocio que valide los privilegios de creación de eventos basándose estrictamente en el plan activo del usuario.
-* Si el organizador posee un **Plan Free**, el sistema comprobará en la tabla `Evento` el conteo de sus publicaciones activas; si este número iguala o supera el límite estricto parametrizado para cuentas gratuitas, el backend bloqueará la creación de nuevos eventos y notificará al usuario la necesidad de un *Upgrade*.
-* Si el organizador posee un **Plan Pro**, el sistema omitirá esta restricción, otorgándole una cuota de publicación ilimitada.
+El backend debe poder responder, para cualquier organizador, si su plan vigente es *Pro* o *Gratuito*. Es *Pro* únicamente si su última suscripción es de tipo "PRO", está "ACTIVA" y su `fecha_fin` no pasó; en cualquier otro caso —incluida la ausencia de suscripciones— es *Gratuito*. El plan se consulta siempre en la base y no a partir de un reclamo del JWT. **Este requisito ya no impone cuotas de publicación:** tanto el plan Gratuito como el Pro permiten publicar una cantidad ilimitada de eventos, y un cambio de plan nunca modifica los eventos ya publicados.
+* #### **RF-8.3: Estadísticas Avanzadas por Cronograma (solo Plan Pro)**
 
 
-* #### **RF-8.3: Restricción y Autorización de Características Avanzadas (Métricas)**
-
-
-El sistema debe evaluar los reclamos de permisos contenidos en el JWT del usuario o consultar dinámicamente el estado de su membresía para autorizar el acceso a módulos de software específicos. El backend restringirá los endpoints de consultas estadísticas avanzadas (como gráficos de tendencias, reportes analíticos de la tabla `Visita` o exportación de datos de asistencia) exclusivamente a los usuarios con una suscripción activa donde `tipo_plan = 'PRO'`. Cualquier intento de acceso desde cuentas del nivel *Free* será rebotado con un código de error de permisos insuficientes (*HTTP 403 Forbidden*).
+Las estadísticas básicas por cronograma (RF-2.10) están disponibles para todos los organizadores. El backend restringirá las **estadísticas avanzadas por cronograma** —distribución de puntajes, tasa de cancelación, ingresos, series diarias de inscripciones y visitas, conversión y exportación de asistentes— a los eventos cuyo organizador tenga *Plan Pro* vigente (RF-8.2). Cualquier intento desde una cuenta *Gratuita* será rechazado con *HTTP 403 Forbidden* y el código `PLAN_PRO_REQUERIDO`, y quedará auditado. La verificación se hace después de comprobar que el evento es propio (un evento ajeno responde 404 antes que 403).
 
 ---
 

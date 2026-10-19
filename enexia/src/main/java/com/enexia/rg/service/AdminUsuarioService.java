@@ -44,11 +44,12 @@ import lombok.extern.slf4j.Slf4j;
  * respuesta silenciosa de siempre, cualquier cuenta cuyo estado no sea ACTIVO.
  *
  * REGLAS (todas se aplican en el servidor, el panel solo las refleja):
- *   - SUSPENDER parte de ACTIVO o BLOQUEADO. Suspender un BLOQUEADO importa:
- *     el titular puede reactivar un bloqueo con su enlace de recuperacion
- *     (RecuperacionCuentaService), pero NO una suspension, que es una sancion.
+ *   - SUSPENDER parte de ACTIVO o BLOQUEADO (una cuenta bloqueada tambien se
+ *     puede sancionar).
  *   - REACTIVAR parte de SUSPENDIDO o BLOQUEADO y deja intentos_fallidos en 0,
- *     si no la cuenta volveria a bloquearse al primer error de tipeo.
+ *     si no la cuenta volveria a bloquearse al primer error de tipeo. ES LA
+ *     UNICA VIA para desbloquear una cuenta (decision del 2026-10-19): ni el
+ *     enlace de recuperacion por correo ni ningun otro flujo lo hacen.
  *   - DE_BAJA es decision del propio titular (RF-1.6): el administrador no la
  *     revierte ni la sanciona.
  *   - Nunca sobre otro ADMINISTRADOR ni sobre la propia cuenta: una suspension
