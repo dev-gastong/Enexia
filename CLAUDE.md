@@ -322,8 +322,8 @@ The former escalation ladder (3 → captcha + 5 min cooldown, 6 → 30 min coold
 
 This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modulo_1.md` and `docs/diagrams/login_registro/login.md` were both rewritten on 2026-09-09 and now agree, and the code matches them as of 2026-09-19. CAPTCHA and 2FA are out of scope and were removed from the login DFD.
 
-> ### ⚠️ Still open: no dedicated unlock endpoint
-> RF-1.5 describes an email link that reactivates the account and lets the owner log back in with their **usual credentials**, no password change required. That is **not** what exists today: the security email links to `POST /api/auth/recuperacion/confirmar`, which reactivates a `BLOQUEADO` account but *requires setting a new password* — there is no separate `/unlock-account?token=` endpoint that unlocks without touching the password. Building that endpoint is still pending work.
+> ### ✅ Decided 2026-10-19: unlocking an account is ADMIN-ONLY
+> A `BLOQUEADO` account is reactivated **only** from the admin panel (`AdminUsuarioService`, action `REACTIVAR`, which also resets `intentos_fallidos`). The email link (`POST /api/auth/recuperacion/confirmar`) only sets a new password and **never touches the account state**; the security email says so. The old plan of a dedicated `/unlock-account?token=` endpoint was **discarded**: one door to unlock means one door to audit. Open follow-ups: no channel for a blocked owner to ask for the unlock, no email on reactivation (see `docs/SUGERENCIAS_PENDIENTES.md`, C1/C2).
 - **Text Moderation**: `better-profanity` library for content filtering (Registro + Login + Events later)
 - **Input Validation**: Use `@Valid` + `@NotNull`, `@Email`, `@Pattern` on DTOs
 
@@ -375,17 +375,17 @@ This closes the RF-1.4 divergence: `docs/requisitos/requisitos_funcionales/modul
 
 ## Sprint 2: Organizations, Events & Public Catalog (Current)
 
-**Status (2026-10-17):** backend complete; frontend built for the public site, organizer panel, admin panel (4 screens) and password recovery. Module 8 (memberships) is the main thing still unbuilt.
+**Status (2026-10-19, project closed):** backend and frontend complete for M1–M7 and N; M8 (memberships) has its decisions and DFDs in `docs/tempDFD/` but is not programmed. Known gaps: the organization-registration screen and the "publish as organization" option of the event form are not wired to the (existing) backend; the ADMINISTRADOR role can't be granted from the app; `FinalizacionEventoScheduler` uses the JVM clock.
 
 | Module | Scope delivered |
 |---|---|
-| **M1** — Auth | Silent account blocking, per-IP rate limiting removed, password reset + unlock by email (RF-1.5) |
+| **M1** — Auth | Silent account blocking, per-IP rate limiting removed, password reset by email (RF-1.5). **Unblocking is admin-only** (RF-6.2 *Reactivar*, 2026-10-19): the recovery link changes the password but never unlocks. |
 | **M7** — Organizations | `Persona_Juridica` registration through both entry points, CUIT mod-11 validation (RF-7.3), `Miembros_Organizacion`. Alta gating removed 2026-09-09 (ADR-14) — an organization is `APROBADO`/`ACTIVO` and cleared to publish the instant its CUIT passes mod-11, both in the spec and in `PersonaJuridicaService.crearOrganizacion()`. |
 | **M2** — Events | Creation with async moderation pipeline (RF-2.1 to RF-2.6), Cloudinary integration (RF-2.3), organizer dashboard (RF-2.8), logical delete (RF-2.9), statistics (RF-2.10) |
 | **M4** — Public interface | Paginated catalog, text search, category/date/location filters, technical sheet, passive visit tracking (RF-4.1 to RF-4.5) |
 | **M5** — Moderation | Text phase + image phase, sequential and asynchronous (RF-5.1 to RF-5.3) |
 | **M6** — Admin panel | **Complete (2026-10-15).** RF-6.1 event moderation (reversible disciplinary suspension + 2nd-instance review), RF-6.2 account management (suspend/reactivate; admin accounts and one's own are protected), RF-6.3 category ABM (logical, reversible deactivation via `categoria.activa`, ADR-22), RF-6.4 subscription audit (`REVOCAR` / `CAMBIAR_PLAN` / `RENOVAR`, ADR-23/26/27). Four screens under `pages/admin/`: `moderacion-eventos`, `usuarios`, `categorias`, `suscripciones`. **Still open:** no way to grant the `ADMINISTRADOR` role from the app (only the SQL-promoted dev account). |
-| **M8** — Memberships | **Only the admin side exists** (RF-6.4, read + exceptional intervention). **Not built:** RF-8.1 upgrade flow with simulated payment, RF-8.2 Free-plan publication cap, RF-8.3 Pro-only advanced stats. The Free cap lives in two disconnected places: `enexia.planes.free.eventos-permitidos` (=2, shown by the admin panel) and `enexia.eventos.limite-plan-gratuito` (=20, the guard in `EventoService.verificarLimiteDePlan`, which ignores the subscription: it caps every organizer, Pro included, at 20 non-deleted events). To be unified when RF-8.2 is built. Specs: `docs/tempDFD/modulo_8_membresias/`. |
+| **M8** — Memberships | **Only the admin side exists** (RF-6.4, read + exceptional intervention). **Decisions of 2026-10-19:** *basic subscription* (plans `GRATUITO` and `PRO`, monthly, simulated payment), **no plan limits the number of events** (the cap — `EventoService.verificarLimiteDePlan` and its properties — was **removed from the code**), and **statistics are per cronograma** (basic for everyone, advanced for Pro). Ratings were verified to be per cronograma (`UNIQUE(id_usuario, id_cronograma)`). **Not built:** the organizer side (upgrade/cancel/expiry job), the plan-resolution service, per-cronograma statistics and the Pro gate (403 `PLAN_PRO_REQUERIDO`). DFDs and task list: `docs/tempDFD/`. |
 
 **Key endpoints**
 
@@ -502,8 +502,8 @@ There is **no `REVISION_PENDIENTE` on alta and no deferred approval.** Verifying
 | ~~Rate Limiting (IP-based)~~ | ❌ **REMOVED 2026-09-08** | see below |
 | Account Locking (silent, single 3-failure step) | ✅ **code aligned 2026-09-19** | - |
 | ~~Cooldown / CAPTCHA ladder (3/6/9)~~ | ❌ **REMOVED 2026-09-19** (code now matches spec) | - |
-| Account unlock via `/unlock-account?token=` | ❌ spec'd, not built | next |
-| Password Reset + account unlock by email (RF-1.5) | ✅ **Sprint 2** | - |
+| ~~Account unlock via `/unlock-account?token=`~~ | ❌ **DISCARDED 2026-10-19** (admin-only unlock) | - |
+| Password Reset by email (RF-1.5) — does **not** unlock | ✅ **Sprint 2** | - |
 | Text Moderation (better-profanity) | ✅ | - |
 | 2FA (Email verification) | ❌ | Sprint 2+ |
 | CAPTCHA | ❌ | Sprint 2+ |
@@ -587,6 +587,7 @@ public class Usuario {
 ## Design Rules (read before any frontend/CSS change)
 
 - **Square corners, everywhere (2026-10-16).** Borders must stay squarish, especially in `pages/admin/*`. Use ONLY the tokens from `pages/css/tokens.css` section 8: `--radio-campo` (4px), `--radio-tarjeta` (6px), `--radio-sm` (6px). Never hardcode `border-radius` values (12/14/16/20/24px) and never use `999px` pills or override `--radio-tarjeta` per page. `50%` is allowed only for avatars, status dots and round close/icon buttons.
+- **Escape user text (2026-10-19).** Any text written by a person (event name/description, ticket type, address, review comment, organization name) that goes into `innerHTML` or an HTML attribute **must pass through `UI.esc(...)`** (`js/utils.js`) or be assigned with `textContent`. Public pages were fixed (stored XSS); not every screen was audited (`docs/SUGERENCIAS_PENDIENTES.md`, X1).
 - No "+" icon or "+" text on any "Crear Evento" button/link.
 - Never show internal DB table names (`Tabla: ...`) in user-facing forms.
 - Admin accounts never see participant actions (inscription button or its notice) on the event detail page.
@@ -596,6 +597,8 @@ public class Usuario {
 
 ## References
 
+- **Programming manual (learning path, A–D)**: [docs/manual/](./docs/manual/README.md)
+- **Pending DFDs and decisions**: [docs/tempDFD/](./docs/tempDFD/README.md) · **Open questions**: [docs/SUGERENCIAS_PENDIENTES.md](./docs/SUGERENCIAS_PENDIENTES.md)
 - **Functional Requirements**: [docs/requisitos/requisitos_funcionales/](./docs/requisitos/requisitos_funcionales/)
 - **Database Model**: [docs/diseño_bd/MER.md](./docs/diseño_bd/MER.md) and [DER.md](./docs/diseño_bd/DER.md)
 - **Workflow Diagrams**: [docs/diagrams/](./docs/diagrams/)

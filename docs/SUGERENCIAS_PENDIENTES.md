@@ -35,8 +35,18 @@
 | E2 | Los tests de Playwright y de API (`LoginTest`, `RegistroTest`, `EventoApiTest`, `CrearEventoTest`, `EventosMasivosApiTest`) necesitan el backend, la base y parámetros; fallan en `gradle test` sin ellos. | Sin tocar. | Moverlos a un *source set* aparte (`integrationTest`) para que `gradle test` corra solo los de unidad. |
 | E3 | Ruido de fin de línea (CRLF/LF) entre las dos PC. | Sin tocar. | Un `.gitattributes` con `* text=auto eol=lf`. |
 | E4 | Los DFD de los módulos 3, 4 y 5 no se revisaron contra el código en este cierre. | Se asumen alineados. | Pasar `check-rules` por cada módulo. |
-| E5 | `pages/organizador/mis-eventos.html` no tiene acceso a las estadísticas del evento. | Pendiente (ver 2.10). | Botón "Estadísticas" por evento. |
+| E5 | La pantalla de estadísticas existe **solo por evento**: es el modal de `pages/organizador/dashboard.html` (`abrirModalStats`); `mis-eventos.html` no tiene acceso. | Pendiente (ver 2.10). | Ampliar el modal a una tarjeta por cronograma y agregar el botón "Estadísticas" en `mis-eventos.html`. |
 | E6 | Las pantallas de recuperación se probaron con un enlace real solo hasta la llegada del correo. | El tramo "abrir el enlace del correo → cambiar la contraseña" no se probó de punta a punta con un token real. | Abrir a mano el enlace del correo de bloqueo en `gaston_test` y completar el cambio. |
+
+## 3b. Frontend: brechas y seguridad
+
+| # | Pregunta | Qué se hizo por defecto | Alternativa |
+|---|---|---|---|
+| X1 | **XSS almacenado en el frontend.** Los textos de usuario (nombre y descripción de eventos, comentarios de valoraciones...) se insertaban sin escapar en `innerHTML`. | **Corregido el 2026-10-19** en `index.html`, `evento-detalle.html`, `dashboard.html`, `mis-eventos.html`, `mis-inscripciones.html` y `perfil.html` del organizador, con `UI.esc` (`js/utils.js`) y verificado en el navegador con una respuesta simulada. **No se auditaron todas las pantallas** (`evento-form.html`, `perfil.html` de participante, las de registro). | Auditar con `grep -n "innerHTML" pages -r` cada plantilla; agregar un **test de Playwright** que cree un evento cuyo nombre sea `<img src=x onerror=...>` y verifique que no se ejecuta; agregar una **Content-Security-Policy**. |
+| X2 | La pantalla de **registro de organizaciones** está deshabilitada (*"en preparación"*) aunque `POST /api/auth/registro/organizacion` funciona. | Sin tocar. | Agregar `API.registroOrganizacion` y habilitar el botón en `register-paso2.html`; hay una pantalla de éxito (`register-completado-pj.html`) ya hecha. |
+| X3 | El formulario de **evento** no ofrece "publicar a nombre de una organización" (el backend acepta `idPersonaJuridica`). | Sin tocar. | Un `<select>` alimentado por `GET /api/organizador/organizaciones`. |
+| X4 | Texto desactualizado: `AuthController.registrarConOrganizacion` y `ValidadorCuit` todavía mencionan `REVISION_PENDIENTE` (etapa eliminada en ADR-14). | Sin tocar. | Corregir los comentarios. |
+| X5 | `CORS` permite orígenes `localhost:8000/5500`; el frontend ya se sirve desde el 8080 (mismo origen). | Sin tocar. | Reemplazar por el dominio real al desplegar (pendiente ya anotado en `SecurityConfig`). |
 
 ## 4. Documentación
 

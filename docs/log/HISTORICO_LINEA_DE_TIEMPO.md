@@ -114,3 +114,23 @@
 * **📄 Doc**: auditoría de suscripciones — RF-6.4 completo, Módulo 8 sin construir y el tope Free duplicado (2 vs 20); 6 decisiones pendientes. `CLAUDE.md`/`CLAUDE_es-ES.md` actualizados (M6 completo, M8 parcial).
   - *Detalle completo*: [sprint_2/2026-10-17_correos_recuperacion_y_suscripciones.md](./sprint_2/2026-10-17_correos_recuperacion_y_suscripciones.md)
 
+#### 2026-10-19 — Cierre del proyecto
+
+* **⚙️ Backend**: el desbloqueo de una cuenta `BLOQUEADA` pasa a ser **exclusivo del panel de administración** (`REACTIVAR`); recuperar la contraseña ya no desbloquea. **Se elimina el tope de eventos** (ningún plan limita los eventos).
+  - *Archivos clave*: `RecuperacionCuentaService.java`, `EmailService.java` (texto del aviso de bloqueo), `EventoService.java`, `AdminSuscripcionService.java`
+* **🐛 Fix de seguridad / 🎨 Frontend**: se corrige el **XSS almacenado** en las páginas públicas con `UI.esc` (`js/utils.js`).
+* **📄 Doc**: `docs/tempDFD/` queda solo con lo pendiente (M8, estadísticas por cronograma, rol ADMINISTRADOR); los DFD implementados (6.3, 6.4, Módulo 7) pasan a `docs/diagrams/`; RF-1.4/1.5/2.10/6.2/8.x actualizados; **valoraciones validadas por cronograma**.
+* **📄 Doc**: **manual de programación** completo en `docs/manual/` (Java, Spring Boot, API, JavaScript, HTML/CSS y los 9 módulos) y `docs/SUGERENCIAS_PENDIENTES.md`.
+  - *Detalle completo*: [sprint_2/2026-10-19_cierre_del_proyecto.md](./sprint_2/2026-10-19_cierre_del_proyecto.md)
+
+---
+
+## 📊 Resumen de Actividad (al 2026-10-19, cierre)
+
+| Indicador | Valor |
+|---|---|
+| Módulos con backend y frontend | M1 Auth, M2 Eventos, M3 Participación, M4 Catálogo, M5 Moderación, M6 Admin (completo), M7 Organizaciones (backend; pantallas de alta sin conectar), N Correos |
+| Módulo especificado sin programar | **M8 Membresías** y estadísticas por cronograma (`docs/tempDFD/`) |
+| Tests | Servicio: verdes. API/UI: requieren backend, base y credenciales |
+| Documentación | Requisitos, DFD (`diagrams/` y `tempDFD/`), logs, ADR hasta el 37, **manual de programación** |
+

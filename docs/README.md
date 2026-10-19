@@ -65,3 +65,6 @@ El sistema se delimita bajo los siguientes parámetros:
 ### [Objetivos del Proyecto y Requisitos Funcionales](./requisitos/README.md)
 ### [Modelo Entidad Relacion](./diseño_bd/MER.md)
 ### [Diagrama Entidad Relacion](./diseño_bd/DER.md)
+### [Manual de programación (recorrido de aprendizaje, Java → Spring Boot → API → JavaScript → HTML/CSS → módulos)](./manual/README.md)
+### [DFD pendientes de programar (tempDFD)](./tempDFD/README.md)
+### [Sugerencias y preguntas abiertas](./SUGERENCIAS_PENDIENTES.md)

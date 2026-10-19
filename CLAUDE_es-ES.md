@@ -344,17 +344,17 @@ backend/src/main/java/com/enexia/
 
 ## Sprint 2: Organizaciones, Eventos y Catálogo Público (Actual)
 
-**Estado (2026-10-17):** backend completo; frontend construido para el sitio público, el panel de organizador, el panel admin (4 pantallas) y la recuperación de contraseña. Lo principal sin construir es el Módulo 8 (membresías).
+**Estado (2026-10-19, proyecto cerrado):** backend y frontend completos para M1–M7 y N; M8 (membresías) tiene sus decisiones y DFD en `docs/tempDFD/` pero no está programado. Brechas conocidas: la pantalla de registro de organizaciones y la opción "publicar a nombre de una organización" del formulario de evento no están conectadas al backend (que sí existe); el rol ADMINISTRADOR no se puede otorgar desde la app; `FinalizacionEventoScheduler` usa el reloj de la JVM.
 
 | Módulo | Alcance entregado |
 |---|---|
-| **M1** — Autenticación | Bloqueo silencioso de cuenta, eliminación del rate limiting por IP, recuperación de contraseña y desbloqueo por email (RF-1.5) |
+| **M1** — Autenticación | Bloqueo silencioso de cuenta, eliminación del rate limiting por IP, recuperación de contraseña por email (RF-1.5). **Desbloquear es exclusivo del administrador** (RF-6.2 *Reactivar*, 2026-10-19): el enlace de recuperación cambia la contraseña pero nunca desbloquea. |
 | **M7** — Organizaciones | Alta de `Persona_Juridica` por los dos caminos, validación de CUIT módulo 11 (RF-7.3), `Miembros_Organizacion`. Control por revisión eliminado el 2026-09-09 (ADR-14) — una organización queda `APROBADO`/`ACTIVO` y habilitada para publicar apenas su CUIT pasa el módulo 11, tanto en la especificación como en `PersonaJuridicaService.crearOrganizacion()`. |
 | **M2** — Eventos | Creación con pipeline asíncrono de moderación (RF-2.1 a RF-2.6), integración Cloudinary (RF-2.3), dashboard del organizador (RF-2.8), baja lógica (RF-2.9), estadísticas (RF-2.10) |
 | **M4** — Interfaz pública | Catálogo paginado, búsqueda por texto, filtros por categoría/fecha/ubicación, ficha técnica, registro pasivo de visitas (RF-4.1 a RF-4.5) |
 | **M5** — Moderación | Fase de texto + fase de imágenes, secuencial y asíncrona (RF-5.1 a RF-5.3) |
 | **M6** — Panel de administración | **Completo (2026-10-15).** RF-6.1 moderación de eventos (suspensión disciplinaria reversible + revisión de 2.ª instancia), RF-6.2 gestión de cuentas (suspender/reactivar; las cuentas admin y la propia están protegidas), RF-6.3 ABM de categorías (baja lógica y reversible con `categoria.activa`, ADR-22), RF-6.4 auditoría de suscripciones (`REVOCAR` / `CAMBIAR_PLAN` / `RENOVAR`, ADR-23/26/27). Cuatro pantallas en `pages/admin/`: `moderacion-eventos`, `usuarios`, `categorias`, `suscripciones`. **Sigue abierto:** no hay forma de otorgar el rol `ADMINISTRADOR` desde la app (solo la cuenta de desarrollo promovida por SQL). |
-| **M8** — Membresías | **Solo existe el lado admin** (RF-6.4, lectura + intervención excepcional). **Sin construir:** RF-8.1 flujo de upgrade con pago simulado, RF-8.2 tope de publicaciones del plan Free, RF-8.3 métricas avanzadas solo Pro. El tope Free vive en dos lugares desconectados: `enexia.planes.free.eventos-permitidos` (=2, lo muestra el panel admin) y `enexia.eventos.limite-plan-gratuito` (=20, la guarda de `EventoService.verificarLimiteDePlan`, que ignora la suscripción: topea a todo organizador, Pro incluido, en 20 eventos no dados de baja). Se unifican al construir RF-8.2. Especificaciones: `docs/tempDFD/modulo_8_membresias/`. |
+| **M8** — Membresías | **Solo existe el lado admin** (RF-6.4, lectura + intervención excepcional). **Decisiones del 2026-10-19:** *suscripción básica* (planes `GRATUITO` y `PRO`, mensual, pago simulado), **ningún plan limita la cantidad de eventos** (el tope —`EventoService.verificarLimiteDePlan` y sus propiedades— se **eliminó del código**) y **las estadísticas son por cronograma** (básicas para todos, avanzadas para Pro). Se verificó que las valoraciones son por cronograma (`UNIQUE(id_usuario, id_cronograma)`). **Sin construir:** el lado del organizador (upgrade, cancelar, job de vencimiento), el servicio que resuelve el plan, las estadísticas por cronograma y la restricción Pro (403 `PLAN_PRO_REQUERIDO`). DFD y lista de tareas: `docs/tempDFD/`. |
 
 ### ⚠️ Cambio de política de fallos de login (2026-09-08, decisión del usuario)
 
@@ -384,8 +384,8 @@ La antigua escalera de penalización (3 → captcha + cooldown de 5 min, 6 → c
 
 Con esto queda cerrada la divergencia de RF-1.4: `docs/requisitos/requisitos_funcionales/modulo_1.md` y `docs/diagrams/login_registro/login.md` se reescribieron el 2026-09-09 y ahora coinciden, y el código las alcanzó el 2026-09-19. CAPTCHA y 2FA quedan fuera de alcance y se quitaron del DFD de login.
 
-> ### ⚠️ Sigue pendiente: no hay endpoint de desbloqueo dedicado
-> RF-1.5 describe un enlace por correo que reactiva la cuenta y deja entrar con las **credenciales habituales**, sin cambiar la contraseña. Eso **no** es lo que existe hoy: el email de seguridad enlaza a `POST /api/auth/recuperacion/confirmar`, que reactiva una cuenta `BLOQUEADA` pero *exige poner una contraseña nueva* — no hay un endpoint `/unlock-account?token=` separado que desbloquee sin tocar la contraseña. Construir ese endpoint sigue pendiente.
+> ### ✅ Decidido el 2026-10-19: desbloquear una cuenta es EXCLUSIVO del administrador
+> Una cuenta `BLOQUEADA` solo se reactiva desde el panel de administración (`AdminUsuarioService`, acción `REACTIVAR`, que además pone `intentos_fallidos` en 0). El enlace del correo (`POST /api/auth/recuperacion/confirmar`) solo fija una contraseña nueva y **nunca toca el estado de la cuenta**; el correo de seguridad lo aclara. El plan de un endpoint dedicado `/unlock-account?token=` se **descartó**: una sola puerta para desbloquear es una sola puerta que auditar. Quedan abiertos: no hay un canal para que el titular bloqueado pida el desbloqueo ni un aviso por correo al reactivar (ver `docs/SUGERENCIAS_PENDIENTES.md`, C1/C2).
 
 ### Registro de Persona Jurídica: los dos caminos
 
@@ -519,7 +519,7 @@ Sin `CLOUDINARY_CLOUD_NAME` el servicio corre en **modo simulado**: valida forma
 | ~~Rate Limiting (por IP)~~ | ❌ **ELIMINADO 2026-09-08** | ver ADR-09 |
 | Bloqueo de cuenta silencioso, escalón único al 3° fallo | ✅ **código alineado el 2026-09-19** | - |
 | ~~Escalera de cooldown / CAPTCHA (3/6/9)~~ | ❌ **ELIMINADA 2026-09-19** (el código ya coincide con la especificación) | - |
-| Desbloqueo por enlace `/unlock-account?token=` | ❌ especificado, sin construir | siguiente |
+| ~~Desbloqueo por enlace `/unlock-account?token=`~~ | ❌ **DESCARTADO 2026-10-19** (desbloqueo solo por administrador) | - |
 | Moderación de texto (better-profanity) | ✅ | - |
 | 2FA (Verificación por email) | ❌ fuera de alcance | - |
 | CAPTCHA | ❌ fuera de alcance | - |
@@ -599,6 +599,7 @@ public class Usuario {
 ## Reglas de diseño (leer antes de cualquier cambio de frontend/CSS)
 
 - **Esquinas cuadradas, en todo (2026-10-16).** Los bordes deben mantenerse cuadrados, sobre todo en `pages/admin/*`. Usar SOLO los tokens de `pages/css/tokens.css` sección 8: `--radio-campo` (4px), `--radio-tarjeta` (6px), `--radio-sm` (6px). Nunca poner valores fijos de `border-radius` (12/14/16/20/24px), ni píldoras `999px`, ni redefinir `--radio-tarjeta` por página. `50%` solo para avatares, puntos de estado y botones redondos de cerrar/ícono.
+- **Escapar el texto de usuario (2026-10-19).** Todo texto que escribió una persona (nombre/descripción de un evento, tipo de ticket, dirección, comentario de una valoración, nombre de organización) que entre a `innerHTML` o a un atributo HTML **debe pasar por `UI.esc(...)`** (`js/utils.js`) o asignarse con `textContent`. Se corrigieron las páginas públicas (XSS almacenado); no se auditaron todas las pantallas (`docs/SUGERENCIAS_PENDIENTES.md`, X1).
 - Ningún botón/enlace "Crear Evento" lleva ícono "+" ni "+" en el texto.
 - Nunca mostrar nombres internos de tablas de BD (`Tabla: ...`) en formularios para el usuario.
 - Las cuentas admin no ven acciones de participante (botón de inscripción ni su aviso) en el detalle de evento.
@@ -608,6 +609,8 @@ public class Usuario {
 
 ## Referencias
 
+- **Manual de programación (recorrido de aprendizaje, A–D)**: [docs/manual/](./docs/manual/README.md)
+- **DFD pendientes y decisiones**: [docs/tempDFD/](./docs/tempDFD/README.md) · **Preguntas abiertas**: [docs/SUGERENCIAS_PENDIENTES.md](./docs/SUGERENCIAS_PENDIENTES.md)
 - **Requisitos Funcionales**: [docs/requisitos/requisitos_funcionales/](./docs/requisitos/requisitos_funcionales/)
 - **Modelo de Base de Datos**: [docs/diseño_bd/MER.md](./docs/diseño_bd/MER.md) y [DER.md](./docs/diseño_bd/DER.md)
 - **Diagramas de Flujo**: [docs/diagrams/](./docs/diagrams/)
