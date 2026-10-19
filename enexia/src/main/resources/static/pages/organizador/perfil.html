@@ -380,7 +380,7 @@ a:hover { color: var(--acento-fuerte); }
         return `
             <div class="campo">
                 <label class="campo__etiqueta">${etiqueta}</label>
-                <div class="entrada entrada--solo-lectura"><input type="text" value="${valor || '-'}" disabled></div>
+                <div class="entrada entrada--solo-lectura"><input type="text" value="${UI.esc(valor || '-')}" disabled></div>
             </div>`;
     }
 

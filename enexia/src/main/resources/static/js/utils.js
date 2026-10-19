@@ -100,6 +100,31 @@ const UI = {
         );
     },
 
+    /* ------------------------------------------------ Escape de HTML --- */
+
+    /**
+     * Convierte un valor en texto SEGURO para insertarlo dentro de un template
+     * que despues va a innerHTML (o dentro de un atributo entre comillas).
+     *
+     * Todo texto que escribio una persona (nombre y descripcion de un evento,
+     * comentarios de una valoracion, nombre de un tipo de ticket, direccion...)
+     * pasa por aca antes de armar HTML. Sin esto, un organizador que llamara
+     * a su evento <img src=x onerror=...> ejecutaria codigo en el navegador de
+     * cada visitante (XSS almacenado, B04 del manual).
+     *
+     * Escapa los cinco caracteres que permiten abrir una etiqueta o salirse de
+     * un atributo: & < > " '   (la misma lista que CorreoHtml.escapar, del lado
+     * del backend).
+     */
+    esc(valor) {
+        return String(valor === null || valor === undefined ? '' : valor)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     /* ------------------------------------------------ Errores por campo --- */
 
     /**

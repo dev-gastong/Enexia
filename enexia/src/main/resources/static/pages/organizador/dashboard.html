@@ -485,7 +485,7 @@ a:hover { color: var(--acento-fuerte); }
                     ? '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 5.5 10.5 10.5M10.5 5.5 5.5 10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
                     : '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5 6.5 12 13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
             </span>
-            <div><p class="toast__titulo">${titulo}</p><p class="toast__texto">${texto}</p></div>
+            <div><p class="toast__titulo">${UI.esc(titulo)}</p><p class="toast__texto">${UI.esc(texto)}</p></div>
             <button class="toast__cerrar" type="button">
                 <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </button>`;
@@ -532,14 +532,14 @@ a:hover { color: var(--acento-fuerte); }
                 ${evento.urlPortada ? '' : iniciales(evento.nombre)}
             </div>
             <div class="fila-evento__info">
-                <p class="fila-evento__nombre">${evento.nombre}</p>
+                <p class="fila-evento__nombre">${UI.esc(evento.nombre)}</p>
                 <div class="fila-evento__meta">
-                    <span>${evento.categoria || 'Sin categoria'}</span>
+                    <span>${UI.esc(evento.categoria || 'Sin categoria')}</span>
                     ${evento.proximaFecha ? `<span>&middot; ${evento.proximaFecha}</span>` : ''}
-                    ${evento.ciudad ? `<span>&middot; ${evento.ciudad}</span>` : ''}
+                    ${evento.ciudad ? `<span>&middot; ${UI.esc(evento.ciudad)}</span>` : ''}
                 </div>
             </div>
-            <span class="chip-estado chip-estado--${estado.clase}" title="${evento.motivoRechazo || ''}">
+            <span class="chip-estado chip-estado--${estado.clase}" title="${UI.esc(evento.motivoRechazo || '')}">
                 <span class="chip-estado__punto"></span>${estado.texto}
             </span>
             <div class="fila-evento__acciones">
