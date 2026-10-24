@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.*;
 import com.cloudinary.utils.ObjectUtils;
 
+import io.jsonwebtoken.io.IOException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,12 +18,12 @@ import lombok.extern.slf4j.Slf4j;
  * Subida y analisis de imagenes promocionales (RF-2.3, RF-5.2, RF-5.3).
  *
  * QUE HACE Y EN QUE ORDEN
- *   1. Valida el archivo ANTES de tocar la red: extension JPG/PNG y peso <= 2MB
- *      (RF-5.2). Un archivo que no pasa esto no se sube: seria gastar ancho de
- *      banda y cuota de la cuenta para que el servidor remoto lo rechace igual.
- *   2. Sube a Cloudinary pidiendo, si esta configurado, el complemento de
- *      moderacion automatica (RF-5.3).
- *   3. Devuelve un veredicto: aprobada (con su URL) o rechazada (con motivo).
+ * 1. Valida el archivo ANTES de tocar la red: extension JPG/PNG y peso <= 2MB
+ * (RF-5.2). Un archivo que no pasa esto no se sube: seria gastar ancho de
+ * banda y cuota de la cuenta para que el servidor remoto lo rechace igual.
+ * 2. Sube a Cloudinary pidiendo, si esta configurado, el complemento de
+ * moderacion automatica (RF-5.3).
+ * 3. Devuelve un veredicto: aprobada (con su URL) o rechazada (con motivo).
  *
  * MODO SIMULADO
  * Sin {@code enexia.cloudinary.cloud-name} configurado, la clase NO llama a la
@@ -29,14 +31,16 @@ import lombok.extern.slf4j.Slf4j;
  * ficticia. Es lo que permite desarrollar y correr la suite de pruebas sin
  * credenciales ni conexion, sin que el resto del pipeline se entere de la
  * diferencia. Para poder probar el camino de rechazo, un nombre de archivo que
- * contenga "rechazar" se rechaza en modo simulado (ver {@link #esRechazoSimulado}).
+ * contenga "rechazar" se rechaza en modo simulado (ver
+ * {@link #esRechazoSimulado}).
  *
  * SOBRE LA MODERACION AUTOMATICA REAL
  * Cloudinary no analiza contenido por si solo: hace falta un complemento
  * (aws_rek_moderation, google_vision, etc.) habilitado en la cuenta. Si la
  * propiedad {@code enexia.cloudinary.moderacion} viene vacia, la imagen se sube
  * SIN analisis y se aprueba. Eso no es un descuido silencioso: se avisa por log
- * al arrancar, porque una moderacion que no modera y nadie sabe que no modera es
+ * al arrancar, porque una moderacion que no modera y nadie sabe que no modera
+ * es
  * peor que no tenerla.
  */
 @Service
@@ -119,7 +123,7 @@ public class CloudinaryService {
     }
 
     // =====================================================================
-    // VALIDACION LOCAL  (RF-5.2, DFD 5.2)
+    // VALIDACION LOCAL (RF-5.2, DFD 5.2)
     // =====================================================================
 
     /**
@@ -150,7 +154,7 @@ public class CloudinaryService {
     }
 
     // =====================================================================
-    // SUBIDA Y MODERACION  (RF-2.3, RF-5.3, DFD 5.3)
+    // SUBIDA Y MODERACION (RF-2.3, RF-5.3, DFD 5.3)
     // =====================================================================
 
     /**
@@ -190,16 +194,18 @@ public class CloudinaryService {
                     // cliente permitiria sobrescribir la imagen de otro evento
                     // mandando un public_id ajeno.
                     "resource_type", "image",
+                    "moderation", "aws_rek",
                     "overwrite", false);
 
             if (complementoModeracion != null && !complementoModeracion.isBlank()) {
                 opciones.put("moderation", complementoModeracion);
             }
 
+            
             // El SDK de Cloudinary devuelve un Map crudo: la conversion sin
             // comprobar es inevitable y por eso el metodo lleva @SuppressWarnings.
             Map<String, Object> respuesta = cliente.uploader().upload(contenido, opciones);
-
+            log.info("Respuesta de Cloudinary para '{}': {}", nombreArchivo, respuesta);
             String url = Objects.toString(respuesta.get("secure_url"), null);
             String publicId = Objects.toString(respuesta.get("public_id"), null);
 
@@ -224,7 +230,8 @@ public class CloudinaryService {
     /**
      * Lee el veredicto del complemento de moderacion.
      *
-     * La respuesta trae {@code moderation: [{status: "approved"|"rejected"|"pending"}]}.
+     * La respuesta trae
+     * {@code moderation: [{status: "approved"|"rejected"|"pending"}]}.
      * "pending" significa analisis asincrono todavia sin resolver: se trata como
      * APROBADA provisional, porque bloquear el evento esperando un veredicto que
      * puede tardar minutos anularia el sentido del pipeline. El repaso de los
@@ -247,7 +254,10 @@ public class CloudinaryService {
         return false;
     }
 
-    /** Borra una imagen remota. Los fallos solo se loguean: es limpieza, no flujo principal. */
+    /**
+     * Borra una imagen remota. Los fallos solo se loguean: es limpieza, no flujo
+     * principal.
+     */
     public void borrarSilencioso(String publicId) {
         if (!estaActivo() || publicId == null || publicId.isBlank()) {
             return;

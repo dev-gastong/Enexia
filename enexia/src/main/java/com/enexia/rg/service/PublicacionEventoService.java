@@ -55,14 +55,16 @@ import lombok.extern.slf4j.Slf4j;
  * transaccion y sin peticion HTTP. Si sus metodos llevaran ademas
  * {@code @Transactional}, la transaccion abarcaria TAMBIEN las llamadas a
  * Cloudinary: una conexion a la base retenida varios segundos esperando una
- * respuesta de red, por cada imagen y por cada evento. Con el pool de conexiones
+ * respuesta de red, por cada imagen y por cada evento. Con el pool de
+ * conexiones
  * agotandose, el sitio entero se cae por culpa de un tercero lento.
  *
  * Separando, cada escritura abre su transaccion, hace lo suyo y la cierra;
  * mientras se habla con Cloudinary NO hay ninguna transaccion abierta.
  *
  * REQUIRES_NEW en ambos metodos: no hay transaccion previa que compartir (el
- * llamador es asincrono), y dejarlo explicito documenta que cada uno se confirma
+ * llamador es asincrono), y dejarlo explicito documenta que cada uno se
+ * confirma
  * por su cuenta.
  */
 @Service
@@ -93,22 +95,34 @@ public class PublicacionEventoService {
      *
      * @param urlsAprobadas URLs que devolvio Cloudinary, ya moderadas
      *
-     * ISOLATION = READ_COMMITTED (obligatorio desde MariaDB 11.6)
-     * MariaDB trae {@code innodb_snapshot_isolation=ON} por defecto: bajo
-     * REPEATABLE READ, un SELECT ... FOR UPDATE que encuentra la fila modificada
-     * DESPUES de la instantanea de la transaccion aborta con el error 1020
-     * "Record has changed since last read". Es una proteccion deliberada contra
-     * las escrituras sobre datos viejos, y es correcta: la transaccion iba a
-     * decidir con informacion vencida.
+     *                      ISOLATION = READ_COMMITTED (obligatorio desde MariaDB
+     *                      11.6)
+     *                      MariaDB trae {@code innodb_snapshot_isolation=ON} por
+     *                      defecto: bajo
+     *                      REPEATABLE READ, un SELECT ... FOR UPDATE que encuentra
+     *                      la fila modificada
+     *                      DESPUES de la instantanea de la transaccion aborta con
+     *                      el error 1020
+     *                      "Record has changed since last read". Es una proteccion
+     *                      deliberada contra
+     *                      las escrituras sobre datos viejos, y es correcta: la
+     *                      transaccion iba a
+     *                      decidir con informacion vencida.
      *
-     * READ COMMITTED elimina el problema de raiz porque no mantiene instantanea:
-     * cada sentencia ve lo ultimo confirmado, asi que el bloqueo simplemente
-     * espera su turno y despues lee el estado real. Es ademas el nivel que usan
-     * por defecto Oracle y PostgreSQL, y el adecuado para transacciones cortas
-     * de escritura como esta.
+     *                      READ COMMITTED elimina el problema de raiz porque no
+     *                      mantiene instantanea:
+     *                      cada sentencia ve lo ultimo confirmado, asi que el
+     *                      bloqueo simplemente
+     *                      espera su turno y despues lee el estado real. Es ademas
+     *                      el nivel que usan
+     *                      por defecto Oracle y PostgreSQL, y el adecuado para
+     *                      transacciones cortas
+     *                      de escritura como esta.
      *
-     * En MariaDB 10.4 esto no hacia falta: el servidor viejo dejaba pasar la
-     * lectura con datos vencidos sin avisar, que es precisamente el bug.
+     *                      En MariaDB 10.4 esto no hacia falta: el servidor viejo
+     *                      dejaba pasar la
+     *                      lectura con datos vencidos sin avisar, que es
+     *                      precisamente el bug.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public void aprobarYPersistir(Long idEvento, EventoCrearRequest datos, List<String> urlsAprobadas) {
@@ -210,15 +224,26 @@ public class PublicacionEventoService {
 
         reconciliarAgenda(evento, datos.getCronogramas());
 
-        multimediaRepository.deleteAll(multimediaRepository.findByEventoIdEventoOrderByOrdenAsc(idEvento));
+        // 1. Buscas las imágenes actuales
+        List<EventoMultimedia> imagenesViejas = multimediaRepository.findByEventoIdEventoOrderByOrdenAsc(idEvento);
+
+        // 2. Las borras del contexto
+        multimediaRepository.deleteAll(imagenesViejas);
+
+        // 3. LA LÍNEA CLAVE: Obligas a la base de datos a ejecutar el DELETE
+        // inmediatamente
+        multimediaRepository.flush();
+
+        // 4. Guardas las nuevas imágenes sin riesgo de superposición
         int orden = 1;
         for (String url : urlsAprobadas) {
             EventoMultimedia imagen = new EventoMultimedia();
-            imagen.setEvento(evento);
+            imagen.setEvento(evento); // La relación con Evento que tienes en tu modelo
             imagen.setTipoArchivo("IMAGEN");
             imagen.setUrlArchivo(url);
             imagen.setOrden(orden++);
             imagen.setFechaSubida(LocalDateTime.now());
+
             multimediaRepository.save(imagen);
         }
 
@@ -260,13 +285,13 @@ public class PublicacionEventoService {
      * falta cuando un organizador reclama.
      */
     private void cambiarEstado(Evento evento, EstadoEventoSistemaNombre estado,
-                               MotivoModeracionEvento motivo) {
+            MotivoModeracionEvento motivo) {
 
         EventoEstadoSistema fila = estadoSistemaRepository
                 .buscarPorEstadoYMotivo(estado.name(), motivo == null ? null : motivo.name())
                 .orElseThrow(() -> new ReglaNegocioException(
                         "El catalogo evento_estado_sistema no tiene la fila " + estado
-                        + (motivo == null ? "" : "/" + motivo)));
+                                + (motivo == null ? "" : "/" + motivo)));
 
         evento.setEstadoSistema(fila);
         eventoRepository.save(evento);
@@ -317,22 +342,22 @@ public class PublicacionEventoService {
      * Tres casos por fila, distinguidos por el id que manda el formulario
      * ({@code idCronograma} / {@code idCronogramaTicket}; ver el javadoc de
      * esos campos en los DTO):
-     *   - Id que coincide con una fila existente: se ACTUALIZA en el lugar, sin
-     *     tocar su identidad (una Inscripcion que la referencia por FK la sigue
-     *     encontrando).
-     *   - Id nulo, o que no coincide con nada de este evento: es una fila
-     *     NUEVA.
-     *   - Fila existente cuyo id el formulario ya no manda: se BORRA de
-     *     verdad. Es seguro porque {@code EventoService.validarCupoYPrecio} ya
-     *     rechazo la edicion mas arriba, antes de moderar, si esa fila tenia
-     *     alguna inscripcion asociada.
+     * - Id que coincide con una fila existente: se ACTUALIZA en el lugar, sin
+     * tocar su identidad (una Inscripcion que la referencia por FK la sigue
+     * encontrando).
+     * - Id nulo, o que no coincide con nada de este evento: es una fila
+     * NUEVA.
+     * - Fila existente cuyo id el formulario ya no manda: se BORRA de
+     * verdad. Es seguro porque {@code EventoService.validarCupoYPrecio} ya
+     * rechazo la edicion mas arriba, antes de moderar, si esa fila tenia
+     * alguna inscripcion asociada.
      */
     private void reconciliarAgenda(Evento evento, List<CronogramaRequest> cronogramasNuevos) {
         Long idEvento = evento.getIdEvento();
 
-        Map<Long, EventoCronograma> cronogramasActuales =
-                cronogramaRepository.findByEventoIdEventoOrderByFechaAscHoraInicioAsc(idEvento).stream()
-                        .collect(Collectors.toMap(EventoCronograma::getIdCronograma, c -> c));
+        Map<Long, EventoCronograma> cronogramasActuales = cronogramaRepository
+                .findByEventoIdEventoOrderByFechaAscHoraInicioAsc(idEvento).stream()
+                .collect(Collectors.toMap(EventoCronograma::getIdCronograma, c -> c));
 
         Map<Long, CronogramaTicket> ticketsActuales = cronogramasActuales.isEmpty()
                 ? Map.of()

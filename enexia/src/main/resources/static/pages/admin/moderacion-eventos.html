@@ -181,7 +181,9 @@ a:hover { color: var(--acento-fuerte); }
 .modal__texto { margin: 0 0 8px; font-size: 13.5px; line-height: 1.6; color: var(--texto-secundario); }
 .modal__campo { margin-top: 14px; }
 .modal__campo label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 600; color: var(--texto); }
-.modal__campo select { width: 100%; padding: 10px 12px; border: 1px solid var(--borde-campo); border-radius: var(--radio-sm); background: var(--superficie); color: var(--texto); font-family: inherit; font-size: 13.5px; }
+.modal__campo select,
+.modal__campo textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--borde-campo); border-radius: var(--radio-sm); background: var(--superficie); color: var(--texto); font-family: inherit; font-size: 13.5px; }
+.modal__campo textarea { resize: vertical; min-height: 75px; }
 .modal__acciones { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
 /* --- Toast ------------------------------------------------------------------- */
@@ -347,6 +349,10 @@ a:hover { color: var(--acento-fuerte); }
                 <option value="FRAUDE_DETECTADO">Fraude detectado</option>
                 <option value="INFRACCION_POST_PUBLICACION">Infracción detectada después de publicado</option>
             </select>
+            <div style="margin-top: 12px;">
+                <label for="modalDecisionObservacion">Observación <span style="font-weight: 400; color: var(--texto-secundario);">(mínimo 10 caracteres)</span></label>
+                <textarea id="modalDecisionObservacion" rows="3" placeholder="Detalle el motivo concreto de la suspensión que recibirá el organizador..."></textarea>
+            </div>
         </div>
         <div class="modal__acciones">
             <button class="boton-fantasma" id="btnCancelarDecision" type="button">Cancelar</button>
@@ -629,6 +635,7 @@ a:hover { color: var(--acento-fuerte); }
     const modalTexto = document.getElementById('modalDecisionTexto');
     const modalCampoMotivo = document.getElementById('modalDecisionCampoMotivo');
     const modalMotivo = document.getElementById('modalDecisionMotivo');
+    const modalObservacion = document.getElementById('modalDecisionObservacion');
     const btnConfirmar = document.getElementById('btnConfirmarDecision');
 
     let eventoEnDecision = null;
@@ -643,6 +650,7 @@ a:hover { color: var(--acento-fuerte); }
             modalTitulo.textContent = 'Suspender este evento';
             modalTexto.textContent = `"${evento.nombre}" dejara de mostrarse en el catalogo publico de inmediato. Esta accion es reversible desde "Revertir suspension".`;
             modalCampoMotivo.hidden = false;
+            if (modalObservacion) modalObservacion.value = '';
             btnConfirmar.className = 'boton-borde';
             btnConfirmar.textContent = 'Si, suspender';
         } else if (accion === 'aprobar') {
@@ -666,6 +674,7 @@ a:hover { color: var(--acento-fuerte); }
 
     function cerrarModalDecision() {
         modal.classList.remove('modal-velo--visible');
+        if (modalObservacion) modalObservacion.value = '';
         eventoEnDecision = null;
         accionEnDecision = null;
     }
@@ -679,7 +688,19 @@ a:hover { color: var(--acento-fuerte); }
         const decision = accionEnDecision === 'suspender' ? 'RECHAZAR' : 'APROBAR';
         const datos = { decision };
         if (accionEnDecision === 'suspender') {
+            const obs = (modalObservacion ? modalObservacion.value : '').trim();
+            if (obs.length < 10) {
+                mostrarToast('error', 'Observación requerida', 'La observación debe tener al menos 10 caracteres.');
+                if (modalObservacion) modalObservacion.focus();
+                return;
+            }
+            if (obs.length > 500) {
+                mostrarToast('error', 'Observación demasiado larga', 'La observación no puede superar los 500 caracteres.');
+                if (modalObservacion) modalObservacion.focus();
+                return;
+            }
             datos.motivoCodigo = modalMotivo.value;
+            datos.observacion = obs;
         }
 
         const nombre = eventoEnDecision.nombre;

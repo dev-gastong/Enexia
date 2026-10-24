@@ -50,10 +50,10 @@ import com.microsoft.playwright.options.RequestOptions;
  * que estas mirando en el navegador.
  *
  * QUE GENERA (cada evento, al azar):
- *   - entre 1 y 3 fechas, todas a partir de hoy + 10 dias (la primera es
- *     exactamente hoy + 10; las otras caen en los dias siguientes, sin repetir),
- *   - entre 1 y 2 tipos de ticket por fecha, con precio y cupo propios,
- *   - categoria, ciudad, direccion, horario e imagen de portada distintos.
+ * - entre 1 y 3 fechas, todas a partir de hoy + 10 dias (la primera es
+ * exactamente hoy + 10; las otras caen en los dias siguientes, sin repetir),
+ * - entre 1 y 2 tipos de ticket por fecha, con precio y cupo propios,
+ * - categoria, ciudad, direccion, horario e imagen de portada distintos.
  * Se reparten en 3 organizadores nuevos (10 eventos cada uno).
  *
  * Cada nombre lleva una etiqueta de corrida ("S10D-xxxx") para encontrar los
@@ -72,26 +72,26 @@ class EventosMasivosApiTest extends BaseApiTest {
     private static final Duration ESPERA_MODERACION = Duration.ofSeconds(45);
 
     private static final String[] PLANTILLAS_NOMBRE = {
-        "Festival de Musica Austral", "Feria de Artesanos del Fin del Mundo", "Torneo Abierto de Ajedrez",
-        "Maraton Costera", "Taller de Fotografia Patagonica", "Noche de Teatro Independiente",
-        "Campeonato de Videojuegos", "Charla de Astronomia", "Cine al Aire Libre", "Encuentro de Cocina Fueguina",
-        "Copa Interbarrios de Futbol", "Jornada de Ciencia para Chicos", "Recital de Folklore",
-        "Expo de Emprendedores", "Torneo de Truco", "Caminata a la Laguna", "Clase Abierta de Yoga",
-        "Muestra de Arte Joven", "Liga Local de Esports", "Ciclo de Conferencias del Sur"
+            "Festival de Musica Austral", "Feria de Artesanos del Fin del Mundo", "Torneo Abierto de Ajedrez",
+            "Maraton Costera", "Taller de Fotografia Patagonica", "Noche de Teatro Independiente",
+            "Campeonato de Videojuegos", "Charla de Astronomia", "Cine al Aire Libre", "Encuentro de Cocina Fueguina",
+            "Copa Interbarrios de Futbol", "Jornada de Ciencia para Chicos", "Recital de Folklore",
+            "Expo de Emprendedores", "Torneo de Truco", "Caminata a la Laguna", "Clase Abierta de Yoga",
+            "Muestra de Arte Joven", "Liga Local de Esports", "Ciclo de Conferencias del Sur"
     };
 
     private static final String[] TIPOS_TICKET = {
-        "General", "VIP", "Early Bird", "Estudiante", "Jubilado", "Platea", "Campo", "Palco", "Familiar"
+            "General", "VIP", "Early Bird", "Estudiante", "Jubilado", "Platea", "Campo", "Palco", "Familiar"
     };
 
     private static final String[] CALLES = {
-        "San Martin", "Maipu", "Gobernador Paz", "Av. Hector Lopez", "Fadul", "Rosas", "Kuanip", "Belgrano"
+            "San Martin", "Maipu", "Gobernador Paz", "Av. Hector Lopez", "Fadul", "Rosas", "Kuanip", "Belgrano"
     };
 
-    private static final String[] HORAS_INICIO = {"09:00", "11:00", "15:00", "17:30", "19:00", "20:30"};
-    private static final int[] DURACIONES_HORAS = {2, 3, 4};
-    private static final int[] PRECIOS = {0, 0, 1500, 3000, 5000, 8000, 12000, 20000};
-    private static final int[] CUPOS = {20, 50, 80, 100, 150, 300};
+    private static final String[] HORAS_INICIO = { "09:00", "11:00", "15:00", "17:30", "19:00", "20:30" };
+    private static final int[] DURACIONES_HORAS = { 2, 3, 4 };
+    private static final int[] PRECIOS = { 0, 0, 1500, 3000, 5000, 8000, 12000, 20000 };
+    private static final int[] CUPOS = { 20, 50, 80, 100, 150, 300 };
 
     private static Random azar;
     private static long semilla;
@@ -150,10 +150,11 @@ class EventosMasivosApiTest extends BaseApiTest {
         assertThat(idsCreados).hasSize(CANTIDAD_EVENTOS).doesNotHaveDuplicates();
 
         // La moderacion es asincrona: se espera a que los 30 queden visibles en el
-        // catalogo publico (= aprobados). Un rechazo no aparece nunca y vence el limite.
+        // catalogo publico (= aprobados). Un rechazo no aparece nunca y vence el
+        // limite.
         await().alias("moderacion de los " + CANTIDAD_EVENTOS + " eventos")
-               .atMost(ESPERA_MODERACION).pollInterval(Duration.ofMillis(500))
-               .until(() -> idsCreados.stream().allMatch(id -> fichaPublica(id) != null));
+                .atMost(ESPERA_MODERACION).pollInterval(Duration.ofMillis(500))
+                .until(() -> idsCreados.stream().allMatch(id -> fichaPublica(id) != null));
 
         // Cada uno se verifica contra la ficha publica.
         List<String> problemas = new ArrayList<>();
@@ -258,7 +259,9 @@ class EventosMasivosApiTest extends BaseApiTest {
         return cronograma;
     }
 
-    /** PNG real de 640x360, de un color distinto por evento, con el numero dibujado. */
+    /**
+     * PNG real de 640x360, de un color distinto por evento, con el numero dibujado.
+     */
     private static byte[] imagen(int numero) {
         try {
             BufferedImage lienzo = new BufferedImage(640, 360, BufferedImage.TYPE_INT_RGB);
