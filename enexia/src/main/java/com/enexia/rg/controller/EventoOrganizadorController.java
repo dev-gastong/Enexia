@@ -28,6 +28,7 @@ import com.enexia.rg.dto.EventoDetalleResponse;
 import com.enexia.rg.dto.EventoEstadisticasResponse;
 import com.enexia.rg.dto.EventoModeracionResponse;
 import com.enexia.rg.dto.EventoResponse;
+import com.enexia.rg.dto.OrganizadorPlanResumenResponse;
 import com.enexia.rg.exception.ReglaNegocioException;
 import com.enexia.rg.service.EventoService;
 import com.enexia.rg.service.ImagenPendiente;
@@ -161,6 +162,12 @@ public class EventoOrganizadorController {
      * Ordena por fecha de creacion descendente: lo ultimo que cargo el
      * organizador es lo que mas probablemente venga a mirar.
      */
+    @GetMapping("/resumen-plan")
+    @PreAuthorize("hasRole('ORGANIZADOR')")
+    public ResponseEntity<OrganizadorPlanResumenResponse> obtenerResumenPlan(Principal principal) {
+        return ResponseEntity.ok(eventoService.obtenerResumenPlan(principal.getName()));
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ORGANIZADOR')")
     public ResponseEntity<Page<EventoResponse>> listar(

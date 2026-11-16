@@ -282,6 +282,16 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
         List<Object[]> contarPorOrganizador(@Param("ids") java.util.Collection<Long> ids,
                         @Param("estadoBaja") String estadoBaja);
 
-        @Query("SELECT COUNT(e) FROM Evento e WHERE e.organizador.idUsuario = :idUsuario AND e.estadoOrganizador.estadoOrganizador IN ('PUBLICADO', 'EN_PROCESO')")
-        long contarEventosActivosPorOrganizador(@Param("idUsuario") Long idUsuario);
+        @Query("""
+            SELECT COUNT(DISTINCT e) FROM Evento e
+            WHERE e.organizador.idUsuario = :idUsuario
+              AND e.estadoOrganizador.estadoOrganizador = 'PUBLICADO'
+              AND e.estadoSistema.estadoSistema IN ('APROBADO_SISTEMA', 'APROBADO_MANUAL')
+              AND EXISTS (
+                  SELECT 1 FROM EventoCronograma c
+                  WHERE c.evento = e 
+                    AND (c.fecha > CURRENT_DATE OR (c.fecha = CURRENT_DATE AND c.horaFin > CURRENT_TIME))
+              )
+            """)
+    long contarEventosActivosPorOrganizador(@Param("idUsuario") Long idUsuario);
 }

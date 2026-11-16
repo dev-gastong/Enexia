@@ -1,6 +1,6 @@
-# CLAUDE_es-ES.md
+# AGENTS_es-ES.md
 
-Este archivo proporciona una guía en español sobre el proyecto Enexia. La versión original en inglés es `CLAUDE.md` (para Claude Code).
+Este archivo proporciona una guía en español sobre el proyecto Enexia. La versión original en inglés es `AGENTS.md` (para el agente de Antigravity).
 
 ---
 
@@ -8,9 +8,9 @@ Este archivo proporciona una guía en español sobre el proyecto Enexia. La vers
 
 ⚠️ **ESTA ES LA VERSIÓN EN ESPAÑOL**.
 
-📄 **Versión en inglés:** `CLAUDE.md` (referencia para Claude Code)
+📄 **Versión en inglés:** `AGENTS.md` (referencia para el agente)
 
-**Instrucción de sincronización:** Cuando se actualiza `CLAUDE.md`, también se actualiza `CLAUDE_es-ES.md` para mantenerlos en sincronía. La estructura de contenido es idéntica; solo cambia el idioma.
+**Instrucción de sincronización:** Cuando se actualiza `AGENTS.md`, también se actualiza `AGENTS_es-ES.md` para mantenerlos en sincronía. La estructura de contenido es idéntica; solo cambia el idioma.
 
 ---
 
@@ -163,7 +163,7 @@ gradle dependencies
 > **No hacer**, bajo ninguna circunstancia — ni para un chequeo rápido, ni "solo para previsualizar una página":
 > - correr `python -m http.server`, `http-server`, `live-server` u otro servidor estático contra `static/` o cualquier subcarpeta;
 > - abrir un HTML directamente desde el disco (`file://...`);
-> - usar la herramienta de navegador `preview_start` con una segunda config de dev-server para el frontend.
+> - usar herramientas externas o servidores de preview con un puerto/origen distinto para el frontend.
 >
 > Todo eso pone la página en un origen distinto de `http://localhost:8080`, y `SecurityConfig.corsConfigurationSource()` no lo permite — cada `fetch()` de `api.js` falla en silencio por CORS, lo que se ve exactamente igual a "el backend está caído" y hace perder tiempo persiguiendo el bug equivocado. La **única** forma correcta de ver o probar cualquier página es levantar el backend (`gradle bootRun` / `./gradlew bootRun`) y abrir `http://localhost:8080/<ruta>`, por ejemplo `http://localhost:8080/index.html` o `http://localhost:8080/pages/auth/login-desktop-claro.html`.
 
@@ -248,7 +248,7 @@ enexia/
 │   ├── requisitos/
 │   ├── diseño_bd/
 │   └── diagrams/
-└── CLAUDE_es-ES.md                  # Este archivo
+└── AGENTS_es-ES.md                  # Este archivo
 ```
 
 ---

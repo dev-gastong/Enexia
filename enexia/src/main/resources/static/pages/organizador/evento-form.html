@@ -966,15 +966,19 @@ input[type="file"] { display: none; }
     /* ------------------------------------------------ Plan / limite --- */
 
     (async function cargarPlan() {
-        const r = await API.listarEventos({ tamano: 1, estado: 'PUBLICADO' });
-        if (r.ok) {
-            // El total real de "vigentes" lo decide el backend al crear; aca
-            // solo se muestra un indicador orientativo con lo que ya se ve.
-            const total = r.cuerpo.totalElements != null ? r.cuerpo.totalElements : '-';
-            document.getElementById('planTexto').textContent = 'Eventos activos: ' + total;
-            document.getElementById('franjaPlanTexto').textContent =
-                'Plan Free: ' + total + ' evento(s) activos usados.';
-        } else {
+        try {
+            const r = await API.obtenerResumenPlan();
+            if (r.ok && r.cuerpo) {
+                const p = r.cuerpo;
+                const limiteTxt = p.limiteEventos ? ' / ' + p.limiteEventos : '';
+                document.getElementById('planTexto').textContent = 'Eventos activos: ' + p.eventosActivos + limiteTxt;
+                document.getElementById('franjaPlanTexto').textContent =
+                    'Plan ' + p.tipoPlan + ': ' + p.eventosActivos + limiteTxt + ' evento(s) activos usados.';
+            } else {
+                document.getElementById('planTexto').textContent = 'Plan Gratis';
+                document.getElementById('franjaPlanTexto').textContent = 'Plan Free activo.';
+            }
+        } catch (_) {
             document.getElementById('planTexto').textContent = 'Plan Gratis';
             document.getElementById('franjaPlanTexto').textContent = 'Plan Free activo.';
         }

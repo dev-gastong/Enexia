@@ -23,6 +23,7 @@ import com.enexia.rg.dto.EventoDetalleResponse;
 import com.enexia.rg.dto.EventoEstadisticasResponse;
 import com.enexia.rg.dto.EventoModeracionResponse;
 import com.enexia.rg.dto.EventoResponse;
+import com.enexia.rg.dto.OrganizadorPlanResumenResponse;
 import com.enexia.rg.dto.TicketRequest;
 import com.enexia.rg.event.EventoCreadoEvent;
 import com.enexia.rg.exception.OperacionNoPermitidaException;
@@ -49,6 +50,7 @@ import com.enexia.rg.repository.EventoMultimediaRepository;
 import com.enexia.rg.repository.EventoRepository;
 import com.enexia.rg.repository.HistorialEstadoEventoRepository;
 import com.enexia.rg.repository.InscripcionRepository;
+import com.enexia.rg.repository.SuscripcionRepository;
 import com.enexia.rg.repository.UsuarioRepository;
 import com.enexia.rg.repository.VisitaRepository;
 
@@ -96,6 +98,7 @@ public class EventoService {
         private final UsuarioRepository usuarioRepository;
         private final VisitaRepository visitaRepository;
         private final InscripcionRepository inscripcionRepository;
+        private final SuscripcionRepository suscripcionRepository;
 
         private final PersonaJuridicaService personaJuridicaService;
         private final ApplicationEventPublisher publicadorDeEventos;
@@ -130,8 +133,10 @@ public class EventoService {
                 Usuario organizador = usuarioRepository.buscarActivoPorEmailConRoles(emailOrganizador)
                                 .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro la cuenta"));
 
-                // --- Paso 2.1: Validar tope de eventos para plan FREE
-                boolean esPlanFree = "FREE".equalsIgnoreCase(organizador.getPlan().getNombre()); // Ajusta según tu
+                                // --- Paso 2.1: Validar tope de eventos para plan FREE
+                String plan = suscripcionRepository.findPlanVigentePorUsuario(organizador.getIdUsuario())
+                                .orElse("FREE");
+                boolean esPlanFree = "FREE".equalsIgnoreCase(plan); // Ajusta según tu
                                                                                                  // modelo de
                                                                                                  // Usuario/Plan
 
@@ -506,6 +511,21 @@ public class EventoService {
          * su ubicacion y una para las proximas fechas. Resolver ciudad y fecha
          * evento por evento seria el N+1 clasico: con 20 tarjetas, 41 consultas.
          */
+        @Transactional(readOnly = true)
+        public OrganizadorPlanResumenResponse obtenerResumenPlan(String email) {
+                Usuario organizador = usuarioRepository.buscarActivoPorEmailConRoles(email)
+                                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontro la cuenta"));
+
+                String plan = suscripcionRepository.findPlanVigentePorUsuario(organizador.getIdUsuario())
+                                .orElse("FREE");
+                long activos = eventoRepository.contarEventosActivosPorOrganizador(organizador.getIdUsuario());
+                boolean esFree = "FREE".equalsIgnoreCase(plan);
+                Integer limite = esFree ? 3 : null;
+                boolean puedeCrear = !esFree || activos < 3;
+
+                return new OrganizadorPlanResumenResponse(plan, activos, limite, puedeCrear);
+        }
+
         @Transactional(readOnly = true)
         public Page<EventoResponse> listarDeOrganizador(String email, String texto, Long idCategoria,
                         String estadoOrganizador, Pageable paginado) {

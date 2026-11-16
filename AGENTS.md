@@ -1,16 +1,16 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to the antigravity agent when working with code in this repository.
 
 ---
 
 ## 📝 Important Note on Documentation Language
 
-⚠️ **KEEP THIS FILE IN ENGLISH** — It's Claude's reference guide.
+⚠️ **KEEP THIS FILE IN ENGLISH** — It's the antigravity agent's reference guide.
 
-📄 **Spanish version available:** `CLAUDE_es-ES.md` (for the user to read)
+📄 **Spanish version available:** `AGENTS_es-ES.md` (for the user to read)
 
-**Sync instruction:** Whenever you update `CLAUDE.md`, also update `CLAUDE_es-ES.md` to keep them in sync. The content structure should be identical; only the language differs.
+**Sync instruction:** Whenever you update `AGENTS.md`, also update `AGENTS_es-ES.md` to keep them in sync. The content structure should be identical; only the language differs.
 
 ---
 
@@ -163,7 +163,7 @@ gradle dependencies
 > **Do not**, under any circumstance — not for a quick check, not "just to preview a page":
 > - run `python -m http.server`, `http-server`, `live-server`, or any other static file server against `static/` or any subfolder of it;
 > - open an HTML file directly from disk (`file://...`);
-> - use the `preview_start` browser tool with a second dev-server config for the frontend.
+> - use any external dev-server or preview tool with a different port/origin for the frontend.
 >
 > All of those put the page on a different origin than `http://localhost:8080`, and `SecurityConfig.corsConfigurationSource()` does not allow it — every `fetch()` in `api.js` fails silently with a CORS error, which looks exactly like "the backend is down" and wastes time chasing the wrong bug. The **only** correct way to view or test any page is to start the backend (`gradle bootRun` / `./gradlew bootRun`) and open `http://localhost:8080/<path>`, e.g. `http://localhost:8080/index.html` or `http://localhost:8080/pages/auth/login-desktop-claro.html`.
 
@@ -248,7 +248,7 @@ enexia/
 │   ├── requisitos/
 │   ├── diseño_bd/
 │   └── diagrams/
-└── CLAUDE.md                        # This file
+└── AGENTS.md                        # This file
 ```
 
 ---
@@ -566,7 +566,7 @@ public class Usuario {
 }
 ```
 
-> Note: in the real entity, states are **related tables** (`usuario_estado`), not enums — see ADR-02. The enum above is the CLAUDE.md draft, kept for reference.
+> Note: in the real entity, states are **related tables** (`usuario_estado`), not enums — see ADR-02. The enum above is the initial draft, kept for reference.
 
 ### Important Implementation Notes
 

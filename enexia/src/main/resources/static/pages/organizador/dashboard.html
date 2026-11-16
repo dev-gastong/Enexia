@@ -588,8 +588,20 @@ a:hover { color: var(--acento-fuerte); }
         document.getElementById('kpiRevision').textContent = enRevision;
         document.getElementById('kpiRechazados').textContent = rechazados;
 
-        document.getElementById('planTexto').textContent = 'Eventos activos: ' + total;
-        document.getElementById('franjaPlanTexto').textContent = 'Plan Free: ' + total + ' evento(s) activos usados.';
+        API.obtenerResumenPlan().then(res => {
+            if (res.ok && res.cuerpo) {
+                const p = res.cuerpo;
+                const limiteTxt = p.limiteEventos ? ' / ' + p.limiteEventos : '';
+                document.getElementById('planTexto').textContent = 'Eventos activos: ' + p.eventosActivos + limiteTxt;
+                document.getElementById('franjaPlanTexto').textContent = 'Plan ' + p.tipoPlan + ': ' + p.eventosActivos + limiteTxt + ' evento(s) activos usados.';
+            } else {
+                document.getElementById('planTexto').textContent = 'Eventos activos: ' + total;
+                document.getElementById('franjaPlanTexto').textContent = 'Plan Free: ' + total + ' evento(s) activos usados.';
+            }
+        }).catch(() => {
+            document.getElementById('planTexto').textContent = 'Eventos activos: ' + total;
+            document.getElementById('franjaPlanTexto').textContent = 'Plan Free: ' + total + ' evento(s) activos usados.';
+        });
 
         contenedor.innerHTML = '';
 

@@ -215,6 +215,11 @@ const API = {
     },
 
     /** GET /api/organizador/eventos/{id} -> detalle propio, para editar (RF-2.7) */
+    /** GET /api/organizador/eventos/resumen-plan -> { tipoPlan, eventosActivos, limiteEventos, puedeCrear } */
+    obtenerResumenPlan() {
+        return this.get('/api/organizador/eventos/resumen-plan');
+    },
+
     obtenerEventoParaEditar(idEvento) {
         return this.get('/api/organizador/eventos/' + idEvento);
     },

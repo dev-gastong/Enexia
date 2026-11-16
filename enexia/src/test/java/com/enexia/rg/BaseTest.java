@@ -11,7 +11,8 @@ import java.nio.file.Paths;
 /**
  * Clase BaseTest - Clase base para todas las pruebas automatizadas
  * Configura la inicialización y limpieza del entorno de Playwright.
- * Proporciona acceso a los objetos necesarios (Playwright, Browser, Context, Page)
+ * Proporciona acceso a los objetos necesarios (Playwright, Browser, Context,
+ * Page)
  * para las pruebas mediante herencia.
  */
 public class BaseTest {
@@ -25,7 +26,8 @@ public class BaseTest {
     protected Page page;
 
     /**
-     * Extensión de JUnit que captura una captura de pantalla cuando falla una prueba
+     * Extensión de JUnit que captura una captura de pantalla cuando falla una
+     * prueba
      * Guarda la evidencia en la carpeta "evidencias" con el nombre del test
      */
     @RegisterExtension
@@ -50,7 +52,8 @@ public class BaseTest {
         // Crea una instancia de Playwright
         playwright = Playwright.create();
         // Verifica si estamos ejecutando en un entorno CI (Continuous Integration)
-        // Si existe la variable de entorno CI, el navegador se ejecutará en modo headless
+        // Si existe la variable de entorno CI, el navegador se ejecutará en modo
+        // headless
         boolean esCI = System.getenv("CI") != null;
         // Lanza el navegador Chromium
         browser = playwright.chromium().launch(
@@ -59,7 +62,6 @@ public class BaseTest {
         context = browser.newContext();
         // Crea una nueva página (pestaña) dentro del contexto
         page = context.newPage();
-
 
         // Iniciar grabación de trazabilidad
         context.tracing().start(new Tracing.StartOptions()
@@ -86,8 +88,6 @@ public class BaseTest {
         browser.close();
         // Cierra la instancia de Playwright
         playwright.close();
-
-
 
     }
 }
